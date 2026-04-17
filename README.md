@@ -14,9 +14,8 @@ Install the BLEnder GitHub App on your org. Give it access to the target repo.
 
 ### Run setup
 
-1. Go to [Actions](../../actions) in `mozilla/blender`
-2. Select **BLEnder Setup**
-3. Click **Run workflow**
+1. Go to [BLEnder Setup](https://github.com/mozilla/blender/actions/workflows/setup.yml)
+2. Click **Run workflow**
 4. Enter the target repo (e.g. `mozilla/blurts-server`)
 5. Click **Run workflow**
 

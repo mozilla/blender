@@ -18,12 +18,21 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Parse target repo
+        id: parse
+        run: |
+          echo "owner=${TARGET_REPO%%/*}" >> "$GITHUB_OUTPUT"
+          echo "name=${TARGET_REPO##*/}" >> "$GITHUB_OUTPUT"
+        env:
+          TARGET_REPO: ${{ inputs.target_repo }}
+
       - id: app-token
         uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349  # v2
         with:
           app-id: ${{ secrets.BLENDER_APP_ID }}
           private-key: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
-          repositories: ${{ inputs.target_repo }}
+          owner: ${{ steps.parse.outputs.owner }}
+          repositories: ${{ steps.parse.outputs.name }}
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
