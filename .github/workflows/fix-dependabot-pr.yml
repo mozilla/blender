@@ -1,0 +1,124 @@
+name: BLEnder Fix Dependabot PR
+on:
+  workflow_call:
+    inputs:
+      pr_number:
+        type: string
+        required: true
+      dry_run:
+        type: string
+        default: 'true'
+      python_version:
+        type: string
+        default: ''
+      node_version:
+        type: string
+        default: ''
+      install_command:
+        type: string
+        default: ''
+      submodules:
+        type: string
+        default: 'false'
+      prompt_dir:
+        type: string
+        default: '.github/blender'
+      repo_name:
+        type: string
+        default: ''
+      blender_local:
+        type: string
+        default: 'false'
+      verbose:
+        type: string
+        default: 'false'
+    secrets:
+      ANTHROPIC_API_KEY:
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: blender-fix-${{ github.repository }}-${{ inputs.pr_number }}
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          submodules: ${{ inputs.submodules == 'true' && 'recursive' || 'false' }}
+          persist-credentials: false
+
+      - name: Checkout PR branch
+        run: gh pr checkout "$PR_NUMBER"
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- Conditional setup ---
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+        if: inputs.python_version != ''
+        with:
+          python-version: ${{ inputs.python_version }}
+          cache: pip
+
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f  # v6
+        if: inputs.node_version != ''
+        with:
+          node-version: ${{ inputs.node_version }}
+
+      - name: Install dependencies
+        if: inputs.install_command != ''
+        # zizmor: ignore[template-injection] -- intentional: callers pass their own install commands
+        run: ${{ inputs.install_command }}
+
+      # --- BLEnder fix ---
+      - name: Checkout blender scripts
+        if: inputs.blender_local != 'true'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          repository: mozilla/blender
+          path: .blender
+          persist-credentials: false
+          sparse-checkout: |
+            scripts
+            claude-settings.json
+
+      - name: Use local blender scripts
+        if: inputs.blender_local == 'true'
+        run: ln -s "${{ github.workspace }}" .blender
+
+      - name: Install sandbox dependencies
+        run: sudo apt-get install -y bubblewrap socat
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code@stable
+
+      - name: Gather PR context
+        run: .blender/scripts/gather-context.sh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          REPO: ${{ github.repository }}
+          PROMPT_DIR: ${{ inputs.prompt_dir }}
+
+      - name: Run Claude fix
+        run: .blender/scripts/run-claude.sh
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          REPO: ${{ github.repository }}
+          REPO_NAME: ${{ inputs.repo_name }}
+          BLENDER_DIR: .blender
+          CLAUDE_VERBOSE: ${{ inputs.verbose }}
+
+      # --- Commit (separate step, Claude is dead) ---
+      - name: Commit and push fix
+        if: inputs.dry_run != 'true'
+        run: .blender/scripts/commit.sh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
