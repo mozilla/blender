@@ -90,6 +90,7 @@ on:
     inputs:
       pr_number: { description: 'PR number to fix', required: true }
       dry_run: { description: 'Dry run', default: 'true' }
+permissions: {}
 jobs:
   fix:
     uses: mozilla/blender/.github/workflows/fix-dependabot-pr.yml@v1
@@ -115,6 +116,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run: { description: 'Dry run', default: 'true' }
+permissions: {}
 jobs:
   automerge:
     uses: mozilla/blender/.github/workflows/automerge-dependabot.yml@v1
