@@ -1,3 +1,4 @@
+---
 name: BLEnder Setup
 on:
   workflow_dispatch:

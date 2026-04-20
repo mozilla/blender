@@ -1,3 +1,4 @@
+---
 name: BLEnder Fix Dependabot PR
 on:
   workflow_call:

@@ -44,7 +44,7 @@ CLAUDE_LOG=$(mktemp /tmp/blender-claude-XXXXXX.log)
 
 echo "Running Claude Code to diagnose and fix..."
 claude_exit=0
-cat .blender-prompt | claude \
+claude \
   -p \
   --verbose \
   --max-turns 30 \
@@ -53,6 +53,7 @@ cat .blender-prompt | claude \
   --allowedTools "Read,Edit,Bash" \
   --disallowedTools "WebSearch,WebFetch" \
   --system-prompt "You are BLEnder, a CI-fixing agent for ${REPO_DISPLAY_NAME}. Fix the CI failure described in the prompt. Be minimal and precise. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message." \
+  < .blender-prompt \
   > "$CLAUDE_LOG" 2>&1 \
   || claude_exit=$?
 

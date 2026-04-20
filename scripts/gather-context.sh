@@ -33,9 +33,11 @@ fi
 # --- Sanitize untrusted input before inserting into prompts ---
 sanitize_for_prompt() {
   local input="$1"
-  # Strip HTML/XML tags
+  # Strip HTML/XML tags (regex requires sed, not ${//})
+  # shellcheck disable=SC2001
   input=$(echo "$input" | sed 's/<[^>]*>//g')
   # Strip markdown image/link injection
+  # shellcheck disable=SC2001
   input=$(echo "$input" | sed 's/!\[[^]]*\]([^)]*)//g')
   # Strip prompt injection attempts
   input=$(echo "$input" | grep -viE '(ignore .* instructions|ignore .* prompt|system prompt|you are now|new instructions|disregard|forget .* above)' || true)

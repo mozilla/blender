@@ -34,7 +34,8 @@ BASE_TREE=$(gh api "repos/${REPO}/git/commits/${PARENT}" --jq '.tree.sha')
 
 # Upload each changed file as a blob
 TREE_ITEMS="[]"
-for file in $(git diff --name-only); do
+while IFS= read -r file; do
+  [ -z "$file" ] && continue
   BLOB_SHA=$(base64 -w 0 "$file" | \
     jq -Rs '{"encoding": "base64", "content": .}' | \
     gh api "repos/${REPO}/git/blobs" \
@@ -45,7 +46,7 @@ for file in $(git diff --name-only); do
     --arg path "$file" \
     --arg sha "$BLOB_SHA" \
     '. + [{"path": $path, "mode": "100644", "type": "blob", "sha": $sha}]')
-done
+done < <(git diff --name-only)
 
 # Create tree from blobs
 TREE_SHA=$(jq -n \
