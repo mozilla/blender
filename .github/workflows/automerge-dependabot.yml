@@ -1,3 +1,4 @@
+---
 name: BLEnder Auto-merge Dependabot
 on:
   workflow_call:
