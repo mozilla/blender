@@ -13,7 +13,7 @@ Read these files to understand the project:
 
 ## Step 2: Generate the prompt template
 
-Create `.github/blender/fix-dependabot-prompt.md` with this structure:
+Create `{{OUTPUT_DIR}}/fix-dependabot-prompt.md` with this structure:
 
 ```
 # BLEnder: Fix CI failures on Dependabot PRs
@@ -70,62 +70,27 @@ Write the file with the Edit tool. Do not include backticks or markdown formatti
 
 Tailor the "Common fix patterns" section based on what you find in the repo.
 
-## Step 3: Generate the caller workflows
+## Step 3: Generate the config file
 
-### `.github/workflows/blender-fix-dependabot-pr.yml`
-
-Generate a thin caller workflow. Determine:
-- `python_version`: from `.python-version`, `pyproject.toml`, CI config, or skip if not a Python project
-- `node_version`: from `.nvmrc`, `.node-version`, `package.json` engines, CI config, or skip if not a Node project
-- `install_command`: the commands to install dependencies (e.g., `pip install -r requirements.txt && cd frontend && npm ci`)
-- `submodules`: 'true' if the repo uses git submodules, 'false' otherwise
+Create `{{OUTPUT_DIR}}/blender.yml` with repo-specific settings. Determine:
 - `repo_name`: a human-readable project name
+- `node_version`: from `.nvmrc`, `.node-version`, `package.json` engines, CI config, or omit if not a Node project
+- `python_version`: from `.python-version`, `pyproject.toml`, CI config, or omit if not a Python project
+- `install_command`: the commands to install dependencies (e.g., `npm ci` or `pip install -r requirements.txt && cd frontend && npm ci`)
 
-Use this template:
-
-```yaml
-name: BLEnder Fix Dependabot CI
-on:
-  workflow_dispatch:
-    inputs:
-      pr_number: { description: 'PR number to fix', required: true }
-      dry_run: { description: 'Dry run', default: 'true' }
-permissions: {}
-jobs:
-  fix:
-    uses: mozilla/blender/.github/workflows/fix-dependabot-pr.yml@v1
-    with:
-      pr_number: ${{ inputs.pr_number }}
-      dry_run: ${{ inputs.dry_run }}
-      python_version: '<version or empty>'
-      node_version: '<version or empty>'
-      install_command: '<command>'
-      submodules: '<true or false>'
-      repo_name: '<Project Name>'
-    secrets:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-```
-
-Remove `python_version` or `node_version` lines if the project does not use that language.
-
-### `.github/workflows/blender-automerge-dependabot.yml`
+Use this format:
 
 ```yaml
-name: BLEnder Auto-merge Dependabot
-on:
-  workflow_dispatch:
-    inputs:
-      dry_run: { description: 'Dry run', default: 'true' }
-permissions: {}
-jobs:
-  automerge:
-    uses: mozilla/blender/.github/workflows/automerge-dependabot.yml@v1
-    with:
-      dry_run: ${{ inputs.dry_run }}
+repo_name: "<Project Name>"
+node_version: "<version>"
+python_version: "<version>"
+install_command: "<command>"
 ```
+
+Omit lines that are not needed (e.g., `python_version` for a pure Node project).
 
 ## Important
 
-- Use the Write tool to create all three files.
+- Use the Write tool to create both files.
 - Do not modify any existing files in the repo.
-- Do not create any files outside `.github/blender/` and `.github/workflows/`.
+- Only create files inside `{{OUTPUT_DIR}}/`.
