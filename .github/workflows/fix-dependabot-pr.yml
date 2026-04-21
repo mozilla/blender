@@ -1,48 +1,29 @@
 ---
 name: BLEnder Fix Dependabot PR
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
+      target_repo:
+        description: 'Target repo (e.g. mozilla/blurts-server)'
+        required: true
       pr_number:
-        type: string
+        description: 'PR number to fix'
         required: true
       dry_run:
-        type: string
+        description: 'Dry run (true = no commit)'
         default: 'true'
-      python_version:
-        type: string
-        default: ''
-      node_version:
-        type: string
-        default: ''
-      install_command:
-        type: string
-        default: ''
-      submodules:
-        type: string
-        default: 'false'
-      prompt_dir:
-        type: string
-        default: '.github/blender'
-      repo_name:
-        type: string
-        default: ''
-      blender_local:
-        type: string
-        default: 'false'
       verbose:
-        type: string
+        description: 'Print full Claude output'
         default: 'false'
-    secrets:
-      ANTHROPIC_API_KEY:
-        required: true
+      submodules:
+        description: 'Check out submodules (true = recursive)'
+        default: 'false'
 
 permissions:
-  contents: write
-  pull-requests: read
+  contents: read
 
 concurrency:
-  group: blender-fix-${{ github.repository }}-${{ inputs.pr_number }}
+  group: blender-fix-${{ inputs.target_repo }}-${{ inputs.pr_number }}
   cancel-in-progress: false
 
 jobs:
@@ -51,48 +32,78 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
+          persist-credentials: false
+
+      - name: Parse target repo
+        id: parse
+        run: |
+          echo "owner=${TARGET_REPO%%/*}" >> "$GITHUB_OUTPUT"
+          echo "name=${TARGET_REPO##*/}" >> "$GITHUB_OUTPUT"
+        env:
+          TARGET_REPO: ${{ inputs.target_repo }}
+
+      - id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349  # v2
+        with:
+          app-id: ${{ secrets.BLENDER_APP_ID }}
+          private-key: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
+          owner: ${{ steps.parse.outputs.owner }}
+          repositories: ${{ steps.parse.outputs.name }}
+          permission-contents: write
+          permission-pull-requests: read
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          repository: ${{ inputs.target_repo }}
+          token: ${{ steps.app-token.outputs.token }}
+          path: target
           submodules: ${{ inputs.submodules == 'true' && 'recursive' || 'false' }}
           persist-credentials: false
 
       - name: Checkout PR branch
+        working-directory: target
         run: gh pr checkout "$PR_NUMBER"
         env:
           PR_NUMBER: ${{ inputs.pr_number }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      - name: Read repo config
+        id: config
+        run: |
+          CONFIG_FILE="target/.blender/blender.yml"
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "Error: No config found at $CONFIG_FILE"
+            echo "Run the setup workflow first to onboard this repo."
+            exit 1
+          fi
+          {
+            echo "node_version=$(yq '.node_version // ""' "$CONFIG_FILE")"
+            echo "python_version=$(yq '.python_version // ""' "$CONFIG_FILE")"
+            echo "install_command=$(yq '.install_command // ""' "$CONFIG_FILE")"
+            echo "repo_name=$(yq '.repo_name // ""' "$CONFIG_FILE")"
+          } >> "$GITHUB_OUTPUT"
 
       # --- Conditional setup ---
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
-        if: inputs.python_version != ''
+        if: steps.config.outputs.python_version != ''
         with:
-          python-version: ${{ inputs.python_version }}
+          python-version: ${{ steps.config.outputs.python_version }}
           cache: pip
 
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f  # v6
-        if: inputs.node_version != ''
+        if: steps.config.outputs.node_version != ''
         with:
-          node-version: ${{ inputs.node_version }}
+          node-version: ${{ steps.config.outputs.node_version }}
 
       - name: Install dependencies
-        if: inputs.install_command != ''
-        # zizmor: ignore[template-injection] -- intentional: callers pass their own install commands
-        run: ${{ inputs.install_command }}
+        if: steps.config.outputs.install_command != ''
+        working-directory: target
+        run: |
+          eval "$INSTALL_COMMAND"
+        env:
+          INSTALL_COMMAND: ${{ steps.config.outputs.install_command }}
 
       # --- BLEnder fix ---
-      - name: Checkout blender scripts
-        if: inputs.blender_local != 'true'
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
-        with:
-          repository: mozilla/blender
-          path: .blender
-          persist-credentials: false
-          sparse-checkout: |
-            scripts
-            claude-settings.json
-
-      - name: Use local blender scripts
-        if: inputs.blender_local == 'true'
-        run: ln -s "${{ github.workspace }}" .blender
-
       - name: Install sandbox dependencies
         run: sudo apt-get install -y bubblewrap socat
 
@@ -100,26 +111,29 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code@stable
 
       - name: Gather PR context
-        run: .blender/scripts/gather-context.sh
+        working-directory: target
+        run: ${{ github.workspace }}/scripts/gather-context.sh
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_NUMBER: ${{ inputs.pr_number }}
-          REPO: ${{ github.repository }}
-          PROMPT_DIR: ${{ inputs.prompt_dir }}
+          REPO: ${{ inputs.target_repo }}
+          PROMPT_DIR: .blender
 
       - name: Run Claude fix
-        run: .blender/scripts/run-claude.sh
+        working-directory: target
+        run: ${{ github.workspace }}/scripts/run-claude.sh
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          REPO: ${{ github.repository }}
-          REPO_NAME: ${{ inputs.repo_name }}
-          BLENDER_DIR: .blender
+          REPO: ${{ inputs.target_repo }}
+          REPO_NAME: ${{ steps.config.outputs.repo_name }}
+          BLENDER_DIR: ${{ github.workspace }}
           CLAUDE_VERBOSE: ${{ inputs.verbose }}
 
       # --- Commit (separate step, Claude is dead) ---
       - name: Commit and push fix
         if: inputs.dry_run != 'true'
-        run: .blender/scripts/commit.sh
+        working-directory: target
+        run: ${{ github.workspace }}/scripts/commit.sh
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ inputs.target_repo }}

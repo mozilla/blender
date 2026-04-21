@@ -1,0 +1,58 @@
+---
+name: BLEnder Auto-merge Dependabot
+on:
+  workflow_dispatch:
+    inputs:
+      target_repo:
+        description: 'Target repo (e.g. mozilla/blurts-server)'
+        required: true
+      dry_run:
+        description: 'Dry run (true = no merge)'
+        default: 'true'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blender-automerge-${{ inputs.target_repo }}
+  cancel-in-progress: false
+
+jobs:
+  automerge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          persist-credentials: false
+
+      - name: Parse target repo
+        id: parse
+        run: |
+          echo "owner=${TARGET_REPO%%/*}" >> "$GITHUB_OUTPUT"
+          echo "name=${TARGET_REPO##*/}" >> "$GITHUB_OUTPUT"
+        env:
+          TARGET_REPO: ${{ inputs.target_repo }}
+
+      - id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349  # v2
+        with:
+          app-id: ${{ secrets.BLENDER_APP_ID }}
+          private-key: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
+          owner: ${{ steps.parse.outputs.owner }}
+          repositories: ${{ steps.parse.outputs.name }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Run auto-merge
+        run: python scripts/automerge-dependabot.py
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ inputs.target_repo }}
+          DRY_RUN: ${{ inputs.dry_run }}

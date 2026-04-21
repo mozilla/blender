@@ -2,13 +2,13 @@
 # BLEnder setup: explore a target repo and generate BLEnder config files.
 #
 # Runs Claude Code to analyze the repo and generate:
-#   1. .github/blender/fix-dependabot-prompt.md
-#   2. .github/workflows/blender-fix-dependabot-pr.yml
-#   3. .github/workflows/blender-automerge-dependabot.yml
+#   1. .blender/fix-dependabot-prompt.md
+#   2. .blender/blender.yml
 #
 # Environment variables:
 #   ANTHROPIC_API_KEY  -- Anthropic API key (required)
 #   REPO               -- Target repo, e.g. mozilla/blurts-server (required)
+#   OUTPUT_DIR          -- Where to write generated files (default: .blender)
 
 set -euo pipefail
 
@@ -26,6 +26,8 @@ if [ -z "${REPO:-}" ]; then
   exit 1
 fi
 
+OUTPUT_DIR="${OUTPUT_DIR:-.blender}"
+
 # Strip any GitHub tokens from Claude's environment
 unset GH_TOKEN 2>/dev/null || true
 unset ACTIONS_RUNTIME_TOKEN 2>/dev/null || true
@@ -35,11 +37,12 @@ unset ACTIONS_CACHE_URL 2>/dev/null || true
 
 PROMPT_NONCE=$(openssl rand -hex 16)
 
-# Substitute repo name into the setup prompt
+# Substitute variables into the setup prompt
 prompt=$(cat "$SETUP_PROMPT")
 prompt="${prompt/\{\{REPO\}\}/$REPO}"
+prompt="${prompt/\{\{OUTPUT_DIR\}\}/$OUTPUT_DIR}"
 
-mkdir -p .github/blender .github/workflows
+mkdir -p "$OUTPUT_DIR"
 
 echo "Running Claude Code to generate BLEnder config for ${REPO}..."
 echo "$prompt" | claude \
@@ -52,16 +55,15 @@ echo "$prompt" | claude \
   || true
 
 # Nonce leak detection
-if git diff --name-only | xargs grep -lF "$PROMPT_NONCE" 2>/dev/null; then
+if find "$OUTPUT_DIR" -type f -exec grep -lF "$PROMPT_NONCE" {} + 2>/dev/null; then
   echo "ABORT: Nonce leaked into generated files."
-  git checkout -- .
+  rm -rf "$OUTPUT_DIR"
   exit 1
 fi
 
 # Validate expected files exist
-for f in .github/blender/fix-dependabot-prompt.md \
-         .github/workflows/blender-fix-dependabot-pr.yml \
-         .github/workflows/blender-automerge-dependabot.yml; do
+for f in "$OUTPUT_DIR/fix-dependabot-prompt.md" \
+         "$OUTPUT_DIR/blender.yml"; do
   if [ ! -f "$f" ]; then
     echo "Warning: Expected file not generated: $f"
   fi
