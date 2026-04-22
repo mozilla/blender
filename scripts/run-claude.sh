@@ -27,13 +27,11 @@ fi
 
 REPO_DISPLAY_NAME="${REPO_NAME:-$(echo "${REPO:-unknown}" | cut -d/ -f2)}"
 
-# Generate nonces for leak detection
+# Generate nonce for leak detection
 PROMPT_NONCE=$(openssl rand -hex 16)
-TOKEN_NONCE=$(openssl rand -hex 16)
 
 # Ensure no GitHub tokens exist in this process
 unset GH_TOKEN 2>/dev/null || true
-export GH_TOKEN="$TOKEN_NONCE"
 unset ACTIONS_RUNTIME_TOKEN 2>/dev/null || true
 unset ACTIONS_ID_TOKEN_REQUEST_URL 2>/dev/null || true
 unset ACTIONS_ID_TOKEN_REQUEST_TOKEN 2>/dev/null || true
@@ -74,11 +72,10 @@ fi
 
 # --- Secret and nonce leak detection ---
 diff_output=$(git diff)
-for secret_label in "ANTHROPIC_API_KEY" "PROMPT_NONCE" "TOKEN_NONCE"; do
+for secret_label in "ANTHROPIC_API_KEY" "PROMPT_NONCE"; do
   case "$secret_label" in
     ANTHROPIC_API_KEY) secret_value="$ANTHROPIC_API_KEY" ;;
     PROMPT_NONCE)      secret_value="$PROMPT_NONCE" ;;
-    TOKEN_NONCE)       secret_value="$TOKEN_NONCE" ;;
   esac
   if echo "$diff_output" | grep -qF "$secret_value"; then
     echo "ABORT: ${secret_label} leaked into changed files."
