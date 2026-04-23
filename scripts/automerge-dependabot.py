@@ -571,9 +571,7 @@ def process_pr(
     return True
 
 
-def _post_retry_comment(
-    pr: PullRequest, reason: str, gh: Github, dry_run: bool
-) -> None:
+def _post_retry_comment(pr: PullRequest, reason: str, dry_run: bool) -> None:
     """Leave a retry comment on the PR, skipping if one exists."""
     comment_body = f"BLEnder: skipped ({reason}). Will retry on next scheduled run."
     if dry_run:
@@ -583,7 +581,7 @@ def _post_retry_comment(
     already_commented = any(
         c.body.startswith("BLEnder: skipped")
         for c in pr.get_issue_comments()
-        if c.user.login == "github-actions[bot]" or c.user.login == gh.get_user().login
+        if c.user.login.endswith("[bot]")
     )
     if already_commented:
         print(f"  Retry comment already exists on PR #{pr.number}")
@@ -648,7 +646,7 @@ def main() -> None:
             skip_reasons.append(f"#{pr.number} ({pkg}): {tag}{e}")
 
             if is_retry:
-                _post_retry_comment(pr, str(e), gh, config.dry_run)
+                _post_retry_comment(pr, str(e), config.dry_run)
 
     _print_summary(merged, skipped, skip_reasons, config.dry_run)
 
