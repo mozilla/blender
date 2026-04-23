@@ -63,6 +63,8 @@ jobs:
             echo "Error: Setup did not generate config at .blender/"
             exit 1
           fi
+          git config user.name "blender[bot]"
+          git config user.email "blender[bot]@users.noreply.github.com"
           BRANCH="blender-setup"
           git checkout -b "$BRANCH"
           git add .blender/
