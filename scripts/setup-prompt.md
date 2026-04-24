@@ -108,6 +108,24 @@ install_command: "<command>"
 
 Omit lines that are not needed (e.g., `python_version` for a pure Node project).
 
+### Optional: BLEnder overrides
+
+Add overrides for default sweep/automerge/fix settings.
+All fields are optional. Omit them to use defaults.
+
+```yaml
+automerge:
+  min_compatibility_score: 90  # default: 80
+  allow_major: false           # default: false
+  check_advisories: true       # default: true
+fix:
+  dry_run: false               # default: false
+  max_claude_turns: 30         # default: 30
+  max_budget_usd: 3.00         # default: 2.00
+```
+
+These overrides are merged on top of BLEnder's `config/defaults.yml` at runtime.
+
 ## Important
 
 - Use the Write tool to create both files.

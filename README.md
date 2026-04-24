@@ -4,63 +4,89 @@ Dependabot PRs break CI. BLEnder fixes them.
 
 It reads the CI logs, runs Claude Code in a sandbox, and commits the fix. It can also auto-merge safe PRs — patch or minor bumps with high compatibility and no advisories.
 
-Config lives in each target repo under `.blender/`. No workflows or secrets needed in the target repo. Everything runs from this repo via a GitHub App token.
+Everything runs from this repo via a GitHub App. No workflows or secrets needed in the target repo.
 
-## Add a repo
+## Install & quick start
 
-### Prerequisites
+1. Install the BLEnder GitHub App on your org. Grant it access to the target repo.
+2. Go to [BLEnder Setup](https://github.com/mozilla/blender/actions/workflows/build-setup.yml) → **Run workflow** → enter the target repo (e.g. `mozilla/blurts-server`)
+3. Review the PR that BLEnder opens on your repo. It adds a `.blender/` directory with config and a prompt template. Check that the prompt lists the right test commands, linters, and formatters.
+4. Merge the PR. BLEnder will start scanning your repo on its next sweep.
 
-Install the BLEnder GitHub App on your org. Give it access to the target repo.
+## Config
 
-### Run setup
+### `.blender/blender.yml`
 
-1. Go to [BLEnder Setup](https://github.com/mozilla/blender/actions/workflows/dispatch-setup.yml)
-2. Click **Run workflow**
-3. Enter the target repo (e.g. `mozilla/blurts-server`)
-4. Click **Run workflow**
+Setup generates this file for your repo. A minimal example:
 
-Setup will:
+```yaml
+repo_name: "My Project"
+install_command: "npm ci"
+```
 
-- Check out the target repo
-- Run Claude Code to analyze the project
-- Generate a config and prompt template
-- Open a PR on the **target repo**
+Available fields:
 
-### Review the PR
+| Field | Required | Description |
+|-------|----------|-------------|
+| `repo_name` | yes | Human-readable project name |
+| `install_command` | no | Command to install dependencies |
+| `node_version` | no | Node.js version for `setup-node` |
+| `python_version` | no | Python version for `setup-python` |
 
-The PR adds a `.blender/` directory to the target repo:
+Omit fields that don't apply.
 
-| File | Purpose |
-|------|---------|
-| `.blender/blender.yml` | Runtime versions, install command, repo name |
-| `.blender/fix-dependabot-prompt.md` | Prompt template with fix patterns for the repo |
+### `.blender/fix-dependabot-prompt.md`
 
-Review the prompt template. It should list the right test commands, linters, and formatters. Edit it if needed.
+Prompt template with `{{PR_TITLE}}`, `{{FAILING_CHECKS}}`, and `{{CI_LOGS}}` placeholders. Lists the repo's test commands, linters, and common fix patterns.
 
-### Merge
+### Default settings
 
-Merge the PR. The repo is onboarded.
+BLEnder ships with defaults in `config/defaults.yml`:
 
-## Quick start
+```yaml
+automerge:
+  allow_major: false
+  min_compatibility_score: 80
+  check_advisories: true
+
+fix:
+  dry_run: false
+  max_claude_turns: 30
+  max_budget_usd: 2.00
+```
+
+Per-repo overrides go in the target repo's `.blender/blender.yml`.
+
+## Manual triggers
 
 ### Fix a failing Dependabot PR
 
-1. Go to [BLEnder Fix](https://github.com/mozilla/blender/actions/workflows/dispatch-fix.yml)
+1. Go to [BLEnder Fix](https://github.com/mozilla/blender/actions/workflows/fix-dependabot-pr.yml)
 2. Click **Run workflow**
 3. Enter the target repo and PR number
-4. Set dry run to `true`
-5. Check the logs to see what Claude would change
-6. Run again with dry run `false` to commit the fix
+4. Set dry run to `true` first to preview
+5. Run again with dry run `false` to commit the fix
 
 ### Auto-merge safe PRs
 
-1. Go to [BLEnder Auto-merge](https://github.com/mozilla/blender/actions/workflows/dispatch-automerge.yml)
+1. Go to [BLEnder Auto-merge](https://github.com/mozilla/blender/actions/workflows/chore-automerge-dependabot-prs.yml)
 2. Click **Run workflow**
 3. Enter the target repo
 4. Set dry run to `true` to preview
 5. Run again with dry run `false` to merge
 
+---
+
 ## How it works
+
+### Sweep
+
+A scheduled job runs every 30 minutes. It authenticates as the BLEnder GitHub App, lists all installations, and checks each repo for work:
+
+- **Failing Dependabot PRs** → triggers a fix workflow
+- **Green Dependabot PRs** that pass safety gates → triggers an auto-merge workflow
+
+The sweep can also be triggered manually from [Scheduled Sweep](https://github.com/mozilla/blender/actions/workflows/scheduled-sweep.yml).
 
 ### Fix workflow
 
@@ -79,7 +105,7 @@ Merge the PR. The repo is onboarded.
 
 ### Auto-merge workflow
 
-Check all open Dependabot PRs against five gates:
+Checks all open Dependabot PRs against five gates:
 
 1. **Author** is `dependabot[bot]`
 2. **CI** is green
@@ -89,26 +115,7 @@ Check all open Dependabot PRs against five gates:
 
 PRs that pass all five gates get approved and merged.
 
-## Per-repo config
-
-Each target repo has a `.blender/` directory with:
-
-### `.blender/blender.yml`
-
-```yaml
-repo_name: "Project Name"
-node_version: "20.20.x"
-python_version: "3.11"
-install_command: "npm ci"
-```
-
-All fields except `repo_name` are optional. Omit what you don't need.
-
-### `.blender/fix-dependabot-prompt.md`
-
-Prompt template with `{{PR_TITLE}}`, `{{FAILING_CHECKS}}`, and `{{CI_LOGS}}` placeholders. Lists the repo's test commands, linters, and common fix patterns.
-
-## Security
+### Security model
 
 - Claude runs in a sandbox. No network. No GitHub token.
 - PR metadata is sanitized before it enters the prompt.

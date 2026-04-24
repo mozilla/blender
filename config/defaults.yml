@@ -1,0 +1,13 @@
+# BLEnder default settings.
+# Per-repo overrides go in the target repo's .blender/blender.yml.
+
+automerge:
+  dry_run: false
+  allow_major: false
+  min_compatibility_score: 80
+  check_advisories: true
+
+fix:
+  dry_run: false
+  max_claude_turns: 30
+  max_budget_usd: 2.00

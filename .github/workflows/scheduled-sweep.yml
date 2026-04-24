@@ -1,0 +1,48 @@
+---
+name: BLEnder Scheduled Sweep
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (true = discover only, no triggers)'
+        default: 'false'
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: blender-sweep
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Run sweep
+        id: sweep
+        run: python scripts/sweep.py
+        env:
+          BLENDER_APP_ID: ${{ secrets.BLENDER_APP_ID }}
+          BLENDER_APP_PRIVATE_KEY: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
+
+      - name: Trigger workflows
+        if: inputs.dry_run != 'true'
+        run: python scripts/trigger-workflows.py
+        env:
+          SWEEP_ACTIONS: ${{ steps.sweep.outputs.actions }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
