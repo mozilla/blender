@@ -28,7 +28,7 @@ import os
 import sys
 from dataclasses import dataclass
 
-from github import Auth, Github, GithubIntegration
+from github import Auth, GithubIntegration
 from github.GithubException import UnknownObjectException
 from github.PullRequest import PullRequest
 from github.Repository import Repository
@@ -97,9 +97,7 @@ def discover_repos(
     """List all installations and their repos."""
     results = []
     for installation in integration.get_installations():
-        token = integration.get_access_token(installation.id)
-        gh = Github(auth=Auth.Token(token.token))
-        repos = list(gh.get_installation(installation.id).get_repos())
+        repos = list(installation.get_repos())
         results.append((installation.id, repos))
     return results
 
