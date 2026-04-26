@@ -85,9 +85,8 @@ jobs:
 
       # --- Conditional setup ---
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
-        if: steps.config.outputs.python_version != ''
         with:
-          python-version: ${{ steps.config.outputs.python_version }}
+          python-version: ${{ steps.config.outputs.python_version || '3.11' }}
           cache: pip
 
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f  # v6

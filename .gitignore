@@ -2,3 +2,5 @@
 .actrc
 .blender-prompt
 .blender-commit-msg
+.claude/settings.local.json
+__pycache__/

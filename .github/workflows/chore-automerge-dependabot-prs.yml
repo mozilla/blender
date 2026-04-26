@@ -50,9 +50,27 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r scripts/requirements.txt
 
+      - name: Fetch repo config
+        id: fetch-config
+        run: |
+          mkdir -p target/.blender
+          gh api "repos/${TARGET_REPO}/contents/.blender/blender.yml" \
+            --jq '.content' | base64 -d > target/.blender/blender.yml
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TARGET_REPO: ${{ inputs.target_repo }}
+        continue-on-error: true
+
+      - name: Load config
+        id: blender-config
+        run: python scripts/load-config.py --defaults config/defaults.yml --repo-config target/.blender/blender.yml
+        continue-on-error: true
+
       - name: Run auto-merge
         run: python scripts/automerge-dependabot.py
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ inputs.target_repo }}
-          DRY_RUN: ${{ inputs.dry_run }}
+          DRY_RUN: ${{ inputs.dry_run || steps.blender-config.outputs.automerge_dry_run || 'false' }}
+          MIN_COMPAT_SCORE: ${{ steps.blender-config.outputs.automerge_min_compatibility_score || '80' }}
+          ALLOW_MAJOR: ${{ steps.blender-config.outputs.automerge_allow_major || 'false' }}

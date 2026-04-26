@@ -66,6 +66,8 @@ class Config:
     repo_name: str
     token: str
     dry_run: bool
+    min_compatibility_score: int = 80
+    allow_major: bool = False
 
 
 # --- Metadata extraction ---
@@ -297,17 +299,20 @@ def gate_ci(repo: Repository, sha: str) -> None:
     print("  CI: all checks passed")
 
 
-def gate_versions(meta: PRMetadata) -> None:
-    """Gate 3: No major version bumps."""
+def gate_versions(meta: PRMetadata, *, allow_major: bool = False) -> None:
+    """Gate 3: No major version bumps (unless allow_major is set)."""
     if not meta.dependencies:
         print("  Versions: no metadata found, treating as patch/minor")
         return
 
-    if meta.has_major:
+    if meta.has_major and not allow_major:
         for dep in meta.dependencies:
             if dep.update_type == "version-update:semver-major":
                 raise SkipPR(f"major version bump on {dep.name}")
         raise SkipPR("major version bump detected")
+
+    if meta.has_major and allow_major:
+        print("  Versions: major bump detected but allow_major=true, proceeding")
 
     if len(meta.dependencies) == 1:
         dep = meta.dependencies[0]
@@ -345,7 +350,11 @@ def _is_patch_or_minor(old_version: str, new_version: str) -> bool:
 
 
 def _check_badge_svg(
-    badge_svg: str, old_version: str, new_version: str, label: str
+    badge_svg: str,
+    old_version: str,
+    new_version: str,
+    label: str,
+    min_score: int = 80,
 ) -> int | None:
     """Parse a badge SVG and return score, None for unknown-ok, or raise."""
     if COMPAT_UNKNOWN_RE.search(badge_svg):
@@ -359,14 +368,16 @@ def _check_badge_svg(
         raise RetryPR("could not parse compatibility score from badge")
 
     score = int(score_match.group("score"))
-    if score < 80:
-        raise RetryPR(f"compatibility score {score}% < 80%")
+    if score < min_score:
+        raise RetryPR(f"compatibility score {score}% < {min_score}%")
 
     return score
 
 
 def _check_group_compatibility(
-    deps: list[DependencyUpdate], raw_ecosystem: str
+    deps: list[DependencyUpdate],
+    raw_ecosystem: str,
+    min_compat_score: int = 80,
 ) -> int | None:
     """Check compatibility for each dep in a group PR. Return min score."""
     min_score: int | None = None
@@ -381,7 +392,11 @@ def _check_group_compatibility(
             raise RetryPR(f"could not fetch compatibility badge for {dep.name}")
 
         score = _check_badge_svg(
-            badge_svg, dep.old_version, dep.version, f"{dep.name} "
+            badge_svg,
+            dep.old_version,
+            dep.version,
+            f"{dep.name} ",
+            min_score=min_compat_score,
         )
         if score is None:
             continue
@@ -400,8 +415,12 @@ def _check_group_compatibility(
     return min_score
 
 
-def gate_compatibility(pr: PullRequest, meta: PRMetadata) -> int | None:
-    """Gate 4: Compatibility score >= 80%."""
+def gate_compatibility(
+    pr: PullRequest,
+    meta: PRMetadata,
+    min_compat_score: int = 80,
+) -> int | None:
+    """Gate 4: Compatibility score >= min_compat_score."""
     # Try badge URL from PR body (single-dep PRs)
     body = pr.body or ""
     badge_match = BADGE_URL_RE.search(body)
@@ -410,7 +429,13 @@ def gate_compatibility(pr: PullRequest, meta: PRMetadata) -> int | None:
         badge_svg = fetch_badge_svg(badge_match.group(1))
         if not badge_svg:
             raise RetryPR("could not fetch compatibility badge")
-        score = _check_badge_svg(badge_svg, meta.old_version, meta.new_version, "")
+        score = _check_badge_svg(
+            badge_svg,
+            meta.old_version,
+            meta.new_version,
+            "",
+            min_score=min_compat_score,
+        )
         if score is not None:
             print(f"  Compatibility: {score}%")
         return score
@@ -420,7 +445,9 @@ def gate_compatibility(pr: PullRequest, meta: PRMetadata) -> int | None:
     if not deps_with_old:
         raise RetryPR("no compatibility badge found in PR body")
 
-    return _check_group_compatibility(deps_with_old, meta.raw_ecosystem)
+    return _check_group_compatibility(
+        deps_with_old, meta.raw_ecosystem, min_compat_score
+    )
 
 
 def _find_affecting_advisories(advisories: list, dep: DependencyUpdate) -> list[str]:
@@ -540,7 +567,20 @@ def load_config() -> Config:
         print("Error: GH_TOKEN is required.")
         sys.exit(1)
 
-    return Config(repo_name=repo, token=token, dry_run=dry_run)
+    min_compat = int(os.environ.get("MIN_COMPAT_SCORE", "80"))
+    allow_major = os.environ.get("ALLOW_MAJOR", "false").lower() in (
+        "true",
+        "1",
+        "yes",
+    )
+
+    return Config(
+        repo_name=repo,
+        token=token,
+        dry_run=dry_run,
+        min_compatibility_score=min_compat,
+        allow_major=allow_major,
+    )
 
 
 def process_pr(
@@ -556,8 +596,8 @@ def process_pr(
 
     meta = extract_metadata(pr)
 
-    gate_versions(meta)
-    compat_score = gate_compatibility(pr, meta)
+    gate_versions(meta, allow_major=config.allow_major)
+    compat_score = gate_compatibility(pr, meta, config.min_compatibility_score)
     gate_ci(repo, pr.head.sha)
     gate_advisories(gh, meta)
 
@@ -614,7 +654,9 @@ def main() -> None:
     config = load_config()
     print(
         f"BLEnder automerge-dependabot: "
-        f"repo={config.repo_name} dry_run={config.dry_run}"
+        f"repo={config.repo_name} dry_run={config.dry_run} "
+        f"min_compat={config.min_compatibility_score} "
+        f"allow_major={config.allow_major}"
     )
 
     gh = Github(auth=Auth.Token(config.token))
