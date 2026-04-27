@@ -12,11 +12,11 @@ lint-zizmor:
 	zizmor .github/workflows/
 
 lint-python:
-	ruff check scripts/
-	ruff format --check scripts/
+	uv run ruff check scripts/
+	uv run ruff format --check scripts/
 
 lint-yaml:
 	yamllint -c .yamllint.yml .github/workflows/
 
 fmt:
-	ruff format scripts/
+	uv run ruff format scripts/

@@ -611,23 +611,28 @@ def process_pr(
     return True
 
 
-def _post_retry_comment(pr: PullRequest, reason: str, dry_run: bool) -> None:
-    """Leave a retry comment on the PR, skipping if one exists."""
-    comment_body = f"BLEnder: skipped ({reason}). Will retry on next scheduled run."
+def _post_skip_comment(
+    pr: PullRequest, reason: str, will_retry: bool, dry_run: bool
+) -> None:
+    """Leave a skip comment on the PR, skipping if one exists."""
+    if will_retry:
+        comment_body = f"BLEnder: skipped ({reason}). Will retry on next scheduled run."
+    else:
+        comment_body = f"BLEnder: will not auto-merge ({reason})."
     if dry_run:
         print(f"  DRY_RUN: would comment: {comment_body}")
         return
 
     already_commented = any(
-        c.body.startswith("BLEnder: skipped")
+        c.body.startswith("BLEnder: ")
         for c in pr.get_issue_comments()
         if c.user.login.endswith("[bot]")
     )
     if already_commented:
-        print(f"  Retry comment already exists on PR #{pr.number}")
+        print(f"  BLEnder comment already exists on PR #{pr.number}")
     else:
         pr.create_issue_comment(comment_body)
-        print(f"  Posted retry comment on PR #{pr.number}")
+        print(f"  Posted comment on PR #{pr.number}")
 
 
 def _print_summary(
@@ -687,8 +692,7 @@ def main() -> None:
             pkg = _package_name_from_branch(pr.head.ref)
             skip_reasons.append(f"#{pr.number} ({pkg}): {tag}{e}")
 
-            if is_retry:
-                _post_retry_comment(pr, str(e), config.dry_run)
+            _post_skip_comment(pr, str(e), is_retry, config.dry_run)
 
     _print_summary(merged, skipped, skip_reasons, config.dry_run)
 

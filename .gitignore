@@ -3,4 +3,5 @@
 .blender-prompt
 .blender-commit-msg
 .claude/settings.local.json
+.venv/
 __pycache__/
