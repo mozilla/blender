@@ -1,5 +1,6 @@
 ---
 name: BLEnder Auto-merge Dependabot
+run-name: "Auto-merge ${{ inputs.target_repo }}"
 on:
   workflow_dispatch:
     inputs:
