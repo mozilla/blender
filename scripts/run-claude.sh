@@ -14,6 +14,7 @@
 set -euo pipefail
 
 BLENDER_DIR="${BLENDER_DIR:-.blender}"
+SUMMARY_FILE=".blender-summary.md"
 
 if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
   echo "Error: ANTHROPIC_API_KEY is required."
@@ -40,6 +41,16 @@ unset ACTIONS_CACHE_URL 2>/dev/null || true
 CLAUDE_SETTINGS="$BLENDER_DIR/claude-settings.json"
 CLAUDE_LOG=$(mktemp /tmp/blender-claude-XXXXXX.log)
 
+SYSTEM_PROMPT="You are BLEnder, a CI-fixing agent for ${REPO_DISPLAY_NAME}. Fix the CI failure described in the prompt. Be minimal and precise. Do not search the web.
+
+When you are done (whether you fixed it or not), write a short summary to ${SUMMARY_FILE}. The summary will be posted as a comment on the PR. Include:
+- What CI failure you found
+- What you tried
+- What you changed (or why you could not fix it)
+Keep it under 20 lines. Use markdown.
+
+Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
+
 echo "Running Claude Code to diagnose and fix..."
 claude_exit=0
 claude \
@@ -48,9 +59,9 @@ claude \
   --max-turns 30 \
   --max-budget-usd 2.00 \
   --settings "$CLAUDE_SETTINGS" \
-  --allowedTools "Read,Edit,Bash" \
+  --allowedTools "Read,Edit,Write,Bash" \
   --disallowedTools "WebSearch,WebFetch" \
-  --system-prompt "You are BLEnder, a CI-fixing agent for ${REPO_DISPLAY_NAME}. Fix the CI failure described in the prompt. Be minimal and precise. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message." \
+  --system-prompt "$SYSTEM_PROMPT" \
   < .blender-prompt \
   > "$CLAUDE_LOG" 2>&1 \
   || claude_exit=$?
@@ -65,8 +76,34 @@ else
 fi
 rm -f "$CLAUDE_LOG"
 
+# --- Fallback summary if Claude didn't write one ---
+if [ ! -f "$SUMMARY_FILE" ]; then
+  if [ "$claude_exit" -ne 0 ]; then
+    {
+      echo "## BLEnder fix attempt — failed"
+      echo ""
+      echo "Claude exited with code ${claude_exit} (likely hit max-turns or budget limit)."
+      echo "No summary was produced. This PR may need human attention."
+    } > "$SUMMARY_FILE"
+  else
+    {
+      echo "## BLEnder fix attempt"
+      echo ""
+      echo "Claude ran but did not produce a summary."
+    } > "$SUMMARY_FILE"
+  fi
+  echo "Fallback summary written to ${SUMMARY_FILE}"
+fi
+
+# --- Nonce leak detection in summary ---
+if grep -qF "$PROMPT_NONCE" "$SUMMARY_FILE"; then
+  echo "ABORT: nonce leaked into summary file."
+  rm -f "$SUMMARY_FILE"
+  exit 1
+fi
+
 if [ "$claude_exit" -ne 0 ]; then
-  echo "Claude exited with code ${claude_exit} (likely hit max-turns or budget)."
+  echo "Claude exited with code ${claude_exit}."
   exit 1
 fi
 

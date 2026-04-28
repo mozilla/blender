@@ -50,7 +50,7 @@ jobs:
           owner: ${{ steps.parse.outputs.owner }}
           repositories: ${{ steps.parse.outputs.name }}
           permission-contents: write
-          permission-pull-requests: read
+          permission-pull-requests: write
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
@@ -125,6 +125,7 @@ jobs:
           PROMPT_DIR: .blender
 
       - name: Run Claude fix
+        id: claude
         working-directory: target
         run: ${{ github.workspace }}/scripts/run-claude.sh
         env:
@@ -133,6 +134,30 @@ jobs:
           REPO_NAME: ${{ steps.config.outputs.repo_name }}
           BLENDER_DIR: ${{ github.workspace }}
           CLAUDE_VERBOSE: ${{ inputs.verbose }}
+        continue-on-error: true
+
+      - name: Comment on PR with fix attempt result
+        if: always() && steps.claude.outcome != 'skipped'
+        run: |
+          SUMMARY_FILE="target/.blender-summary.md"
+          if [ -f "$SUMMARY_FILE" ]; then
+            BODY="$(cat "$SUMMARY_FILE")
+
+          [Workflow run](${RUN_URL})"
+          else
+            BODY="BLEnder fix attempted on PR #${PR_NUMBER} but no summary was produced.
+          [Workflow run](${RUN_URL})"
+          fi
+          cd target && gh pr comment "$PR_NUMBER" --body "$BODY"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          REPO: ${{ inputs.target_repo }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Fail if Claude failed
+        if: steps.claude.outcome == 'failure'
+        run: exit 1
 
       # --- Commit (separate step, Claude is dead) ---
       - name: Commit and push fix
