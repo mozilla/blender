@@ -144,7 +144,7 @@ def process_repo(repo: Repository) -> list[Action]:
             # Check for BLEnder fix-attempt comments (covers failed attempts)
             comments = pr.get_issue_comments()
             has_fix_comment = any(
-                "BLEnder fix" in (c.body or "")
+                "BLEnder picked up this PR" in (c.body or "")
                 for c in comments
                 if c.user.login.endswith("[bot]")
             )
