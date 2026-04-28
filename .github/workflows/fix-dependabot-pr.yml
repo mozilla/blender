@@ -1,5 +1,6 @@
 ---
 name: BLEnder Fix Dependabot PR
+run-name: "Fix ${{ inputs.target_repo }} PR #${{ inputs.pr_number }}"
 on:
   workflow_dispatch:
     inputs:
