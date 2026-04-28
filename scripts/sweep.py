@@ -132,11 +132,23 @@ def process_repo(repo: Repository) -> list[Action]:
             continue
 
         if result == "fix":
+            # Check for BLEnder commits on the PR
             commits = pr.get_commits()
-            already_attempted = any(
+            has_blender_commit = any(
                 (c.commit.message or "").startswith("BLEnder fix(") for c in commits
             )
-            if already_attempted:
+            if has_blender_commit:
+                print(f"    PR #{pr.number}: BLEnder already committed a fix, skipping")
+                continue
+
+            # Check for BLEnder fix-attempt comments (covers failed attempts)
+            comments = pr.get_issue_comments()
+            has_fix_comment = any(
+                "BLEnder picked up this PR" in (c.body or "")
+                for c in comments
+                if c.user.login.endswith("[bot]")
+            )
+            if has_fix_comment:
                 print(f"    PR #{pr.number}: BLEnder already attempted fix, skipping")
                 continue
 

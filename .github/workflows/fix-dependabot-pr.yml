@@ -50,7 +50,7 @@ jobs:
           owner: ${{ steps.parse.outputs.owner }}
           repositories: ${{ steps.parse.outputs.name }}
           permission-contents: write
-          permission-pull-requests: read
+          permission-pull-requests: write
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
@@ -123,6 +123,15 @@ jobs:
           PR_NUMBER: ${{ inputs.pr_number }}
           REPO: ${{ inputs.target_repo }}
           PROMPT_DIR: .blender
+
+      - name: Comment on PR
+        working-directory: target
+        run: |
+          gh pr comment "$PR_NUMBER" --body "BLEnder picked up this PR. [Workflow run](${RUN_URL})"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Run Claude fix
         working-directory: target
