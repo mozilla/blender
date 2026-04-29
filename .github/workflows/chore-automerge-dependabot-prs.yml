@@ -68,7 +68,7 @@ jobs:
         continue-on-error: true
 
       - name: Run auto-merge
-        run: python scripts/automerge-dependabot.py
+        run: python scripts/automerge_dependabot.py
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ inputs.target_repo }}

@@ -25,6 +25,7 @@ import yaml
 from github import Auth, Github
 from github.PullRequest import PullRequest
 from github.Repository import Repository
+import nodesemver
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
@@ -234,79 +235,65 @@ def fetch_badge_svg(url: str) -> str | None:
 # --- Version range checking for advisories ---
 
 
-def normalize_range(range_str: str) -> str:
+def _normalize_pep440_range(range_str: str) -> str:
     """Normalize advisory version ranges to PEP 440 specifiers.
 
     GitHub advisories use "= X.Y.Z" (single equals) which is not
     valid PEP 440. Convert to "== X.Y.Z".
     """
     # "= 4.5.0" -> "== 4.5.0", but leave ">= 4.5.0" and "<= 4.5.0" alone
-    return re.sub(r"(?<![<>!~])=\s+", "== ", range_str)
+    return re.sub(r"(?<![<>=!~])=\s+", "== ", range_str)
 
 
-# Match npm-style prerelease: 1.2.3-canary.0, 1.2.3-beta.1, etc.
-_NPM_PRERELEASE_RE = re.compile(r"(\d+\.\d+\.\d+)-[A-Za-z][\w.]*")
+def _semver_satisfies(version_str: str, range_str: str) -> bool:
+    """Check version against range using node-semver.
 
-
-def _strip_npm_prerelease(spec_str: str) -> str:
-    """Strip npm prerelease identifiers that PEP 440 cannot parse.
-
-    Converts e.g. '>= 15.1.1-canary.0' to '>= 15.1.1.dev0'.
-    The .dev0 suffix ensures PEP 440 treats it as *before* the release,
-    which preserves the lower-bound semantics of '>= X.Y.Z-prerelease'.
+    GitHub advisory ranges use commas for AND. Node-semver uses
+    spaces for AND. Convert before checking.
     """
-    return _NPM_PRERELEASE_RE.sub(r"\1.dev0", spec_str)
+    semver_range = range_str.replace(",", " ")
+    return nodesemver.satisfies(version_str, semver_range)
 
 
-def version_in_range(version_str: str, range_str: str) -> bool:
+def _pep440_in_range(version_str: str, range_str: str) -> bool:
+    """Check version against range using PEP 440 (packaging library)."""
+    ver = Version(version_str)
+    spec = SpecifierSet(_normalize_pep440_range(range_str))
+    return ver in spec
+
+
+def version_in_range(version_str: str, range_str: str, ecosystem: str = "") -> bool:
     """Check if a version falls within a vulnerability range.
 
     Returns True if the version IS vulnerable (in range), or if
     parsing fails (safe default: assume vulnerable).
 
-    Handles npm semver prerelease identifiers (e.g. 1.2.3-canary.0)
-    that are not valid PEP 440 by converting them to .dev0 suffixes.
+    Uses PEP 440 for pip ecosystem. Uses node-semver for everything
+    else (npm, cargo, go, rubygems, etc.). Falls back to the other
+    parser if the primary one fails.
     """
-    try:
-        ver = Version(version_str)
-    except InvalidVersion:
-        return True
-
-    normalized = normalize_range(range_str)
-
-    # Fast path: try the range as-is.
-    try:
-        return ver in SpecifierSet(normalized)
-    except InvalidSpecifier:
-        pass
-
-    # Slow path: strip npm prerelease tags and retry.
-    try:
-        return ver in SpecifierSet(_strip_npm_prerelease(normalized))
-    except InvalidSpecifier:
-        pass
-
-    # Last resort: split compound range, check each bound individually.
-    # If ANY valid upper bound proves the version is safe, return False.
-    parts = [p.strip() for p in normalized.split(",")]
-    has_valid_bound = False
-    for part in parts:
-        cleaned = _strip_npm_prerelease(part)
+    if ecosystem == "pip":
+        # PEP 440 first, semver fallback.
         try:
-            spec = SpecifierSet(cleaned)
-            has_valid_bound = True
-            if ver not in spec:
-                # Version is outside this bound. For upper bounds
-                # (< or <=) this means the version is above the fix.
-                return False
-        except InvalidSpecifier:
-            continue
+            return _pep440_in_range(version_str, range_str)
+        except (InvalidVersion, InvalidSpecifier):
+            pass
+        try:
+            return _semver_satisfies(version_str, range_str)
+        except (ValueError, TypeError):
+            pass
+    else:
+        # Semver first, PEP 440 fallback.
+        try:
+            return _semver_satisfies(version_str, range_str)
+        except (ValueError, TypeError):
+            pass
+        try:
+            return _pep440_in_range(version_str, range_str)
+        except (InvalidVersion, InvalidSpecifier):
+            pass
 
-    # If we checked at least one valid bound and all matched, vulnerable.
-    if has_valid_bound:
-        return True
-
-    # Nothing parsed at all. Assume vulnerable.
+    # Nothing parsed. Assume vulnerable.
     return True
 
 
@@ -502,7 +489,9 @@ def gate_compatibility(
     )
 
 
-def _find_affecting_advisories(advisories: list, dep: DependencyUpdate) -> list[str]:
+def _find_affecting_advisories(
+    advisories: list, dep: DependencyUpdate, ecosystem: str = ""
+) -> list[str]:
     """Return GHSA IDs from advisories where the new version is vulnerable."""
     affecting: list[str] = []
     for a in advisories:
@@ -511,7 +500,9 @@ def _find_affecting_advisories(advisories: list, dep: DependencyUpdate) -> list[
                 continue
             if v.package.name != dep.name:
                 continue
-            in_range = version_in_range(dep.version, v.vulnerable_version_range)
+            in_range = version_in_range(
+                dep.version, v.vulnerable_version_range, ecosystem
+            )
             print(
                 f"    {a.ghsa_id}: range {v.vulnerable_version_range!r} "
                 f"-> {dep.version} in range: {in_range}"
@@ -548,7 +539,7 @@ def gate_advisories(gh: Github, meta: PRMetadata) -> None:
             f"  Advisories: found {len(advisories)} total advisory(ies) for {dep.name}"
         )
 
-        affecting = _find_affecting_advisories(advisories, dep)
+        affecting = _find_affecting_advisories(advisories, dep, meta.ecosystem)
         if affecting:
             raise SkipPR(
                 f"{len(affecting)} security advisory(ies) affect "
