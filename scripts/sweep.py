@@ -141,15 +141,20 @@ def process_repo(repo: Repository) -> list[Action]:
                 print(f"    PR #{pr.number}: BLEnder already committed a fix, skipping")
                 continue
 
-            # Check for BLEnder fix-attempt comments (covers failed attempts)
+            # Check for any BLEnder comment (covers fix attempts AND
+            # automerge skip/reject decisions like "will not auto-merge")
             comments = pr.get_issue_comments()
-            has_fix_comment = any(
-                "BLEnder picked up this PR" in (c.body or "")
-                for c in comments
-                if c.user.login.endswith("[bot]")
+            blender_comment = next(
+                (
+                    c.body
+                    for c in comments
+                    if c.user.login.endswith("[bot]")
+                    and (c.body or "").startswith("BLEnder")
+                ),
+                None,
             )
-            if has_fix_comment:
-                print(f"    PR #{pr.number}: BLEnder already attempted fix, skipping")
+            if blender_comment:
+                print(f"    PR #{pr.number}: BLEnder already commented, skipping")
                 continue
 
         print(f"    PR #{pr.number}: {result}")
