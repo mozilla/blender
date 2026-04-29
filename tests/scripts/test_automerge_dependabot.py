@@ -1,11 +1,19 @@
-"""Tests for version_in_range and its helpers."""
+"""Tests for scripts.automerge_dependabot."""
 
 from __future__ import annotations
+
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from scripts.automerge_dependabot import (
+    AdvisorySkipPR,
+    DependencyUpdate,
+    PRMetadata,
+    SkipPR,
     _normalize_pep440_range,
+    _post_dependabot_recreate,
+    gate_advisories,
     version_in_range,
 )
 
@@ -134,3 +142,87 @@ class TestVersionInRangeFallback:
         """
         assert version_in_range("not_a_version", "not_a_range", "") is False
         assert version_in_range("", "", "") is False
+
+
+# --- gate_advisories raises AdvisorySkipPR ---
+
+
+def test_gate_advisories_raises_advisory_skip_pr():
+    """Advisory on the new version raises AdvisorySkipPR, not bare SkipPR."""
+    meta = PRMetadata(
+        dependencies=[
+            DependencyUpdate(
+                name="lodash",
+                version="4.17.20",
+                dependency_type="direct:production",
+                update_type="version-update:semver-patch",
+            )
+        ],
+        ecosystem="npm",
+        raw_ecosystem="npm_and_yarn",
+    )
+
+    vuln = MagicMock()
+    vuln.vulnerable_version_range = ">= 4.0.0, < 4.17.21"
+    vuln.package = MagicMock()
+    vuln.package.name = "lodash"
+
+    advisory = MagicMock()
+    advisory.ghsa_id = "GHSA-abcd-1234-efgh"
+    advisory.vulnerabilities = [vuln]
+
+    gh = MagicMock()
+    gh.get_global_advisories.return_value = [advisory]
+
+    with pytest.raises(AdvisorySkipPR, match="GHSA-abcd-1234-efgh"):
+        gate_advisories(gh, meta)
+
+
+# --- _post_dependabot_recreate ---
+
+
+def test_post_dependabot_recreate_comment_text():
+    """Exact text matters — Dependabot parses commands literally."""
+    pr = MagicMock()
+    pr.number = 42
+    _post_dependabot_recreate(pr, dry_run=False)
+    pr.create_issue_comment.assert_called_once_with("@dependabot recreate")
+
+
+# --- main loop: advisory skip triggers recreate, regular skip does not ---
+
+
+@pytest.mark.parametrize(
+    "exception, expect_recreate",
+    [
+        (AdvisorySkipPR("advisory on lodash@4.17.20"), True),
+        (SkipPR("major version bump"), False),
+    ],
+)
+@patch("scripts.automerge_dependabot.process_pr")
+def test_main_loop_recreate_on_advisory_skip_only(
+    mock_process, exception, expect_recreate, monkeypatch,
+):
+    from scripts.automerge_dependabot import main
+
+    monkeypatch.setenv("REPO", "owner/repo")
+    monkeypatch.setenv("GH_TOKEN", "fake-token")
+    monkeypatch.setenv("DRY_RUN", "false")
+
+    pr = MagicMock()
+    pr.number = 7
+    pr.user.login = "dependabot[bot]"
+    pr.head.ref = "dependabot/npm_and_yarn/lodash-4.17.21"
+    pr.get_issue_comments.return_value = []
+
+    mock_process.side_effect = exception
+
+    with patch("scripts.automerge_dependabot.Github") as gh_cls:
+        gh_cls.return_value.get_repo.return_value.get_pulls.return_value = [pr]
+        main()
+
+    recreate_calls = [
+        c for c in pr.create_issue_comment.call_args_list
+        if c.args[0] == "@dependabot recreate"
+    ]
+    assert len(recreate_calls) == (1 if expect_recreate else 0)

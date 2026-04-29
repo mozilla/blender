@@ -38,6 +38,10 @@ class RetryPR(SkipPR):
     """Score-related skip that may resolve on a future run."""
 
 
+class AdvisorySkipPR(SkipPR):
+    """Skip caused by a GHSA advisory on the new version."""
+
+
 @dataclass
 class DependencyUpdate:
     """Structured metadata from Dependabot's commit message YAML."""
@@ -541,7 +545,7 @@ def gate_advisories(gh: Github, meta: PRMetadata) -> None:
 
         affecting = _find_affecting_advisories(advisories, dep, meta.ecosystem)
         if affecting:
-            raise SkipPR(
+            raise AdvisorySkipPR(
                 f"{len(affecting)} security advisory(ies) affect "
                 f"{dep.name}@{dep.version}: {', '.join(affecting)}"
             )
@@ -678,6 +682,15 @@ def _post_skip_comment(
         print(f"  Posted comment on PR #{pr.number}")
 
 
+def _post_dependabot_recreate(pr: PullRequest, dry_run: bool) -> None:
+    """Ask Dependabot to recreate the PR with a newer version."""
+    if dry_run:
+        print(f"  DRY_RUN: would comment @dependabot recreate on PR #{pr.number}")
+        return
+    pr.create_issue_comment("@dependabot recreate")
+    print(f"  Posted @dependabot recreate on PR #{pr.number}")
+
+
 def _print_summary(
     merged: int, skipped: int, skip_reasons: list[str], dry_run: bool
 ) -> None:
@@ -736,6 +749,9 @@ def main() -> None:
             skip_reasons.append(f"#{pr.number} ({pkg}): {tag}{e}")
 
             _post_skip_comment(pr, str(e), is_retry, config.dry_run)
+
+            if isinstance(e, AdvisorySkipPR):
+                _post_dependabot_recreate(pr, config.dry_run)
 
     _print_summary(merged, skipped, skip_reasons, config.dry_run)
 
