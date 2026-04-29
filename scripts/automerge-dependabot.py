@@ -244,18 +244,70 @@ def normalize_range(range_str: str) -> str:
     return re.sub(r"(?<![<>!~])=\s+", "== ", range_str)
 
 
+# Match npm-style prerelease: 1.2.3-canary.0, 1.2.3-beta.1, etc.
+_NPM_PRERELEASE_RE = re.compile(r"(\d+\.\d+\.\d+)-[A-Za-z][\w.]*")
+
+
+def _strip_npm_prerelease(spec_str: str) -> str:
+    """Strip npm prerelease identifiers that PEP 440 cannot parse.
+
+    Converts e.g. '>= 15.1.1-canary.0' to '>= 15.1.1.dev0'.
+    The .dev0 suffix ensures PEP 440 treats it as *before* the release,
+    which preserves the lower-bound semantics of '>= X.Y.Z-prerelease'.
+    """
+    return _NPM_PRERELEASE_RE.sub(r"\1.dev0", spec_str)
+
+
 def version_in_range(version_str: str, range_str: str) -> bool:
     """Check if a version falls within a vulnerability range.
 
     Returns True if the version IS vulnerable (in range), or if
     parsing fails (safe default: assume vulnerable).
+
+    Handles npm semver prerelease identifiers (e.g. 1.2.3-canary.0)
+    that are not valid PEP 440 by converting them to .dev0 suffixes.
     """
     try:
         ver = Version(version_str)
-        spec = SpecifierSet(normalize_range(range_str))
-        return ver in spec
-    except (InvalidVersion, InvalidSpecifier):
+    except InvalidVersion:
         return True
+
+    normalized = normalize_range(range_str)
+
+    # Fast path: try the range as-is.
+    try:
+        return ver in SpecifierSet(normalized)
+    except InvalidSpecifier:
+        pass
+
+    # Slow path: strip npm prerelease tags and retry.
+    try:
+        return ver in SpecifierSet(_strip_npm_prerelease(normalized))
+    except InvalidSpecifier:
+        pass
+
+    # Last resort: split compound range, check each bound individually.
+    # If ANY valid upper bound proves the version is safe, return False.
+    parts = [p.strip() for p in normalized.split(",")]
+    has_valid_bound = False
+    for part in parts:
+        cleaned = _strip_npm_prerelease(part)
+        try:
+            spec = SpecifierSet(cleaned)
+            has_valid_bound = True
+            if ver not in spec:
+                # Version is outside this bound. For upper bounds
+                # (< or <=) this means the version is above the fix.
+                return False
+        except InvalidSpecifier:
+            continue
+
+    # If we checked at least one valid bound and all matched, vulnerable.
+    if has_valid_bound:
+        return True
+
+    # Nothing parsed at all. Assume vulnerable.
+    return True
 
 
 # --- Safety gates ---
