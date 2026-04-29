@@ -64,3 +64,13 @@ jobs:
         run: pip install yamllint
       - name: Run yamllint
         run: yamllint -c .yamllint.yml .github/workflows/
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04  # v6
+      - name: Run tests
+        run: uv run --extra test pytest --cov --cov-report=term-missing tests/

@@ -25,6 +25,7 @@ import yaml
 from github import Auth, Github
 from github.PullRequest import PullRequest
 from github.Repository import Repository
+import nodesemver
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
@@ -234,28 +235,66 @@ def fetch_badge_svg(url: str) -> str | None:
 # --- Version range checking for advisories ---
 
 
-def normalize_range(range_str: str) -> str:
+def _normalize_pep440_range(range_str: str) -> str:
     """Normalize advisory version ranges to PEP 440 specifiers.
 
     GitHub advisories use "= X.Y.Z" (single equals) which is not
     valid PEP 440. Convert to "== X.Y.Z".
     """
     # "= 4.5.0" -> "== 4.5.0", but leave ">= 4.5.0" and "<= 4.5.0" alone
-    return re.sub(r"(?<![<>!~])=\s+", "== ", range_str)
+    return re.sub(r"(?<![<>=!~])=\s+", "== ", range_str)
 
 
-def version_in_range(version_str: str, range_str: str) -> bool:
+def _semver_satisfies(version_str: str, range_str: str) -> bool:
+    """Check version against range using node-semver.
+
+    GitHub advisory ranges use commas for AND. Node-semver uses
+    spaces for AND. Convert before checking.
+    """
+    semver_range = range_str.replace(",", " ")
+    return nodesemver.satisfies(version_str, semver_range)
+
+
+def _pep440_in_range(version_str: str, range_str: str) -> bool:
+    """Check version against range using PEP 440 (packaging library)."""
+    ver = Version(version_str)
+    spec = SpecifierSet(_normalize_pep440_range(range_str))
+    return ver in spec
+
+
+def version_in_range(version_str: str, range_str: str, ecosystem: str = "") -> bool:
     """Check if a version falls within a vulnerability range.
 
     Returns True if the version IS vulnerable (in range), or if
     parsing fails (safe default: assume vulnerable).
+
+    Uses PEP 440 for pip ecosystem. Uses node-semver for everything
+    else (npm, cargo, go, rubygems, etc.). Falls back to the other
+    parser if the primary one fails.
     """
-    try:
-        ver = Version(version_str)
-        spec = SpecifierSet(normalize_range(range_str))
-        return ver in spec
-    except (InvalidVersion, InvalidSpecifier):
-        return True
+    if ecosystem == "pip":
+        # PEP 440 first, semver fallback.
+        try:
+            return _pep440_in_range(version_str, range_str)
+        except (InvalidVersion, InvalidSpecifier):
+            pass
+        try:
+            return _semver_satisfies(version_str, range_str)
+        except (ValueError, TypeError):
+            pass
+    else:
+        # Semver first, PEP 440 fallback.
+        try:
+            return _semver_satisfies(version_str, range_str)
+        except (ValueError, TypeError):
+            pass
+        try:
+            return _pep440_in_range(version_str, range_str)
+        except (InvalidVersion, InvalidSpecifier):
+            pass
+
+    # Nothing parsed. Assume vulnerable.
+    return True
 
 
 # --- Safety gates ---
@@ -450,7 +489,9 @@ def gate_compatibility(
     )
 
 
-def _find_affecting_advisories(advisories: list, dep: DependencyUpdate) -> list[str]:
+def _find_affecting_advisories(
+    advisories: list, dep: DependencyUpdate, ecosystem: str = ""
+) -> list[str]:
     """Return GHSA IDs from advisories where the new version is vulnerable."""
     affecting: list[str] = []
     for a in advisories:
@@ -459,7 +500,9 @@ def _find_affecting_advisories(advisories: list, dep: DependencyUpdate) -> list[
                 continue
             if v.package.name != dep.name:
                 continue
-            in_range = version_in_range(dep.version, v.vulnerable_version_range)
+            in_range = version_in_range(
+                dep.version, v.vulnerable_version_range, ecosystem
+            )
             print(
                 f"    {a.ghsa_id}: range {v.vulnerable_version_range!r} "
                 f"-> {dep.version} in range: {in_range}"
@@ -496,7 +539,7 @@ def gate_advisories(gh: Github, meta: PRMetadata) -> None:
             f"  Advisories: found {len(advisories)} total advisory(ies) for {dep.name}"
         )
 
-        affecting = _find_affecting_advisories(advisories, dep)
+        affecting = _find_affecting_advisories(advisories, dep, meta.ecosystem)
         if affecting:
             raise SkipPR(
                 f"{len(affecting)} security advisory(ies) affect "
