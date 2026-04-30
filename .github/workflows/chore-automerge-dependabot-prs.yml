@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 concurrency:
   group: blender-automerge-${{ inputs.target_repo }}
@@ -68,6 +69,7 @@ jobs:
         continue-on-error: true
 
       - name: Run auto-merge
+        id: run-automerge
         run: python scripts/automerge_dependabot.py
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -75,3 +77,25 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run || steps.blender-config.outputs.automerge_dry_run || 'false' }}
           MIN_COMPAT_SCORE: ${{ steps.blender-config.outputs.automerge_min_compatibility_score || '80' }}
           ALLOW_MAJOR: ${{ steps.blender-config.outputs.automerge_allow_major || 'false' }}
+          REVIEW_MAJOR: ${{ steps.blender-config.outputs.automerge_review_major || 'true' }}
+
+      - name: Dispatch major-bump reviews
+        if: steps.run-automerge.outputs.major_bumps != ''
+        run: |
+          echo "$MAJOR_BUMPS" | jq -c '.[]' | while read -r bump; do
+            pr_number=$(echo "$bump" | jq -r '.pr_number')
+            dep_name=$(echo "$bump" | jq -r '.dep_name')
+            new_version=$(echo "$bump" | jq -r '.new_version')
+            echo "Dispatching review for PR #${pr_number} (${dep_name} ${new_version})..."
+            gh workflow run chore-review-major-dependabot-update.yml \
+              --field target_repo="$TARGET_REPO" \
+              --field pr_number="$pr_number" \
+              --field dep_name="$dep_name" \
+              --field new_version="$new_version" \
+              --field dry_run="${DRY_RUN}"
+          done
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_REPO: ${{ inputs.target_repo }}
+          MAJOR_BUMPS: ${{ steps.run-automerge.outputs.major_bumps }}
+          DRY_RUN: ${{ inputs.dry_run || 'true' }}

@@ -1,6 +1,6 @@
 ---
-name: BLEnder Fix Dependabot PR
-run-name: "Fix ${{ inputs.target_repo }} PR #${{ inputs.pr_number }}"
+name: BLEnder Review Major Bump
+run-name: "Review ${{ inputs.target_repo }} PR #${{ inputs.pr_number }} major update to ${{ inputs.dep_name }} ${{ inputs.new_version }}"
 on:
   workflow_dispatch:
     inputs:
@@ -8,10 +8,16 @@ on:
         description: 'Target repo (e.g. mozilla/blurts-server)'
         required: true
       pr_number:
-        description: 'PR number to fix'
+        description: 'PR number to review'
         required: true
+      dep_name:
+        description: 'Dependency name (e.g. python-ipware)'
+        default: ''
+      new_version:
+        description: 'New major version (e.g. 7.0.0)'
+        default: ''
       dry_run:
-        description: 'Dry run (true = no commit)'
+        description: 'Dry run (true = no approve/merge)'
         default: 'true'
       verbose:
         description: 'Print full Claude output'
@@ -24,11 +30,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: blender-fix-${{ inputs.target_repo }}-${{ inputs.pr_number }}
+  group: blender-major-${{ inputs.target_repo }}-${{ inputs.pr_number }}
   cancel-in-progress: false
 
 jobs:
-  fix:
+  review:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
@@ -50,7 +56,7 @@ jobs:
           private-key: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
           owner: ${{ steps.parse.outputs.owner }}
           repositories: ${{ steps.parse.outputs.name }}
-          permission-contents: write
+          permission-contents: read
           permission-pull-requests: write
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
@@ -90,6 +96,15 @@ jobs:
       - name: Restore BLEnder config
         run: cp -r /tmp/blender-config/. target/.blender/
 
+      - name: Comment on PR
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body "BLEnder is reviewing this major version bump. [Workflow run](${RUN_URL})"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          REPO: ${{ inputs.target_repo }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
       # --- Conditional setup ---
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
         with:
@@ -109,7 +124,38 @@ jobs:
         env:
           INSTALL_COMMAND: ${{ steps.config.outputs.install_command }}
 
-      # --- BLEnder fix ---
+      # --- Parse PR metadata for gather-context ---
+      - name: Parse PR metadata
+        id: pr-meta
+        working-directory: target
+        run: |
+          PR_JSON=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}")
+          PR_TITLE=$(echo "$PR_JSON" | jq -r '.title')
+
+          # Extract dep name, old version, new version from PR title
+          # "Bump python-ipware from 6.0.5 to 7.0.0"
+          DEP_NAME=$(echo "$PR_TITLE" | sed -n 's/.*[Bb]ump \(.*\) from .*/\1/p')
+          OLD_VERSION=$(echo "$PR_TITLE" | sed -n 's/.*from \([^ ]*\) to .*/\1/p')
+          NEW_VERSION=$(echo "$PR_TITLE" | sed -n 's/.*to \([^ ]*\)/\1/p')
+
+          # Ecosystem from branch name
+          BRANCH=$(echo "$PR_JSON" | jq -r '.head.ref')
+          ECOSYSTEM=$(echo "$BRANCH" | cut -d/ -f2)
+
+          {
+            echo "dep_name=${DEP_NAME}"
+            echo "old_version=${OLD_VERSION}"
+            echo "new_version=${NEW_VERSION}"
+            echo "ecosystem=${ECOSYSTEM}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Dependency: ${DEP_NAME} ${OLD_VERSION} -> ${NEW_VERSION} (${ECOSYSTEM})"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          REPO: ${{ inputs.target_repo }}
+
+      # --- BLEnder review ---
       - name: Install sandbox dependencies
         run: sudo apt-get install -y bubblewrap socat
 
@@ -123,18 +169,13 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_NUMBER: ${{ inputs.pr_number }}
           REPO: ${{ inputs.target_repo }}
-          PROMPT_TEMPLATE: .blender/fix-dependabot-prompt.md
+          PROMPT_TEMPLATE: ${{ github.workspace }}/prompts/major-bump-prompt.md
+          DEP_NAME: ${{ steps.pr-meta.outputs.dep_name }}
+          OLD_VERSION: ${{ steps.pr-meta.outputs.old_version }}
+          NEW_VERSION: ${{ steps.pr-meta.outputs.new_version }}
+          ECOSYSTEM: ${{ steps.pr-meta.outputs.ecosystem }}
 
-      - name: Comment on PR
-        working-directory: target
-        run: |
-          gh pr comment "$PR_NUMBER" --body "BLEnder picked up this PR. [Workflow run](${RUN_URL})"
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          PR_NUMBER: ${{ inputs.pr_number }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-      - name: Run Claude fix
+      - name: Run Claude review
         working-directory: target
         run: ${{ github.workspace }}/scripts/run-claude.sh
         env:
@@ -142,13 +183,14 @@ jobs:
           REPO: ${{ inputs.target_repo }}
           REPO_NAME: ${{ steps.config.outputs.repo_name }}
           BLENDER_DIR: ${{ github.workspace }}
+          BLENDER_MODE: major
           CLAUDE_VERBOSE: ${{ inputs.verbose }}
 
-      # --- Commit (separate step, Claude is dead) ---
-      - name: Commit and push fix
-        if: inputs.dry_run != 'true'
+      - name: Post review results
         working-directory: target
-        run: ${{ github.workspace }}/scripts/commit.sh
+        run: python ${{ github.workspace }}/scripts/post_major_review.py
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
           REPO: ${{ inputs.target_repo }}
+          DRY_RUN: ${{ inputs.dry_run }}
