@@ -1,6 +1,6 @@
 ---
 name: BLEnder Review Major Bump
-run-name: "Review ${{ inputs.target_repo }} PR #${{ inputs.pr_number }}"
+run-name: "Review ${{ inputs.target_repo }} PR #${{ inputs.pr_number }} major update to ${{ inputs.dep_name }} ${{ inputs.new_version }}"
 on:
   workflow_dispatch:
     inputs:
@@ -10,6 +10,12 @@ on:
       pr_number:
         description: 'PR number to review'
         required: true
+      dep_name:
+        description: 'Dependency name (e.g. python-ipware)'
+        default: ''
+      new_version:
+        description: 'New major version (e.g. 7.0.0)'
+        default: ''
       dry_run:
         description: 'Dry run (true = no approve/merge)'
         default: 'true'

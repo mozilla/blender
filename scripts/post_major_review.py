@@ -25,27 +25,9 @@ import sys
 from github import Auth, Github
 from github.PullRequest import PullRequest
 
+from scripts.github_utils import enable_auto_merge
+
 VERDICT_FILE = ".blender-verdict.json"
-
-
-def _enable_auto_merge(pr: PullRequest) -> None:
-    """Enable auto-merge on a PR via the GraphQL API."""
-    query = """
-    mutation EnableAutoMerge($prId: ID!) {
-      enablePullRequestAutoMerge(input: {pullRequestId: $prId, mergeMethod: SQUASH}) {
-        pullRequest { autoMergeRequest { enabledAt } }
-      }
-    }
-    """
-    _, data = pr._requester.requestJsonAndCheck(
-        "POST",
-        "/graphql",
-        input={"query": query, "variables": {"prId": pr.node_id}},
-    )
-    errors = data.get("errors")
-    if errors:
-        msg = "; ".join(e.get("message", str(e)) for e in errors)
-        raise RuntimeError(f"GraphQL enablePullRequestAutoMerge failed: {msg}")
 
 
 def post_comment(pr: PullRequest, body: str, dry_run: bool) -> None:
@@ -64,7 +46,7 @@ def approve_and_merge(pr: PullRequest, confidence: str, dry_run: bool) -> None:
         print("DRY_RUN: would approve and enable auto-merge")
         return
     pr.create_review(event="APPROVE", body=review_body)
-    _enable_auto_merge(pr)
+    enable_auto_merge(pr)
 
 
 def main() -> None:

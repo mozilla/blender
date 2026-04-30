@@ -27,6 +27,8 @@ from github import Auth, Github
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 import nodesemver
+
+from scripts.github_utils import enable_auto_merge
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
@@ -569,32 +571,6 @@ def gate_advisories(gh: Github, meta: PRMetadata) -> None:
 # --- Merge action ---
 
 
-def _enable_auto_merge(pr: PullRequest) -> None:
-    """Enable auto-merge on a PR via the GraphQL API.
-
-    The REST API merge endpoint requires elevated permissions that
-    GITHUB_TOKEN in Actions doesn't have with branch protection.
-    The GraphQL enablePullRequestAutoMerge mutation works with the
-    standard token and lets GitHub merge once protection rules pass.
-    """
-    query = """
-    mutation EnableAutoMerge($prId: ID!) {
-      enablePullRequestAutoMerge(input: {pullRequestId: $prId, mergeMethod: SQUASH}) {
-        pullRequest { autoMergeRequest { enabledAt } }
-      }
-    }
-    """
-    _, data = pr._requester.requestJsonAndCheck(
-        "POST",
-        "/graphql",
-        input={"query": query, "variables": {"prId": pr.node_id}},
-    )
-    errors = data.get("errors")
-    if errors:
-        msg = "; ".join(e.get("message", str(e)) for e in errors)
-        raise RuntimeError(f"GraphQL enablePullRequestAutoMerge failed: {msg}")
-
-
 def approve_and_merge(pr: PullRequest, compat_score: int | None) -> None:
     """Approve the PR and enable auto-merge."""
     compat_display = f"{compat_score}%" if compat_score is not None else "unknown"
@@ -604,7 +580,7 @@ def approve_and_merge(pr: PullRequest, compat_score: int | None) -> None:
         "no advisories)."
     )
     pr.create_review(event="APPROVE", body=review_body)
-    _enable_auto_merge(pr)
+    enable_auto_merge(pr)
 
 
 # --- Main ---
