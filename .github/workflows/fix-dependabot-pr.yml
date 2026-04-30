@@ -123,7 +123,7 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_NUMBER: ${{ inputs.pr_number }}
           REPO: ${{ inputs.target_repo }}
-          PROMPT_DIR: .blender
+          PROMPT_TEMPLATE: .blender/fix-dependabot-prompt.md
 
       - name: Comment on PR
         working-directory: target

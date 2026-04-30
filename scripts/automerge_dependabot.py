@@ -694,27 +694,6 @@ def _post_skip_comment(
         print(f"  Posted comment on PR #{pr.number}")
 
 
-def _post_reviewing_comment(
-    pr: PullRequest, dep_name: str, dry_run: bool
-) -> None:
-    """Post a comment that BLEnder is reviewing a major bump."""
-    comment_body = f"BLEnder: reviewing major version bump on {dep_name}."
-    if dry_run:
-        print(f"  DRY_RUN: would comment: {comment_body}")
-        return
-
-    already_commented = any(
-        c.body.startswith("BLEnder: ")
-        for c in pr.get_issue_comments()
-        if c.user.login.endswith("[bot]")
-    )
-    if already_commented:
-        print(f"  BLEnder comment already exists on PR #{pr.number}")
-    else:
-        pr.create_issue_comment(comment_body)
-        print(f"  Posted comment on PR #{pr.number}")
-
-
 def _post_dependabot_recreate(pr: PullRequest, dry_run: bool) -> None:
     """Ask Dependabot to recreate the PR with a newer version."""
     if dry_run:
@@ -805,9 +784,7 @@ def main() -> None:
                 "pr_title": pr.title,
             })
 
-            if review_major:
-                _post_reviewing_comment(pr, e.dep.name, config.dry_run)
-            else:
+            if not review_major:
                 _post_skip_comment(pr, str(e), False, config.dry_run)
 
         except SkipPR as e:

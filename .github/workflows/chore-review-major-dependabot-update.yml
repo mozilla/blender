@@ -90,6 +90,15 @@ jobs:
       - name: Restore BLEnder config
         run: cp -r /tmp/blender-config/. target/.blender/
 
+      - name: Comment on PR
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body "BLEnder is reviewing this major version bump. [Workflow run](${RUN_URL})"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          REPO: ${{ inputs.target_repo }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
       # --- Conditional setup ---
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
         with:
@@ -152,21 +161,11 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_NUMBER: ${{ inputs.pr_number }}
           REPO: ${{ inputs.target_repo }}
-          BLENDER_MODE: major
-          BLENDER_DIR: ${{ github.workspace }}
+          PROMPT_TEMPLATE: ${{ github.workspace }}/prompts/major-bump-prompt.md
           DEP_NAME: ${{ steps.pr-meta.outputs.dep_name }}
           OLD_VERSION: ${{ steps.pr-meta.outputs.old_version }}
           NEW_VERSION: ${{ steps.pr-meta.outputs.new_version }}
           ECOSYSTEM: ${{ steps.pr-meta.outputs.ecosystem }}
-
-      - name: Comment on PR
-        working-directory: target
-        run: |
-          gh pr comment "$PR_NUMBER" --body "BLEnder is reviewing this major version bump. [Workflow run](${RUN_URL})"
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          PR_NUMBER: ${{ inputs.pr_number }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Run Claude review
         working-directory: target
@@ -181,7 +180,7 @@ jobs:
 
       - name: Post review results
         working-directory: target
-        run: ${{ github.workspace }}/scripts/post-major-review.sh
+        run: python ${{ github.workspace }}/scripts/post_major_review.py
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_NUMBER: ${{ inputs.pr_number }}
