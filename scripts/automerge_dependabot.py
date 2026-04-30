@@ -15,6 +15,7 @@ Environment variables:
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -40,6 +41,15 @@ class RetryPR(SkipPR):
 
 class AdvisorySkipPR(SkipPR):
     """Skip caused by a GHSA advisory on the new version."""
+
+
+class MajorBumpPR(SkipPR):
+    """Skip caused by a major version bump. Carries dep/meta for dispatch."""
+
+    def __init__(self, message: str, *, dep: DependencyUpdate, meta: PRMetadata):
+        super().__init__(message)
+        self.dep = dep
+        self.meta = meta
 
 
 @dataclass
@@ -351,7 +361,9 @@ def gate_versions(meta: PRMetadata, *, allow_major: bool = False) -> None:
     if meta.has_major and not allow_major:
         for dep in meta.dependencies:
             if dep.update_type == "version-update:semver-major":
-                raise SkipPR(f"major version bump on {dep.name}")
+                raise MajorBumpPR(
+                    f"major version bump on {dep.name}", dep=dep, meta=meta
+                )
         raise SkipPR("major version bump detected")
 
     if meta.has_major and allow_major:
@@ -682,6 +694,27 @@ def _post_skip_comment(
         print(f"  Posted comment on PR #{pr.number}")
 
 
+def _post_reviewing_comment(
+    pr: PullRequest, dep_name: str, dry_run: bool
+) -> None:
+    """Post a comment that BLEnder is reviewing a major bump."""
+    comment_body = f"BLEnder: reviewing major version bump on {dep_name}."
+    if dry_run:
+        print(f"  DRY_RUN: would comment: {comment_body}")
+        return
+
+    already_commented = any(
+        c.body.startswith("BLEnder: ")
+        for c in pr.get_issue_comments()
+        if c.user.login.endswith("[bot]")
+    )
+    if already_commented:
+        print(f"  BLEnder comment already exists on PR #{pr.number}")
+    else:
+        pr.create_issue_comment(comment_body)
+        print(f"  Posted comment on PR #{pr.number}")
+
+
 def _post_dependabot_recreate(pr: PullRequest, dry_run: bool) -> None:
     """Ask Dependabot to recreate the PR with a newer version."""
     if dry_run:
@@ -711,13 +744,28 @@ def _package_name_from_branch(branch_ref: str) -> str:
     return "/".join(parts[2:]) if len(parts) > 2 else branch_ref
 
 
+def _write_github_output(key: str, value: str) -> None:
+    """Append key=value to $GITHUB_OUTPUT (if set)."""
+    output_file = os.environ.get("GITHUB_OUTPUT")
+    if not output_file:
+        return
+    with open(output_file, "a") as f:
+        f.write(f"{key}={value}\n")
+
+
 def main() -> None:
     config = load_config()
+    review_major = os.environ.get("REVIEW_MAJOR", "false").lower() in (
+        "true",
+        "1",
+        "yes",
+    )
     print(
         f"BLEnder automerge-dependabot: "
         f"repo={config.repo_name} dry_run={config.dry_run} "
         f"min_compat={config.min_compatibility_score} "
-        f"allow_major={config.allow_major}"
+        f"allow_major={config.allow_major} "
+        f"review_major={review_major}"
     )
 
     gh = Github(auth=Auth.Token(config.token))
@@ -735,11 +783,33 @@ def main() -> None:
     merged = 0
     skipped = 0
     skip_reasons: list[str] = []
+    major_bumps: list[dict] = []
 
     for pr in prs:
         try:
             if process_pr(config, gh, repo, pr):
                 merged += 1
+        except MajorBumpPR as e:
+            print(f"  MAJOR: {e}")
+            skipped += 1
+            pkg = _package_name_from_branch(pr.head.ref)
+            skip_reasons.append(f"#{pr.number} ({pkg}): {e}")
+
+            major_bumps.append({
+                "pr_number": pr.number,
+                "dep_name": e.dep.name,
+                "old_version": e.meta.old_version or e.dep.old_version,
+                "new_version": e.dep.version,
+                "ecosystem": e.meta.ecosystem,
+                "raw_ecosystem": e.meta.raw_ecosystem,
+                "pr_title": pr.title,
+            })
+
+            if review_major:
+                _post_reviewing_comment(pr, e.dep.name, config.dry_run)
+            else:
+                _post_skip_comment(pr, str(e), False, config.dry_run)
+
         except SkipPR as e:
             is_retry = isinstance(e, RetryPR)
             tag = "[retry] " if is_retry else ""
@@ -752,6 +822,9 @@ def main() -> None:
 
             if isinstance(e, AdvisorySkipPR):
                 _post_dependabot_recreate(pr, config.dry_run)
+
+    if major_bumps:
+        _write_github_output("major_bumps", json.dumps(major_bumps))
 
     _print_summary(merged, skipped, skip_reasons, config.dry_run)
 

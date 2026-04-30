@@ -9,11 +9,13 @@ import pytest
 from scripts.automerge_dependabot import (
     AdvisorySkipPR,
     DependencyUpdate,
+    MajorBumpPR,
     PRMetadata,
     SkipPR,
     _normalize_pep440_range,
     _post_dependabot_recreate,
     gate_advisories,
+    gate_versions,
     version_in_range,
 )
 
@@ -226,3 +228,123 @@ def test_main_loop_recreate_on_advisory_skip_only(
         if c.args[0] == "@dependabot recreate"
     ]
     assert len(recreate_calls) == (1 if expect_recreate else 0)
+
+
+# --- MajorBumpPR ---
+
+
+def test_major_bump_pr_is_skip_pr_subclass():
+    """Existing `except SkipPR` handlers still catch MajorBumpPR."""
+    dep = DependencyUpdate(
+        name="ipware", version="7.0.0",
+        dependency_type="direct:production",
+        update_type="version-update:semver-major",
+    )
+    meta = PRMetadata(has_major=True, dependencies=[dep])
+    exc = MajorBumpPR("major version bump on ipware", dep=dep, meta=meta)
+    assert isinstance(exc, SkipPR)
+
+
+def test_gate_versions_raises_major_bump_pr():
+    """gate_versions raises MajorBumpPR (not bare SkipPR) for major bumps."""
+    dep = DependencyUpdate(
+        name="python-ipware", version="7.0.0",
+        dependency_type="direct:production",
+        update_type="version-update:semver-major",
+        old_version="6.0.5",
+    )
+    meta = PRMetadata(
+        dependencies=[dep], has_major=True,
+        old_version="6.0.5", new_version="7.0.0",
+    )
+    with pytest.raises(MajorBumpPR, match="python-ipware") as exc_info:
+        gate_versions(meta, allow_major=False)
+    assert exc_info.value.dep is dep
+    assert exc_info.value.meta is meta
+
+
+@patch("scripts.automerge_dependabot.process_pr")
+def test_main_outputs_major_bumps_json(mock_process, monkeypatch, tmp_path):
+    """MajorBumpPR exceptions are collected and written to GITHUB_OUTPUT."""
+    import json
+    from scripts.automerge_dependabot import main
+
+    monkeypatch.setenv("REPO", "owner/repo")
+    monkeypatch.setenv("GH_TOKEN", "fake-token")
+    monkeypatch.setenv("DRY_RUN", "false")
+    monkeypatch.setenv("REVIEW_MAJOR", "true")
+
+    output_file = tmp_path / "github_output"
+    output_file.write_text("")
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
+
+    dep = DependencyUpdate(
+        name="ipware", version="7.0.0",
+        dependency_type="direct:production",
+        update_type="version-update:semver-major",
+        old_version="6.0.5",
+    )
+    meta = PRMetadata(
+        dependencies=[dep], has_major=True,
+        ecosystem="pip", raw_ecosystem="pip",
+        old_version="6.0.5", new_version="7.0.0",
+    )
+    mock_process.side_effect = MajorBumpPR(
+        "major version bump on ipware", dep=dep, meta=meta,
+    )
+
+    pr = MagicMock()
+    pr.number = 42
+    pr.title = "Bump ipware from 6.0.5 to 7.0.0"
+    pr.user.login = "dependabot[bot]"
+    pr.head.ref = "dependabot/pip/ipware-7.0.0"
+    pr.get_issue_comments.return_value = []
+
+    with patch("scripts.automerge_dependabot.Github") as gh_cls:
+        gh_cls.return_value.get_repo.return_value.get_pulls.return_value = [pr]
+        main()
+
+    output = output_file.read_text()
+    assert "major_bumps=" in output
+    bumps = json.loads(output.split("major_bumps=", 1)[1].strip())
+    assert len(bumps) == 1
+    assert bumps[0]["pr_number"] == 42
+    assert bumps[0]["dep_name"] == "ipware"
+
+
+@patch("scripts.automerge_dependabot.process_pr")
+def test_main_posts_reviewing_comment(mock_process, monkeypatch):
+    """When REVIEW_MAJOR=true, MajorBumpPR posts 'reviewing' comment."""
+    from scripts.automerge_dependabot import main
+
+    monkeypatch.setenv("REPO", "owner/repo")
+    monkeypatch.setenv("GH_TOKEN", "fake-token")
+    monkeypatch.setenv("DRY_RUN", "false")
+    monkeypatch.setenv("REVIEW_MAJOR", "true")
+
+    dep = DependencyUpdate(
+        name="ipware", version="7.0.0",
+        dependency_type="direct:production",
+        update_type="version-update:semver-major",
+    )
+    meta = PRMetadata(dependencies=[dep], has_major=True)
+    mock_process.side_effect = MajorBumpPR(
+        "major version bump on ipware", dep=dep, meta=meta,
+    )
+
+    pr = MagicMock()
+    pr.number = 42
+    pr.title = "Bump ipware from 6.0.5 to 7.0.0"
+    pr.user.login = "dependabot[bot]"
+    pr.head.ref = "dependabot/pip/ipware-7.0.0"
+    pr.get_issue_comments.return_value = []
+
+    with patch("scripts.automerge_dependabot.Github") as gh_cls:
+        gh_cls.return_value.get_repo.return_value.get_pulls.return_value = [pr]
+        main()
+
+    comment_calls = [
+        c.args[0] for c in pr.create_issue_comment.call_args_list
+    ]
+    assert any("reviewing major version bump" in c for c in comment_calls)
+    assert not any("will not auto-merge" in c for c in comment_calls)

@@ -4,16 +4,27 @@
 # This script has GH_TOKEN but does NOT have ANTHROPIC_API_KEY.
 # It writes the final prompt to .blender-prompt for run-claude.sh.
 #
+# Modes:
+#   BLENDER_MODE=fix   (default) -- gather failing checks + CI logs
+#   BLENDER_MODE=major           -- gather PR diff, body, release notes, CI status
+#
 # Environment variables:
 #   PR_NUMBER   -- PR number to fix (required)
 #   REPO        -- GitHub repo, e.g. mozilla/fx-private-relay (required)
 #   GH_TOKEN    -- GitHub token for API calls (required)
 #   PROMPT_DIR  -- Path to prompt templates (default: .github/blender)
+#   BLENDER_DIR -- Path to blender repo root (for major mode prompts)
+#   BLENDER_MODE -- "fix" (default) or "major"
+#   DEP_NAME    -- Dependency name (major mode only)
+#   OLD_VERSION -- Old version (major mode only)
+#   NEW_VERSION -- New version (major mode only)
+#   ECOSYSTEM   -- Package ecosystem (major mode only)
 
 set -euo pipefail
 
+BLENDER_MODE="${BLENDER_MODE:-fix}"
 PROMPT_DIR="${PROMPT_DIR:-.github/blender}"
-PROMPT_TEMPLATE="$PROMPT_DIR/fix-dependabot-prompt.md"
+BLENDER_DIR="${BLENDER_DIR:-.blender}"
 
 if [ -z "${PR_NUMBER:-}" ] || [ -z "${REPO:-}" ]; then
   echo "Error: PR_NUMBER and REPO are required."
@@ -44,9 +55,9 @@ sanitize_for_prompt() {
   echo "$input"
 }
 
-echo "BLEnder gather-context: PR #${PR_NUMBER} repo=${REPO}"
+echo "BLEnder gather-context: PR #${PR_NUMBER} repo=${REPO} mode=${BLENDER_MODE}"
 
-# --- Fetch PR metadata ---
+# --- Fetch PR metadata (shared) ---
 echo "Fetching PR metadata..."
 pr_json=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}")
 pr_title=$(echo "$pr_json" | jq -r '.title')
@@ -62,6 +73,84 @@ fi
 echo "  Title: ${pr_title}"
 echo "  Branch: ${pr_branch}"
 echo "  SHA: ${pr_sha}"
+
+# --- Mode: major ---
+if [ "$BLENDER_MODE" = "major" ]; then
+  if [ -z "${DEP_NAME:-}" ] || [ -z "${OLD_VERSION:-}" ] || [ -z "${NEW_VERSION:-}" ]; then
+    echo "Error: DEP_NAME, OLD_VERSION, and NEW_VERSION are required in major mode."
+    exit 1
+  fi
+
+  PROMPT_TEMPLATE="$BLENDER_DIR/prompts/major-bump-prompt.md"
+  if [ ! -f "$PROMPT_TEMPLATE" ]; then
+    echo "Error: Prompt template not found: $PROMPT_TEMPLATE"
+    exit 1
+  fi
+
+  # Fetch PR diff
+  echo "Fetching PR diff..."
+  pr_diff=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}" \
+    -H "Accept: application/vnd.github.v3.diff" 2>/dev/null || echo "(diff unavailable)")
+
+  # Fetch PR body
+  pr_body=$(echo "$pr_json" | jq -r '.body // "(no body)"')
+
+  # Fetch release notes (best-effort)
+  echo "Fetching release notes..."
+  release_notes="(release notes unavailable)"
+  # Try to extract the repo URL from PR body
+  dep_repo_url=$(echo "$pr_body" | grep -oP 'https://github\.com/[^/]+/[^/\s)]+' | head -1 || true)
+  if [ -n "$dep_repo_url" ]; then
+    dep_repo_path=$(echo "$dep_repo_url" | sed 's|https://github.com/||')
+    release_notes=$(gh api "repos/${dep_repo_path}/releases" \
+      --jq '.[0:5] | .[] | "## \(.tag_name)\n\(.body)\n"' 2>/dev/null || echo "(release notes unavailable)")
+  fi
+
+  # Fetch CI status summary
+  echo "Fetching CI status..."
+  ci_status=""
+  checks_json=$(gh api "repos/${REPO}/commits/${pr_sha}/check-runs" --paginate 2>/dev/null || echo '{"check_runs":[]}')
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    ci_status="${ci_status}${line}
+"
+  done < <(echo "$checks_json" | jq -r '.check_runs[] | "\(.name): \(.conclusion // .status)"')
+
+  statuses_json=$(gh api "repos/${REPO}/commits/${pr_sha}/status" 2>/dev/null || echo '{"statuses":[]}')
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    ci_status="${ci_status}${line}
+"
+  done < <(echo "$statuses_json" | jq -r '.statuses[] | "\(.context): \(.state)"')
+
+  if [ -z "$ci_status" ]; then
+    ci_status="No CI checks found."
+  fi
+
+  # Build prompt
+  echo "Building prompt..."
+  prompt=$(cat "$PROMPT_TEMPLATE")
+
+  safe_diff=$(sanitize_for_prompt "$pr_diff")
+  safe_body=$(sanitize_for_prompt "$pr_body")
+  safe_notes=$(sanitize_for_prompt "$release_notes")
+  safe_ci=$(sanitize_for_prompt "$ci_status")
+
+  prompt="${prompt//\{\{DEP_NAME\}\}/$DEP_NAME}"
+  prompt="${prompt//\{\{OLD_VERSION\}\}/$OLD_VERSION}"
+  prompt="${prompt//\{\{NEW_VERSION\}\}/$NEW_VERSION}"
+  prompt="${prompt/\{\{PR_DIFF\}\}/$safe_diff}"
+  prompt="${prompt/\{\{PR_BODY\}\}/$safe_body}"
+  prompt="${prompt/\{\{RELEASE_NOTES\}\}/$safe_notes}"
+  prompt="${prompt/\{\{CI_STATUS\}\}/$safe_ci}"
+
+  echo "$prompt" > .blender-prompt
+  echo "Prompt written to .blender-prompt (major mode)"
+  exit 0
+fi
+
+# --- Mode: fix (existing behavior) ---
+PROMPT_TEMPLATE="$PROMPT_DIR/fix-dependabot-prompt.md"
 
 # --- Fetch failing checks from both APIs ---
 echo "Fetching check runs..."

@@ -14,7 +14,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SETTINGS_FILE="$(dirname "$SCRIPT_DIR")/claude-settings.json"
-SETUP_PROMPT="$SCRIPT_DIR/setup-prompt.md"
+SETUP_PROMPT="$SCRIPT_DIR/../prompts/setup-prompt.md"
 
 if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
   echo "Error: ANTHROPIC_API_KEY is required."
