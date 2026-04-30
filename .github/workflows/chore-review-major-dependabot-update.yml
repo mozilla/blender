@@ -136,10 +136,12 @@ jobs:
           BRANCH=$(echo "$PR_JSON" | jq -r '.head.ref')
           ECOSYSTEM=$(echo "$BRANCH" | cut -d/ -f2)
 
-          echo "dep_name=${DEP_NAME}" >> "$GITHUB_OUTPUT"
-          echo "old_version=${OLD_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "new_version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "ecosystem=${ECOSYSTEM}" >> "$GITHUB_OUTPUT"
+          {
+            echo "dep_name=${DEP_NAME}"
+            echo "old_version=${OLD_VERSION}"
+            echo "new_version=${NEW_VERSION}"
+            echo "ecosystem=${ECOSYSTEM}"
+          } >> "$GITHUB_OUTPUT"
 
           echo "Dependency: ${DEP_NAME} ${OLD_VERSION} -> ${NEW_VERSION} (${ECOSYSTEM})"
         env:

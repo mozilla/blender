@@ -90,7 +90,7 @@ echo "Fetching release notes..."
 release_notes="(release notes unavailable)"
 dep_repo_url=$(echo "$pr_body" | grep -oP 'https://github\.com/[^/]+/[^/\s)]+' | head -1 || true)
 if [ -n "$dep_repo_url" ]; then
-  dep_repo_path=$(echo "$dep_repo_url" | sed 's|https://github.com/||')
+  dep_repo_path="${dep_repo_url#https://github.com/}"
   release_notes=$(gh api "repos/${dep_repo_path}/releases" \
     --jq '.[0:5] | .[] | "## \(.tag_name)\n\(.body)\n"' 2>/dev/null || echo "(release notes unavailable)")
 fi

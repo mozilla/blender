@@ -203,7 +203,10 @@ def test_post_dependabot_recreate_comment_text():
 )
 @patch("scripts.automerge_dependabot.process_pr")
 def test_main_loop_recreate_on_advisory_skip_only(
-    mock_process, exception, expect_recreate, monkeypatch,
+    mock_process,
+    exception,
+    expect_recreate,
+    monkeypatch,
 ):
     from scripts.automerge_dependabot import main
 
@@ -224,7 +227,8 @@ def test_main_loop_recreate_on_advisory_skip_only(
         main()
 
     recreate_calls = [
-        c for c in pr.create_issue_comment.call_args_list
+        c
+        for c in pr.create_issue_comment.call_args_list
         if c.args[0] == "@dependabot recreate"
     ]
     assert len(recreate_calls) == (1 if expect_recreate else 0)
@@ -236,14 +240,17 @@ def test_main_loop_recreate_on_advisory_skip_only(
 def test_gate_versions_raises_major_bump_pr():
     """gate_versions raises MajorBumpPR (not bare SkipPR) for major bumps."""
     dep = DependencyUpdate(
-        name="python-ipware", version="7.0.0",
+        name="python-ipware",
+        version="7.0.0",
         dependency_type="direct:production",
         update_type="version-update:semver-major",
         old_version="6.0.5",
     )
     meta = PRMetadata(
-        dependencies=[dep], has_major=True,
-        old_version="6.0.5", new_version="7.0.0",
+        dependencies=[dep],
+        has_major=True,
+        old_version="6.0.5",
+        new_version="7.0.0",
     )
     with pytest.raises(MajorBumpPR, match="python-ipware") as exc_info:
         gate_versions(meta, allow_major=False)
@@ -267,18 +274,24 @@ def test_main_outputs_major_bumps_json(mock_process, monkeypatch, tmp_path):
     monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
 
     dep = DependencyUpdate(
-        name="ipware", version="7.0.0",
+        name="ipware",
+        version="7.0.0",
         dependency_type="direct:production",
         update_type="version-update:semver-major",
         old_version="6.0.5",
     )
     meta = PRMetadata(
-        dependencies=[dep], has_major=True,
-        ecosystem="pip", raw_ecosystem="pip",
-        old_version="6.0.5", new_version="7.0.0",
+        dependencies=[dep],
+        has_major=True,
+        ecosystem="pip",
+        raw_ecosystem="pip",
+        old_version="6.0.5",
+        new_version="7.0.0",
     )
     mock_process.side_effect = MajorBumpPR(
-        "major version bump on ipware", dep=dep, meta=meta,
+        "major version bump on ipware",
+        dep=dep,
+        meta=meta,
     )
 
     pr = MagicMock()
@@ -311,13 +324,16 @@ def test_main_no_comment_when_review_major(mock_process, monkeypatch):
     monkeypatch.setenv("REVIEW_MAJOR", "true")
 
     dep = DependencyUpdate(
-        name="ipware", version="7.0.0",
+        name="ipware",
+        version="7.0.0",
         dependency_type="direct:production",
         update_type="version-update:semver-major",
     )
     meta = PRMetadata(dependencies=[dep], has_major=True)
     mock_process.side_effect = MajorBumpPR(
-        "major version bump on ipware", dep=dep, meta=meta,
+        "major version bump on ipware",
+        dep=dep,
+        meta=meta,
     )
 
     pr = MagicMock()

@@ -774,15 +774,17 @@ def main() -> None:
             pkg = _package_name_from_branch(pr.head.ref)
             skip_reasons.append(f"#{pr.number} ({pkg}): {e}")
 
-            major_bumps.append({
-                "pr_number": pr.number,
-                "dep_name": e.dep.name,
-                "old_version": e.meta.old_version or e.dep.old_version,
-                "new_version": e.dep.version,
-                "ecosystem": e.meta.ecosystem,
-                "raw_ecosystem": e.meta.raw_ecosystem,
-                "pr_title": pr.title,
-            })
+            major_bumps.append(
+                {
+                    "pr_number": pr.number,
+                    "dep_name": e.dep.name,
+                    "old_version": e.meta.old_version or e.dep.old_version,
+                    "new_version": e.dep.version,
+                    "ecosystem": e.meta.ecosystem,
+                    "raw_ecosystem": e.meta.raw_ecosystem,
+                    "pr_title": pr.title,
+                }
+            )
 
             if not review_major:
                 _post_skip_comment(pr, str(e), False, config.dry_run)
