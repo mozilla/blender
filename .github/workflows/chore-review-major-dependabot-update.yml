@@ -129,10 +129,12 @@ jobs:
           node-version: ${{ steps.config.outputs.node_version }}
 
       - name: Install dependencies
+        id: install
         if: steps.config.outputs.install_command != ''
+        continue-on-error: true
         working-directory: target
         run: |
-          eval "$INSTALL_COMMAND"
+          eval "$INSTALL_COMMAND" 2>&1 | tee /tmp/install-output.log
         env:
           INSTALL_COMMAND: ${{ steps.config.outputs.install_command }}
 
@@ -170,6 +172,8 @@ jobs:
           PR_NUMBER: ${{ inputs.pr_number }}
           REPO: ${{ inputs.target_repo }}
           PROMPT_TEMPLATE: ${{ github.workspace }}/prompts/major-bump-prompt.md
+          INSTALL_FAILED: ${{ steps.install.outcome == 'failure' && 'true' || 'false' }}
+          INSTALL_LOG_FILE: /tmp/install-output.log
           DEP_NAME: ${{ steps.pr-meta.outputs.dep_name }}
           OLD_VERSION: ${{ steps.pr-meta.outputs.old_version }}
           NEW_VERSION: ${{ steps.pr-meta.outputs.new_version }}
