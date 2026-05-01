@@ -56,8 +56,10 @@ def has_blender_verdict(pr: PullRequest) -> bool:
     return False
 
 
-def enable_auto_merge(pr: PullRequest) -> None:
+def enable_auto_merge(pr: PullRequest) -> str | None:
     """Enable auto-merge on a PR via the GraphQL API.
+
+    Returns None on success, or an error message string on failure.
 
     The REST API merge endpoint requires elevated permissions that
     GITHUB_TOKEN in Actions doesn't have with branch protection.
@@ -78,5 +80,5 @@ def enable_auto_merge(pr: PullRequest) -> None:
     )
     errors = data.get("errors")
     if errors:
-        msg = "; ".join(e.get("message", str(e)) for e in errors)
-        raise RuntimeError(f"GraphQL enablePullRequestAutoMerge failed: {msg}")
+        return "; ".join(e.get("message", str(e)) for e in errors)
+    return None

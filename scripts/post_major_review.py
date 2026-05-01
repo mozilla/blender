@@ -43,14 +43,18 @@ def post_comment(pr: PullRequest, body: str, dry_run: bool) -> None:
     pr.create_issue_comment(body)
 
 
-def approve_and_merge(pr: PullRequest, confidence: str, dry_run: bool) -> None:
-    """Approve the PR and enable auto-merge."""
+def approve_and_merge(pr: PullRequest, confidence: str, dry_run: bool) -> str | None:
+    """Approve the PR and enable auto-merge.
+
+    Returns None on success, or an error message if auto-merge failed.
+    The approval is posted regardless.
+    """
     review_body = Verdict.APPROVED.comment(f"({confidence} confidence).")
     if dry_run:
         print("DRY_RUN: would approve and enable auto-merge")
-        return
+        return None
     pr.create_review(event="APPROVE", body=review_body)
-    enable_auto_merge(pr)
+    return enable_auto_merge(pr)
 
 
 def main() -> None:
@@ -102,6 +106,21 @@ def main() -> None:
     print(f"Reason: {reason}")
 
     if safe and confidence != "low":
+        merge_err = approve_and_merge(pr, confidence, dry_run)
+        auto_merge_note = ""
+        if merge_err:
+            print(f"Warning: auto-merge failed: {merge_err}")
+            auto_merge_note = (
+                "\n\n> **Note:** auto-merge could not be enabled"
+                f" ({merge_err}).\n"
+                "> A maintainer can merge this PR manually, or"
+                " [enable auto-merge](https://docs.github.com/en/"
+                "repositories/configuring-branches-and-merges-in-"
+                "your-repository/configuring-pull-request-merges/"
+                "managing-auto-merge-for-pull-requests-in-your-"
+                "repository) on the repo so BLEnder can merge"
+                " safe updates in the future."
+            )
         comment = (
             f"{Verdict.SAFE.comment('to merge.')}\n\n"
             f"**Confidence:** {confidence}\n"
@@ -109,11 +128,14 @@ def main() -> None:
             f"**Breaking changes:** "
             f"{breaking_changes or 'None that affect this codebase'}\n"
             f"**Test coverage:** {test_coverage}"
+            f"{auto_merge_note}"
         )
-        approve_and_merge(pr, confidence, dry_run)
         post_comment(pr, comment, dry_run)
         if not dry_run:
-            print("Done. PR approved and auto-merge enabled.")
+            if merge_err:
+                print("Done. PR approved. Auto-merge not available.")
+            else:
+                print("Done. PR approved and auto-merge enabled.")
     else:
         comment = (
             f"{Verdict.NEEDS_REVIEW.comment()}\n\n"
