@@ -741,8 +741,14 @@ function initPlayer() {
     document.getElementById('btn-play').textContent = '▶';
   });
 
-  // Load first track (no autoplay)
+  // Load first track and autoplay
   loadTrack(0);
+  playerAudio.play().then(() => {
+    playerPlaying = true;
+    document.getElementById('btn-play').textContent = '❚❚';
+  }).catch(() => {
+    // Browser blocked autoplay — user must click play
+  });
 }
 
 // ── Init ──
