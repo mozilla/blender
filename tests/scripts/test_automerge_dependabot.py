@@ -18,6 +18,7 @@ from scripts.automerge_dependabot import (
     gate_versions,
     version_in_range,
 )
+from scripts.github_utils import Verdict, has_blender_verdict
 
 
 # --- _normalize_pep440_range ---
@@ -300,6 +301,7 @@ def test_main_outputs_major_bumps_json(mock_process, monkeypatch, tmp_path):
     pr.user.login = "dependabot[bot]"
     pr.head.ref = "dependabot/pip/ipware-7.0.0"
     pr.get_issue_comments.return_value = []
+    pr.get_reviews.return_value = []
 
     with patch("scripts.automerge_dependabot.Github") as gh_cls:
         gh_cls.return_value.get_repo.return_value.get_pulls.return_value = [pr]
@@ -342,9 +344,112 @@ def test_main_no_comment_when_review_major(mock_process, monkeypatch):
     pr.user.login = "dependabot[bot]"
     pr.head.ref = "dependabot/pip/ipware-7.0.0"
     pr.get_issue_comments.return_value = []
+    pr.get_reviews.return_value = []
 
     with patch("scripts.automerge_dependabot.Github") as gh_cls:
         gh_cls.return_value.get_repo.return_value.get_pulls.return_value = [pr]
         main()
 
     pr.create_issue_comment.assert_not_called()
+
+
+# --- has_blender_verdict ---
+
+
+def _gh_comment(body: str, login: str = "blender[bot]"):
+    """Build a mock GitHub comment/review object with .body and .user.login."""
+    m = MagicMock()
+    m.body = body
+    m.user.login = login
+    return m
+
+
+@pytest.mark.parametrize(
+    "verdict",
+    [Verdict.SAFE, Verdict.NEEDS_REVIEW, Verdict.NO_VERDICT, Verdict.MALFORMED],
+)
+def test_has_blender_verdict_from_comment(verdict):
+    pr = MagicMock()
+    pr.get_issue_comments.return_value = [_gh_comment(body=verdict.comment("extra."))]
+    pr.get_reviews.return_value = []
+    assert has_blender_verdict(pr) is True
+
+
+def test_has_blender_verdict_from_review():
+    pr = MagicMock()
+    pr.get_issue_comments.return_value = []
+    pr.get_reviews.return_value = [
+        _gh_comment(body=Verdict.APPROVED.comment("(high confidence)."))
+    ]
+    assert has_blender_verdict(pr) is True
+
+
+def test_has_blender_verdict_false_when_no_verdict():
+    pr = MagicMock()
+    pr.get_issue_comments.return_value = [
+        _gh_comment(body="Reviewing this major version bump.")
+    ]
+    pr.get_reviews.return_value = []
+    assert has_blender_verdict(pr) is False
+
+
+def test_has_blender_verdict_ignores_human_comments():
+    pr = MagicMock()
+    pr.get_issue_comments.return_value = [
+        _gh_comment(body=Verdict.SAFE.comment("to merge."), login="groovecoder")
+    ]
+    pr.get_reviews.return_value = []
+    assert has_blender_verdict(pr) is False
+
+
+@patch("scripts.automerge_dependabot.process_pr")
+def test_main_skips_dispatch_when_already_reviewed(mock_process, monkeypatch, tmp_path):
+    """Already-reviewed major bumps are not dispatched again."""
+    from scripts.automerge_dependabot import main
+
+    monkeypatch.setenv("REPO", "owner/repo")
+    monkeypatch.setenv("GH_TOKEN", "fake-token")
+    monkeypatch.setenv("DRY_RUN", "false")
+    monkeypatch.setenv("REVIEW_MAJOR", "true")
+
+    output_file = tmp_path / "github_output"
+    output_file.write_text("")
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
+
+    dep = DependencyUpdate(
+        name="ipware",
+        version="7.0.0",
+        dependency_type="direct:production",
+        update_type="version-update:semver-major",
+        old_version="6.0.5",
+    )
+    meta = PRMetadata(
+        dependencies=[dep],
+        has_major=True,
+        ecosystem="pip",
+        raw_ecosystem="pip",
+        old_version="6.0.5",
+        new_version="7.0.0",
+    )
+    mock_process.side_effect = MajorBumpPR(
+        "major version bump on ipware", dep=dep, meta=meta
+    )
+
+    pr = MagicMock()
+    pr.number = 42
+    pr.title = "Bump ipware from 6.0.5 to 7.0.0"
+    pr.user.login = "dependabot[bot]"
+    pr.head.ref = "dependabot/pip/ipware-7.0.0"
+    # Simulate existing verdict comment
+    pr.get_issue_comments.return_value = [
+        _gh_comment(body=Verdict.NO_VERDICT.comment("Manual review needed."))
+    ]
+    pr.get_reviews.return_value = []
+
+    with patch("scripts.automerge_dependabot.Github") as gh_cls:
+        gh_cls.return_value.get_repo.return_value.get_pulls.return_value = [pr]
+        main()
+
+    # No major_bumps output written
+    output = output_file.read_text()
+    assert "major_bumps=" not in output
