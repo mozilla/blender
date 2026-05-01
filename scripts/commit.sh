@@ -26,6 +26,7 @@ fi
 
 if git diff --quiet && git diff --cached --quiet; then
   echo "No changes to commit."
+  echo "pushed=false" >> "${GITHUB_OUTPUT:-/dev/null}"
   exit 0
 fi
 
@@ -73,3 +74,4 @@ gh api "repos/${REPO}/git/refs/heads/${BRANCH}" \
   --field "sha=${COMMIT}"
 
 echo "Pushed verified commit ${COMMIT}"
+echo "pushed=true" >> "${GITHUB_OUTPUT:-/dev/null}"

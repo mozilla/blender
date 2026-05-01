@@ -207,6 +207,15 @@ prompt="${prompt//\{\{DEP_NAME\}\}/$DEP_NAME}"
 prompt="${prompt//\{\{OLD_VERSION\}\}/$OLD_VERSION}"
 prompt="${prompt//\{\{NEW_VERSION\}\}/$NEW_VERSION}"
 
+# Optional install-error placeholder (fix mode with broken installs)
+install_error=""
+if [ "${INSTALL_FAILED:-}" = "true" ] && [ -n "${INSTALL_LOG_FILE:-}" ] && [ -f "${INSTALL_LOG_FILE}" ]; then
+  echo "Install failed — injecting last 200 lines of log into prompt."
+  raw_log=$(tail -200 "$INSTALL_LOG_FILE")
+  install_error=$(sanitize_for_prompt "$raw_log")
+fi
+prompt="${prompt//\{\{INSTALL_ERROR\}\}/$install_error}"
+
 # Write prompt to file for run-claude.sh
 echo "$prompt" > .blender-prompt
 
