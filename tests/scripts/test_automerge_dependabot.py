@@ -188,8 +188,33 @@ def test_post_dependabot_recreate_comment_text():
     """Exact text matters — Dependabot parses commands literally."""
     pr = MagicMock()
     pr.number = 42
+    pr.get_issue_comments.return_value = []
     _post_dependabot_recreate(pr, dry_run=False)
     pr.create_issue_comment.assert_called_once_with("@dependabot recreate")
+
+
+def test_post_dependabot_recreate_skips_when_already_posted():
+    """Don't post a second @dependabot recreate on the same PR."""
+    pr = MagicMock()
+    pr.number = 42
+    existing = MagicMock()
+    existing.user.login = "mozilla-blender[bot]"
+    existing.body = "@dependabot recreate"
+    pr.get_issue_comments.return_value = [existing]
+    _post_dependabot_recreate(pr, dry_run=False)
+    pr.create_issue_comment.assert_not_called()
+
+
+def test_post_dependabot_recreate_skips_when_rejected():
+    """Don't retry recreate after dependabot says we lack push access."""
+    pr = MagicMock()
+    pr.number = 42
+    rejection = MagicMock()
+    rejection.user.login = "dependabot[bot]"
+    rejection.body = "Sorry, only users with push access can use that command."
+    pr.get_issue_comments.return_value = [rejection]
+    _post_dependabot_recreate(pr, dry_run=False)
+    pr.create_issue_comment.assert_not_called()
 
 
 # --- main loop: advisory skip triggers recreate, regular skip does not ---
