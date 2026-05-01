@@ -385,23 +385,35 @@ function assignRun(run, type, duration) {
 
 // ── Data fetching ──
 
-async function fetchRuns(perPage = 100, page = 1) {
-  const url = `${API}?per_page=${perPage}&page=${page}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    const limit = res.headers.get('x-ratelimit-remaining');
-    throw new Error(`API ${res.status} (remaining: ${limit})`);
+function parseLinkHeader(header) {
+  if (!header) return {};
+  const links = {};
+  for (const part of header.split(',')) {
+    const match = part.match(/<([^>]+)>;\s*rel="([^"]+)"/);
+    if (match) links[match[2]] = match[1];
   }
-  const data = await res.json();
-  return data.workflow_runs || [];
+  return links;
 }
 
 async function fetchAllHistory() {
-  // Fetch all 5 pages in parallel
-  const pages = await Promise.all(
-    [1, 2, 3, 4, 5].map(p => fetchRuns(100, p).catch(() => []))
-  );
-  return pages.flat();
+  let url = `${API}?per_page=100`;
+  const allRuns = [];
+
+  while (url) {
+    const res = await fetch(url);
+    if (!res.ok) {
+      const limit = res.headers.get('x-ratelimit-remaining');
+      throw new Error(`API ${res.status} (remaining: ${limit})`);
+    }
+    const data = await res.json();
+    const runs = data.workflow_runs || [];
+    allRuns.push(...runs);
+
+    const links = parseLinkHeader(res.headers.get('link'));
+    url = links.next || null;
+  }
+
+  return allRuns;
 }
 
 // ── Conditional poll (ETag) ──
