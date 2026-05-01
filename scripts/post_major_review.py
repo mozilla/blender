@@ -25,7 +25,10 @@ import sys
 from github import Auth, Github
 from github.PullRequest import PullRequest
 
-from scripts.github_utils import enable_auto_merge
+try:
+    from scripts.github_utils import enable_auto_merge
+except ModuleNotFoundError:
+    from github_utils import enable_auto_merge
 
 VERDICT_FILE = ".blender-verdict.json"
 

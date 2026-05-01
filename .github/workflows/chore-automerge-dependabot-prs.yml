@@ -88,6 +88,7 @@ jobs:
             new_version=$(echo "$bump" | jq -r '.new_version')
             echo "Dispatching review for PR #${pr_number} (${dep_name} ${new_version})..."
             gh workflow run chore-review-major-dependabot-update.yml \
+              --ref "$REF" \
               --field target_repo="$TARGET_REPO" \
               --field pr_number="$pr_number" \
               --field dep_name="$dep_name" \
@@ -96,6 +97,7 @@ jobs:
           done
         env:
           GH_TOKEN: ${{ github.token }}
+          REF: ${{ github.ref }}
           TARGET_REPO: ${{ inputs.target_repo }}
           MAJOR_BUMPS: ${{ steps.run-automerge.outputs.major_bumps }}
           DRY_RUN: ${{ inputs.dry_run || 'true' }}
