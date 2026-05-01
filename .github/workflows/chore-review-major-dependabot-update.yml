@@ -111,6 +111,10 @@ jobs:
           python-version: ${{ steps.config.outputs.python_version || '3.11' }}
           cache: pip
 
+      - name: Install BLEnder Python dependencies
+        run: pip install -r scripts/requirements.txt
+        working-directory: ${{ github.workspace }}
+
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f  # v6
         if: steps.config.outputs.node_version != ''
         with:
