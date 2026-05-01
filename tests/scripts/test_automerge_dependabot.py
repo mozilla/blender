@@ -356,8 +356,8 @@ def test_main_no_comment_when_review_major(mock_process, monkeypatch):
 # --- has_blender_verdict ---
 
 
-def _make_mock(body: str, login: str = "blender[bot]"):
-    """Build a mock PR comment or review with the given body and login."""
+def _gh_comment(body: str, login: str = "blender[bot]"):
+    """Build a mock GitHub comment/review object with .body and .user.login."""
     m = MagicMock()
     m.body = body
     m.user.login = login
@@ -370,7 +370,7 @@ def _make_mock(body: str, login: str = "blender[bot]"):
 )
 def test_has_blender_verdict_from_comment(verdict):
     pr = MagicMock()
-    pr.get_issue_comments.return_value = [_make_mock(verdict.comment("extra."))]
+    pr.get_issue_comments.return_value = [_gh_comment(body=verdict.comment("extra."))]
     pr.get_reviews.return_value = []
     assert has_blender_verdict(pr) is True
 
@@ -379,7 +379,7 @@ def test_has_blender_verdict_from_review():
     pr = MagicMock()
     pr.get_issue_comments.return_value = []
     pr.get_reviews.return_value = [
-        _make_mock(Verdict.APPROVED.comment("(high confidence)."))
+        _gh_comment(body=Verdict.APPROVED.comment("(high confidence)."))
     ]
     assert has_blender_verdict(pr) is True
 
@@ -387,7 +387,7 @@ def test_has_blender_verdict_from_review():
 def test_has_blender_verdict_false_when_no_verdict():
     pr = MagicMock()
     pr.get_issue_comments.return_value = [
-        _make_mock("Reviewing this major version bump.")
+        _gh_comment(body="Reviewing this major version bump.")
     ]
     pr.get_reviews.return_value = []
     assert has_blender_verdict(pr) is False
@@ -396,7 +396,7 @@ def test_has_blender_verdict_false_when_no_verdict():
 def test_has_blender_verdict_ignores_human_comments():
     pr = MagicMock()
     pr.get_issue_comments.return_value = [
-        _make_mock(Verdict.SAFE.comment("to merge."), login="groovecoder")
+        _gh_comment(body=Verdict.SAFE.comment("to merge."), login="groovecoder")
     ]
     pr.get_reviews.return_value = []
     assert has_blender_verdict(pr) is False
@@ -442,7 +442,7 @@ def test_main_skips_dispatch_when_already_reviewed(mock_process, monkeypatch, tm
     pr.head.ref = "dependabot/pip/ipware-7.0.0"
     # Simulate existing verdict comment
     pr.get_issue_comments.return_value = [
-        _make_mock(Verdict.NO_VERDICT.comment("Manual review needed."))
+        _gh_comment(body=Verdict.NO_VERDICT.comment("Manual review needed."))
     ]
     pr.get_reviews.return_value = []
 

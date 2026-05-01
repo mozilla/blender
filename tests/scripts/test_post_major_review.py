@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 from scripts.github_utils import Verdict
 from scripts.post_major_review import main
-from tests.scripts.test_automerge_dependabot import _make_mock
+from tests.scripts.test_automerge_dependabot import _gh_comment
 
 
 @patch("scripts.post_major_review.Github")
@@ -36,7 +36,7 @@ def test_no_duplicate_verdict_comment(mock_gh_cls, monkeypatch, tmp_path):
 
     pr = MagicMock()
     pr.get_issue_comments.return_value = [
-        _make_mock(Verdict.NEEDS_REVIEW.comment())
+        _gh_comment(body=Verdict.NEEDS_REVIEW.comment())
     ]
     pr.get_reviews.return_value = []
     mock_gh_cls.return_value.get_repo.return_value.get_pull.return_value = pr
