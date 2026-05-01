@@ -22,6 +22,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 concurrency:
   group: blender-fix-${{ inputs.target_repo }}-${{ inputs.pr_number }}
@@ -102,10 +103,12 @@ jobs:
           node-version: ${{ steps.config.outputs.node_version }}
 
       - name: Install dependencies
+        id: install
         if: steps.config.outputs.install_command != ''
+        continue-on-error: true
         working-directory: target
         run: |
-          eval "$INSTALL_COMMAND"
+          eval "$INSTALL_COMMAND" 2>&1 | tee /tmp/install-output.log
         env:
           INSTALL_COMMAND: ${{ steps.config.outputs.install_command }}
 
@@ -124,6 +127,8 @@ jobs:
           PR_NUMBER: ${{ inputs.pr_number }}
           REPO: ${{ inputs.target_repo }}
           PROMPT_TEMPLATE: .blender/fix-dependabot-prompt.md
+          INSTALL_FAILED: ${{ steps.install.outcome == 'failure' && 'true' || 'false' }}
+          INSTALL_LOG_FILE: /tmp/install-output.log
 
       - name: Comment on PR
         working-directory: target
@@ -146,9 +151,56 @@ jobs:
 
       # --- Commit (separate step, Claude is dead) ---
       - name: Commit and push fix
+        id: commit
         if: inputs.dry_run != 'true'
         working-directory: target
         run: ${{ github.workspace }}/scripts/commit.sh
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ inputs.target_repo }}
+
+      - name: Parse PR title
+        id: pr-meta
+        if: >-
+          inputs.dry_run != 'true'
+          && steps.commit.outputs.pushed == 'true'
+        run: |
+          PR_TITLE=$(gh api "repos/${TARGET_REPO}/pulls/${PR_NUMBER}" --jq '.title')
+          export PR_TITLE
+          ${{ github.workspace }}/scripts/parse-pr-title.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_REPO: ${{ inputs.target_repo }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+
+      - name: Dispatch major-bump review
+        if: >-
+          inputs.dry_run != 'true'
+          && steps.commit.outputs.pushed == 'true'
+          && steps.pr-meta.outputs.old_version != ''
+          && steps.pr-meta.outputs.new_version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF: ${{ github.ref }}
+          TARGET_REPO: ${{ inputs.target_repo }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          DEP_NAME: ${{ steps.pr-meta.outputs.dep_name }}
+          OLD_VERSION: ${{ steps.pr-meta.outputs.old_version }}
+          NEW_VERSION: ${{ steps.pr-meta.outputs.new_version }}
+        run: |
+          OLD_MAJOR="${OLD_VERSION%%.*}"
+          NEW_MAJOR="${NEW_VERSION%%.*}"
+
+          if [ "$OLD_MAJOR" = "$NEW_MAJOR" ]; then
+            echo "Not a major bump (${OLD_VERSION} -> ${NEW_VERSION}). Skipping."
+            exit 0
+          fi
+
+          echo "Major bump detected: ${DEP_NAME} ${OLD_VERSION} -> ${NEW_VERSION}"
+          gh workflow run chore-review-major-dependabot-update.yml \
+            --ref "$REF" \
+            --raw-field target_repo="$TARGET_REPO" \
+            --raw-field pr_number="$PR_NUMBER" \
+            --raw-field dep_name="$DEP_NAME" \
+            --raw-field new_version="$NEW_VERSION" \
+            --raw-field dry_run="false"
