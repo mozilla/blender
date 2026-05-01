@@ -287,25 +287,8 @@ body {
   image-rendering: auto;
 }
 
-#player-header {
-  font-size: clamp(5px, 0.65vw, 10px);
-  text-align: center;
-  letter-spacing: 0.1em;
-  color: #0f0;
-  text-decoration: none;
-  text-shadow: 0 0 6px #0f0, 0 0 12px #0a0;
-}
-
-#player-header:hover {
-  text-shadow: 0 0 10px #0f0, 0 0 20px #0f0;
-}
-
-#player-display {
-  text-align: center;
-  min-height: 2.5em;
-}
-
 #player-title {
+  text-align: center;
   font-size: clamp(4px, 0.55vw, 9px);
   max-width: 100%;
   white-space: nowrap;
@@ -315,8 +298,8 @@ body {
 
 #player-artist {
   font-size: clamp(3px, 0.4vw, 6px);
+  text-align: center;
   opacity: 0.7;
-  margin-top: 0.3em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -360,10 +343,6 @@ body {
 
 #attr-link:hover {
   text-shadow: 0 0 8px #0f0;
-}
-
-#attr-license {
-  opacity: 0.5;
 }
 
 /* Debug overlay */

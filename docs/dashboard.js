@@ -678,7 +678,6 @@ function loadTrack(index) {
   const titleEl = document.getElementById('player-title');
   const artistEl = document.getElementById('player-artist');
   const attrLink = document.getElementById('attr-link');
-  const attrLicense = document.getElementById('attr-license');
 
   titleEl.textContent = track.title;
   let credit = track.artist;
@@ -686,8 +685,7 @@ function loadTrack(index) {
   artistEl.textContent = credit;
 
   attrLink.href = track.page;
-  attrLink.textContent = track.artist;
-  attrLicense.textContent = track.license;
+  attrLink.textContent = track.license;
 }
 
 function togglePlay() {
