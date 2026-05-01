@@ -356,7 +356,7 @@ def test_main_no_comment_when_review_major(mock_process, monkeypatch):
 # --- has_blender_verdict ---
 
 
-def _gh_comment(body: str, login: str = "blender[bot]"):
+def _gh_comment(body: str, login: str = "mozilla-blender[bot]"):
     """Build a mock GitHub comment/review object with .body and .user.login."""
     m = MagicMock()
     m.body = body

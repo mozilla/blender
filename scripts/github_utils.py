@@ -7,7 +7,7 @@ from enum import Enum
 from github.PullRequest import PullRequest
 
 
-BOT_LOGIN = "blender[bot]"
+BOT_LOGIN = "mozilla-blender[bot]"
 
 
 class Verdict(Enum):
