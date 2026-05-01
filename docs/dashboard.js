@@ -26,6 +26,124 @@ const COUNTER_TARGETS = {
   fail:   { left: 66.5, top: 51 },
 };
 
+// ccMixter synthwave playlist — curated from ccmixter.org/api/query?tags=synthwave
+// Tracks are CC-licensed. Playlist order is shuffled on each page load.
+const PLAYLIST = [
+  {
+    title: 'My Heart Beats for You',
+    artist: 'Rewob',
+    featuring: 'DevynRose',
+    mp3: 'https://ccmixter.org/content/rewob/rewob_-_My_Heart_Beats_for_You.mp3',
+    page: 'https://ccmixter.org/files/rewob/70481',
+    license: 'CC BY-NC 3.0',
+    licenseUrl: 'http://creativecommons.org/licenses/by-nc/3.0/',
+  },
+  {
+    title: 'The Daily Elevens',
+    artist: 'jaspertine',
+    mp3: 'https://ccmixter.org/content/jaspertine/jaspertine_-_The_Daily_Elevens_12.mp3',
+    page: 'https://ccmixter.org/files/jaspertine/69716',
+    license: 'CC BY 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+  },
+  {
+    title: 'Nothing Stays The Same',
+    artist: 'DJDecay',
+    mp3: 'https://ccmixter.org/content/DJDecay/DJDecay_-_Nothing_Stays_The_Same_(Synthwave_Mix).mp3',
+    page: 'https://ccmixter.org/files/DJDecay/69641',
+    license: 'CC BY-NC 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-nc/4.0/',
+  },
+  {
+    title: 'Aria',
+    artist: 'Vidian',
+    featuring: 'Admiral Bob',
+    mp3: 'https://ccmixter.org/content/Vidian/Vidian_-_Aria.mp3',
+    page: 'https://ccmixter.org/files/Vidian/69302',
+    license: 'CC BY 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+  },
+  {
+    title: 'IEMRG',
+    artist: 'loveshadow',
+    featuring: 'snowflake',
+    mp3: 'https://ccmixter.org/content/Loveshadow/Loveshadow_-_IEMRG.mp3',
+    page: 'https://ccmixter.org/files/Loveshadow/69112',
+    license: 'CC BY-NC 3.0',
+    licenseUrl: 'http://creativecommons.org/licenses/by-nc/3.0/',
+  },
+  {
+    title: 'Let it Go',
+    artist: 'Rewob',
+    featuring: 'debbizo',
+    mp3: 'https://ccmixter.org/content/rewob/rewob_-_Let_it_Go.mp3',
+    page: 'https://ccmixter.org/files/rewob/70685',
+    license: 'CC BY-NC 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-nc/4.0/',
+  },
+  {
+    title: 'HyperSpeed',
+    artist: 'cdk',
+    featuring: 'Snowflake',
+    mp3: 'https://ccmixter.org/content/cdk/cdk_-_HyperSpeed_(cdk_mix).mp3',
+    page: 'https://ccmixter.org/files/cdk/70683',
+    license: 'CC BY-NC 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-nc/4.0/',
+  },
+  {
+    title: 'RESONATE',
+    artist: 'Ant.Survila',
+    featuring: 'Rewob',
+    mp3: 'https://ccmixter.org/content/AntSurvila/AntSurvila_-_RESONATE.mp3',
+    page: 'https://ccmixter.org/files/AntSurvila/70632',
+    license: 'CC BY-NC 3.0',
+    licenseUrl: 'http://creativecommons.org/licenses/by-nc/3.0/',
+  },
+  {
+    title: 'The Journey',
+    artist: 'Rewob',
+    featuring: 'Kikoid',
+    mp3: 'https://ccmixter.org/content/rewob/rewob_-_The_Journey.mp3',
+    page: 'https://ccmixter.org/files/rewob/70618',
+    license: 'CC BY-NC 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-nc/4.0/',
+  },
+  {
+    title: 'Blue Island Love',
+    artist: 'salvatorej',
+    featuring: 'Orrisroot',
+    mp3: 'https://ccmixter.org/content/salvatoreJ/salvatoreJ_-_Blue_Island_Love.mp3',
+    page: 'https://ccmixter.org/files/salvatoreJ/70576',
+    license: 'CC BY-NC 3.0',
+    licenseUrl: 'http://creativecommons.org/licenses/by-nc/3.0/',
+  },
+  {
+    title: 'The Captain',
+    artist: 'Fresh_Morning_Duet',
+    featuring: 'Snowflake',
+    mp3: 'https://ccmixter.org/content/Fresh_Morning_Duet/Fresh_Morning_Duet_-_The_Captain.mp3',
+    page: 'https://ccmixter.org/files/Fresh_Morning_Duet/70575',
+    license: 'CC BY 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+  },
+  {
+    title: 'Orbital',
+    artist: 'Ben Blohowiak',
+    mp3: 'https://ccmixter.org/content/bblohowiak/bblohowiak_-_Orbital_(Multiplication_Remix).mp3',
+    page: 'https://ccmixter.org/files/bblohowiak/70681',
+    license: 'CC BY-NC 4.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by-nc/4.0/',
+  },
+  {
+    title: 'Drugs Of Choice',
+    artist: 'cdk',
+    mp3: 'https://ccmixter.org/content/cdk/cdk_-_Drugs_Of_Choice_(cdk_Mix).mp3',
+    page: 'https://ccmixter.org/files/cdk/70638',
+    license: 'CC BY-NC 3.0',
+    licenseUrl: 'http://creativecommons.org/licenses/by-nc/3.0/',
+  },
+];
+
 // Desk positions (% of scene)
 const DESK_POSITIONS = [
   { left: 11.5, top: 67 },
@@ -503,6 +621,94 @@ function updateClocks() {
   }
 }
 
+// ── Music Player ──
+
+let playerAudio = null;
+let playerIndex = 0;
+let playerOrder = [];
+let playerPlaying = false;
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function loadTrack(index) {
+  const track = PLAYLIST[playerOrder[index]];
+  playerAudio.src = track.mp3;
+
+  const titleEl = document.getElementById('player-title');
+  const artistEl = document.getElementById('player-artist');
+  const attrLink = document.getElementById('attr-link');
+  const attrLicense = document.getElementById('attr-license');
+
+  titleEl.textContent = track.title;
+  let credit = track.artist;
+  if (track.featuring) credit += ` ft. ${track.featuring}`;
+  artistEl.textContent = credit;
+
+  attrLink.href = track.page;
+  attrLink.textContent = track.artist;
+  attrLicense.textContent = track.license;
+}
+
+function togglePlay() {
+  const btn = document.getElementById('btn-play');
+  if (playerPlaying) {
+    playerAudio.pause();
+    playerPlaying = false;
+    btn.textContent = '▶';
+  } else {
+    playerAudio.play();
+    playerPlaying = true;
+    btn.textContent = '❚❚';
+  }
+}
+
+function nextTrack() {
+  playerIndex = (playerIndex + 1) % PLAYLIST.length;
+  loadTrack(playerIndex);
+  if (playerPlaying) playerAudio.play();
+}
+
+function prevTrack() {
+  if (playerAudio.currentTime > 3) {
+    playerAudio.currentTime = 0;
+  } else {
+    playerIndex = (playerIndex - 1 + PLAYLIST.length) % PLAYLIST.length;
+    loadTrack(playerIndex);
+    if (playerPlaying) playerAudio.play();
+  }
+}
+
+function initPlayer() {
+  playerAudio = new Audio();
+  playerAudio.volume = 0.4;
+
+  // Fisher-Yates shuffle of playlist indices
+  playerOrder = Array.from({ length: PLAYLIST.length }, (_, i) => i);
+  shuffleArray(playerOrder);
+
+  // Bind controls
+  document.getElementById('btn-play').addEventListener('click', togglePlay);
+  document.getElementById('btn-next').addEventListener('click', nextTrack);
+  document.getElementById('btn-prev').addEventListener('click', prevTrack);
+
+  // Auto-advance on track end
+  playerAudio.addEventListener('ended', nextTrack);
+
+  // Stop on error — don't skip to next (avoids rapid looping on 403s)
+  playerAudio.addEventListener('error', () => {
+    playerPlaying = false;
+    document.getElementById('btn-play').textContent = '▶';
+  });
+
+  // Load first track (no autoplay)
+  loadTrack(0);
+}
+
 // ── Init ──
 
 if (new URLSearchParams(window.location.search).has('debug')) {
@@ -510,5 +716,6 @@ if (new URLSearchParams(window.location.search).has('debug')) {
 }
 
 setInterval(updateClocks, 1000);
+initPlayer();
 initialLoad();
 setInterval(poll, POLL_INTERVAL);
