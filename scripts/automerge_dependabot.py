@@ -678,6 +678,18 @@ def _post_dependabot_recreate(pr: PullRequest, dry_run: bool) -> None:
     if dry_run:
         print(f"  DRY_RUN: would comment @dependabot recreate on PR #{pr.number}")
         return
+
+    for c in pr.get_issue_comments():
+        if c.user.login == BOT_LOGIN and c.body == "@dependabot recreate":
+            print(f"  Already posted @dependabot recreate on PR #{pr.number}")
+            return
+        if (
+            c.user.login == "dependabot[bot]"
+            and "only users with push access" in c.body
+        ):
+            print(f"  Dependabot rejected recreate on PR #{pr.number}, skipping")
+            return
+
     pr.create_issue_comment("@dependabot recreate")
     print(f"  Posted @dependabot recreate on PR #{pr.number}")
 
