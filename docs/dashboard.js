@@ -9,6 +9,12 @@ const CACHE_KEY = 'blender-dashboard-cache';
 const CACHE_MAX_AGE = 30 * 60_000; // 30 min — re-fetch full history after this
 const IDLE_DESK = 2; // center desk — idle robot sits here
 
+// Merge counter: count actual merged PRs, not workflow runs.
+// BLEnder leaves a review containing "BLEnder auto-merge" on every PR it merges.
+// GitHub Search API (10 req/min, separate from REST budget).
+const MERGE_SEARCH_API = 'https://api.github.com/search/issues';
+const MERGE_SEARCH_QUERY = 'is:pr is:merged "BLEnder auto-merge" in:comments';
+
 // Workflow file → type mapping
 const WORKFLOW_MAP = {
   'scheduled-sweep.yml': 'sweep',
@@ -335,11 +341,12 @@ function completeWork(deskIdx, run, type) {
     robot.classList.add('fading');
   }
 
-  // Determine counter target
-  const isFailed = run.conclusion === 'failure';
-  const counterType = isFailed ? 'fail' : type;
-
-  fireBeam(deskIdx, type, counterType);
+  // Merge counter comes from Search API — no beam for merge runs
+  if (type !== 'merge') {
+    const isFailed = run.conclusion === 'failure';
+    const counterType = isFailed ? 'fail' : type;
+    fireBeam(deskIdx, type, counterType);
+  }
 
   setTimeout(() => freeDesk(deskIdx), 600);
 }
@@ -430,6 +437,16 @@ async function fetchRunsConditional(perPage = 30) {
   return data.workflow_runs || [];
 }
 
+// ── Merge count (Search API) ──
+
+async function fetchMergeCount() {
+  const url = `${MERGE_SEARCH_API}?q=${encodeURIComponent(MERGE_SEARCH_QUERY)}`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.total_count ?? null;
+}
+
 // ── Initial load ──
 
 function processHistory(allRuns) {
@@ -441,12 +458,15 @@ function processHistory(allRuns) {
     if (!type) continue;
 
     if (run.status === 'completed') {
-      if (run.conclusion === 'success') {
-        counters[type]++;
-        totalRuns++;
-      } else if (run.conclusion === 'failure') {
-        counters.fail++;
-        totalRuns++;
+      // Merge counter comes from the Search API — skip workflow-run counting
+      if (type !== 'merge') {
+        if (run.conclusion === 'success') {
+          counters[type]++;
+          totalRuns++;
+        } else if (run.conclusion === 'failure') {
+          counters.fail++;
+          totalRuns++;
+        }
       }
       completedByType[type].push(run);
     }
@@ -486,6 +506,12 @@ async function initialLoad() {
           counters[type]--;
         }
       }
+    }
+
+    // Fetch actual merge count from Search API
+    const mergeCount = await fetchMergeCount();
+    if (mergeCount !== null) {
+      counters.merge = mergeCount;
     }
 
     renderCounters();
@@ -548,17 +574,27 @@ async function poll() {
       } else if (run.status === 'completed' && !seenRunIds.has(run.id)) {
         // Never seen, already completed — count directly
         seenRunIds.add(run.id);
-        if (run.conclusion === 'failure') {
-          counters.fail++;
-          totalRuns++;
-          updateCounter('fail', counters.fail);
-        } else if (run.conclusion === 'success') {
-          counters[type]++;
-          totalRuns++;
-          updateCounter(type, counters[type]);
+        // Merge counter comes from Search API — skip here
+        if (type !== 'merge') {
+          if (run.conclusion === 'failure') {
+            counters.fail++;
+            totalRuns++;
+            updateCounter('fail', counters.fail);
+          } else if (run.conclusion === 'success') {
+            counters[type]++;
+            totalRuns++;
+            updateCounter(type, counters[type]);
+          }
+          renderFailRate();
         }
-        renderFailRate();
       }
+    }
+
+    // Refresh merge count from Search API
+    const mergeCount = await fetchMergeCount();
+    if (mergeCount !== null && mergeCount !== counters.merge) {
+      counters.merge = mergeCount;
+      updateCounter('merge', counters.merge);
     }
 
     setStatus('Live', false);
