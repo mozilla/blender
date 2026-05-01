@@ -159,28 +159,35 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ inputs.target_repo }}
 
+      - name: Parse PR title
+        id: pr-meta
+        if: >-
+          inputs.dry_run != 'true'
+          && steps.commit.outputs.pushed == 'true'
+        run: |
+          PR_TITLE=$(gh api "repos/${TARGET_REPO}/pulls/${PR_NUMBER}" --jq '.title')
+          export PR_TITLE
+          ${{ github.workspace }}/scripts/parse-pr-title.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_REPO: ${{ inputs.target_repo }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+
       - name: Dispatch major-bump review
         if: >-
           inputs.dry_run != 'true'
           && steps.commit.outputs.pushed == 'true'
+          && steps.pr-meta.outputs.old_version != ''
+          && steps.pr-meta.outputs.new_version != ''
         env:
           GH_TOKEN: ${{ github.token }}
           REF: ${{ github.ref }}
           TARGET_REPO: ${{ inputs.target_repo }}
           PR_NUMBER: ${{ inputs.pr_number }}
+          DEP_NAME: ${{ steps.pr-meta.outputs.dep_name }}
+          OLD_VERSION: ${{ steps.pr-meta.outputs.old_version }}
+          NEW_VERSION: ${{ steps.pr-meta.outputs.new_version }}
         run: |
-          PR_TITLE=$(gh api "repos/${TARGET_REPO}/pulls/${PR_NUMBER}" --jq '.title')
-
-          DEP_NAME=$(echo "$PR_TITLE" | sed -n 's/.*[Bb]ump \(.*\) from .*/\1/p')
-          OLD_VERSION=$(echo "$PR_TITLE" | sed -n 's/.*from \([^ ]*\) to .*/\1/p')
-          NEW_VERSION=$(echo "$PR_TITLE" | sed -n 's/.*to \([^ ]*\)/\1/p')
-
-          if [ -z "$OLD_VERSION" ] || [ -z "$NEW_VERSION" ]; then
-            echo "Could not parse versions from title: ${PR_TITLE}"
-            echo "Skipping — will be picked up by next sweep."
-            exit 0
-          fi
-
           OLD_MAJOR="${OLD_VERSION%%.*}"
           NEW_MAJOR="${NEW_VERSION%%.*}"
 

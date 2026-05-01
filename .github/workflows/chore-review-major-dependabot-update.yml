@@ -143,25 +143,13 @@ jobs:
         run: |
           PR_JSON=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}")
           PR_TITLE=$(echo "$PR_JSON" | jq -r '.title')
-
-          # Extract dep name, old version, new version from PR title
-          # "Bump python-ipware from 6.0.5 to 7.0.0"
-          DEP_NAME=$(echo "$PR_TITLE" | sed -n 's/.*[Bb]ump \(.*\) from .*/\1/p')
-          OLD_VERSION=$(echo "$PR_TITLE" | sed -n 's/.*from \([^ ]*\) to .*/\1/p')
-          NEW_VERSION=$(echo "$PR_TITLE" | sed -n 's/.*to \([^ ]*\)/\1/p')
+          export PR_TITLE
+          ${{ github.workspace }}/scripts/parse-pr-title.sh
 
           # Ecosystem from branch name
           BRANCH=$(echo "$PR_JSON" | jq -r '.head.ref')
           ECOSYSTEM=$(echo "$BRANCH" | cut -d/ -f2)
-
-          {
-            echo "dep_name=${DEP_NAME}"
-            echo "old_version=${OLD_VERSION}"
-            echo "new_version=${NEW_VERSION}"
-            echo "ecosystem=${ECOSYSTEM}"
-          } >> "$GITHUB_OUTPUT"
-
-          echo "Dependency: ${DEP_NAME} ${OLD_VERSION} -> ${NEW_VERSION} (${ECOSYSTEM})"
+          echo "ecosystem=${ECOSYSTEM}" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_NUMBER: ${{ inputs.pr_number }}
