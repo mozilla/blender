@@ -490,12 +490,17 @@ function showDebug() {
 const launchTime = Date.now();
 const missionClock = document.getElementById('mission-clock');
 
-function updateMissionClock() {
+function updateClocks() {
   const elapsed = Math.floor((Date.now() - launchTime) / 1000);
   const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
   const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
   const s = String(elapsed % 60).padStart(2, '0');
   missionClock.textContent = `T+ ${h}:${m}:${s}`;
+
+  // Keep status bar time ticking between polls
+  if (!statusText.classList.contains('error')) {
+    statusTime.textContent = new Date().toLocaleTimeString();
+  }
 }
 
 // ── Init ──
@@ -504,6 +509,6 @@ if (new URLSearchParams(window.location.search).has('debug')) {
   showDebug();
 }
 
-setInterval(updateMissionClock, 1000);
+setInterval(updateClocks, 1000);
 initialLoad();
 setInterval(poll, POLL_INTERVAL);
