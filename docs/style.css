@@ -283,7 +283,9 @@ body {
 }
 
 #player-logo {
+  display: block;
   width: 60%;
+  margin: 0 auto;
   image-rendering: auto;
 }
 
