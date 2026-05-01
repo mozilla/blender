@@ -29,9 +29,9 @@ from github.Repository import Repository
 import nodesemver
 
 try:
-    from scripts.github_utils import enable_auto_merge
+    from scripts.github_utils import BOT_LOGIN, enable_auto_merge, has_blender_verdict
 except ModuleNotFoundError:
-    from github_utils import enable_auto_merge
+    from github_utils import BOT_LOGIN, enable_auto_merge, has_blender_verdict
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
@@ -664,7 +664,7 @@ def _post_skip_comment(
     already_commented = any(
         c.body.startswith("BLEnder: ")
         for c in pr.get_issue_comments()
-        if c.user.login.endswith("[bot]")
+        if c.user.login == BOT_LOGIN
     )
     if already_commented:
         print(f"  BLEnder comment already exists on PR #{pr.number}")
@@ -753,19 +753,21 @@ def main() -> None:
             pkg = _package_name_from_branch(pr.head.ref)
             skip_reasons.append(f"#{pr.number} ({pkg}): {e}")
 
-            major_bumps.append(
-                {
-                    "pr_number": pr.number,
-                    "dep_name": e.dep.name,
-                    "old_version": e.meta.old_version or e.dep.old_version,
-                    "new_version": e.dep.version,
-                    "ecosystem": e.meta.ecosystem,
-                    "raw_ecosystem": e.meta.raw_ecosystem,
-                    "pr_title": pr.title,
-                }
-            )
-
-            if not review_major:
+            if review_major and has_blender_verdict(pr):
+                print("  Already reviewed by BLEnder, skipping dispatch.")
+            elif review_major:
+                major_bumps.append(
+                    {
+                        "pr_number": pr.number,
+                        "dep_name": e.dep.name,
+                        "old_version": e.meta.old_version or e.dep.old_version,
+                        "new_version": e.dep.version,
+                        "ecosystem": e.meta.ecosystem,
+                        "raw_ecosystem": e.meta.raw_ecosystem,
+                        "pr_title": pr.title,
+                    }
+                )
+            else:
                 _post_skip_comment(pr, str(e), False, config.dry_run)
 
         except SkipPR as e:

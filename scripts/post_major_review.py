@@ -26,9 +26,9 @@ from github import Auth, Github
 from github.PullRequest import PullRequest
 
 try:
-    from scripts.github_utils import enable_auto_merge
+    from scripts.github_utils import Verdict, enable_auto_merge, has_blender_verdict
 except ModuleNotFoundError:
-    from github_utils import enable_auto_merge
+    from github_utils import Verdict, enable_auto_merge, has_blender_verdict
 
 VERDICT_FILE = ".blender-verdict.json"
 
@@ -37,14 +37,15 @@ def post_comment(pr: PullRequest, body: str, dry_run: bool) -> None:
     if dry_run:
         print(f"DRY_RUN: would comment:\n{body}")
         return
+    if has_blender_verdict(pr):
+        print("Verdict comment already exists, skipping duplicate.")
+        return
     pr.create_issue_comment(body)
 
 
 def approve_and_merge(pr: PullRequest, confidence: str, dry_run: bool) -> None:
     """Approve the PR and enable auto-merge."""
-    review_body = (
-        f"BLEnder auto-merge: major bump evaluated as safe ({confidence} confidence)."
-    )
+    review_body = Verdict.APPROVED.comment(f"({confidence} confidence).")
     if dry_run:
         print("DRY_RUN: would approve and enable auto-merge")
         return
@@ -71,7 +72,7 @@ def main() -> None:
         print("No verdict file found. Claude could not evaluate this bump.")
         post_comment(
             pr,
-            "BLEnder: could not evaluate this major version bump. Manual review needed.",
+            Verdict.NO_VERDICT.comment("— manual review needed."),
             dry_run,
         )
         return
@@ -85,7 +86,7 @@ def main() -> None:
         print(f"Error reading verdict: {exc}")
         post_comment(
             pr,
-            "BLEnder: verdict file was malformed. Manual review needed.",
+            Verdict.MALFORMED.comment("— manual review needed."),
             dry_run,
         )
         return
@@ -102,7 +103,7 @@ def main() -> None:
 
     if safe and confidence != "low":
         comment = (
-            "BLEnder: major version bump is safe to merge.\n\n"
+            f"{Verdict.SAFE.comment('to merge.')}\n\n"
             f"**Confidence:** {confidence}\n"
             f"**Reason:** {reason}\n\n"
             f"**Breaking changes:** "
@@ -115,7 +116,7 @@ def main() -> None:
             print("Done. PR approved and auto-merge enabled.")
     else:
         comment = (
-            "BLEnder: this major version bump needs human review.\n\n"
+            f"{Verdict.NEEDS_REVIEW.comment()}\n\n"
             f"**Confidence:** {confidence}\n"
             f"**Reason:** {reason}\n\n"
             f"**Breaking changes:** {breaking_changes or 'None identified'}\n"
