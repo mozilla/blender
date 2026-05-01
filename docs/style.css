@@ -1,0 +1,283 @@
+/* BLEnder Mission Control Dashboard */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0a0a12;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-family: 'Press Start 2P', monospace;
+}
+
+/* Scene container — maintains aspect ratio of background (1672:941) */
+#scene {
+  position: relative;
+  width: 100vw;
+  max-width: 1672px;
+  aspect-ratio: 1672 / 941;
+}
+
+#bg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* Counter panels — positioned over the upper screens */
+.counter-panel {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #0f0;
+  text-shadow: 0 0 8px #0f0, 0 0 16px #0a0;
+  text-decoration: none;
+}
+
+.counter-label {
+  font-size: clamp(4px, 0.6vw, 10px);
+  opacity: 0.7;
+  margin-bottom: 0.3em;
+}
+
+.counter-value {
+  font-size: clamp(8px, 1.4vw, 22px);
+  transition: transform 0.15s;
+}
+
+.counter-value.pulse {
+  transform: scale(1.4);
+  text-shadow: 0 0 12px #0f0, 0 0 24px #0f0;
+}
+
+.counter-fail {
+  color: #f44;
+  text-shadow: 0 0 8px #f44, 0 0 16px #a00;
+}
+
+/* Screen positions (% of scene) */
+/* Sweeps — left stacked pair, top */
+#counter-sweeps {
+  left: 17%;
+  top: 32%;
+  width: 5%;
+  height: 8%;
+}
+
+/* Fail rate — left stacked pair, bottom */
+#counter-fail-rate {
+  left: 17%;
+  top: 46%;
+  width: 5%;
+  height: 8%;
+}
+
+/* Merges — center-left large screen */
+#counter-merges {
+  left: 32%;
+  top: 32%;
+  width: 22%;
+  height: 22%;
+}
+
+.counter-large .counter-value {
+  font-size: clamp(12px, 2.5vw, 40px);
+}
+
+/* Reviews — center-right stacked pair, top */
+#counter-reviews {
+  left: 64%;
+  top: 33%;
+  width: 5%;
+  height: 8%;
+}
+
+/* Failures — center-right stacked pair, bottom */
+#counter-failures {
+  left: 64%;
+  top: 47%;
+  width: 5%;
+  height: 8%;
+}
+
+/* Fixes — right screen */
+#counter-fixes {
+  left: 74.5%;
+  top: 32%;
+  width: 16%;
+  height: 22%;
+}
+
+.counter-medium .counter-value {
+  font-size: clamp(10px, 1.8vw, 30px);
+}
+
+/* Desk slots */
+.desk-slot {
+  position: absolute;
+  width: 7%;
+  height: 18%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.desk-slot[data-desk="0"] { left: 8%;   top: 56%; }
+.desk-slot[data-desk="1"] { left: 30%;  top: 56%; }
+.desk-slot[data-desk="2"] { left: 46%;  top: 56%; }
+.desk-slot[data-desk="3"] { left: 64%;  top: 56%; }
+.desk-slot[data-desk="4"] { left: 82%;  top: 56%; }
+
+/* Robot sprite */
+.robot {
+  width: 80%;
+  image-rendering: pixelated;
+  opacity: 0;
+  transition: opacity 0.5s;
+  position: absolute;
+  bottom: 10%;
+}
+
+.robot.active {
+  opacity: 1;
+}
+
+.robot.fading {
+  opacity: 0;
+}
+
+/* Activity icon */
+.activity-icon {
+  width: 42%;
+  aspect-ratio: 1;
+  background-image: url('assets/sprites.png');
+  background-size: 400% 100%;
+  image-rendering: pixelated;
+  position: absolute;
+  top: -5%;
+  filter: drop-shadow(0 0 4px #fff);
+}
+
+.activity-icon.sweep { background-position: 0% 0; }
+.activity-icon.merge { background-position: 42% 0; }
+.activity-icon.review { background-position: 70% 0; }
+.activity-icon.fix { background-position: 100% 0; }
+
+/* Repo name link */
+.repo-link {
+  position: absolute;
+  bottom: -25%;
+  font-size: clamp(3px, 0.45vw, 7px);
+  color: #0f0;
+  text-decoration: none;
+  text-shadow: 0 0 4px #0f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200%;
+  text-align: center;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.repo-link:hover {
+  color: #4f4;
+  text-shadow: 0 0 8px #0f0;
+}
+
+/* Spinning indicator — matches GitHub's in-progress icon */
+.run-spinner {
+  width: 1.4em;
+  height: 1.4em;
+  flex-shrink: 0;
+  margin-right: 0.6em;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Beam animation */
+.beam {
+  position: absolute;
+  width: clamp(12px, 1.5vw, 24px);
+  aspect-ratio: 1;
+  background-image: url('assets/sprites.png');
+  background-size: 400% 100%;
+  image-rendering: pixelated;
+  transition: top 0.4s ease-in, left 0.4s ease-in, opacity 0.3s;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.beam.sweep { background-position: 0% 0; }
+.beam.merge { background-position: 42% 0; }
+.beam.review { background-position: 70% 0; }
+.beam.fix { background-position: 100% 0; }
+
+/* Mission clock — T+ mission clock */
+#mission-clock {
+  position: absolute;
+  top: 22%;
+  right: 28.3%;
+  font-size: clamp(6px, 0.8vw, 11px);
+  color: #f0f;
+  text-shadow: 0 0 6px #f0f, 0 0 12px #a0a;
+  background-color: #000422;
+  padding: 0.4em 0.6em;
+  pointer-events: none;
+}
+
+/* Status bar */
+#status-bar {
+  position: absolute;
+  top: 21.5%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #000422;
+  padding: 0.6em 0.9em;
+  font-size: clamp(6px, 0.7vw, 12px);
+  color: #f0f;
+  text-shadow: 0 0 6px #f0f, 0 0 12px #a0a;
+  display: flex;
+  gap: 1.5em;
+}
+
+#status-bar .error {
+  color: #f44;
+  text-shadow: 0 0 6px #f44, 0 0 12px #a00;
+}
+
+/* Debug overlay */
+.debug-box {
+  position: absolute;
+  border: 2px solid red;
+  background: rgba(255, 0, 0, 0.15);
+  pointer-events: none;
+  z-index: 200;
+}
+
+.debug-box::after {
+  content: attr(data-label);
+  position: absolute;
+  top: -1em;
+  left: 0;
+  font-size: 8px;
+  color: red;
+  font-family: monospace;
+  white-space: nowrap;
+}
