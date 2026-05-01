@@ -46,24 +46,26 @@ def test_no_duplicate_verdict_comment(mock_gh_cls, monkeypatch, tmp_path):
     pr.create_issue_comment.assert_not_called()
 
 
-@patch("scripts.post_major_review.Github")
-@patch("scripts.post_major_review.enable_auto_merge")
-def test_safe_verdict_approves_and_merges(mock_merge, mock_gh_cls, monkeypatch, tmp_path):
-    """Safe + high confidence verdict approves and enables auto-merge."""
-    # main() reads .blender-verdict.json from disk, so the test must create it.
-    verdict_file = tmp_path / ".blender-verdict.json"
-    verdict_file.write_text(
-        json.dumps(
-            {
-                "safe": True,
-                "confidence": "high",
-                "reason": "No breaking changes affect this codebase",
-                "breaking_changes": [],
-                "affected_code": [],
-                "test_coverage": "good",
-            }
-        )
+def _safe_verdict():
+    return json.dumps(
+        {
+            "safe": True,
+            "confidence": "high",
+            "reason": "No breaking changes affect this codebase",
+            "breaking_changes": [],
+            "affected_code": [],
+            "test_coverage": "good",
+        }
     )
+
+
+@patch("scripts.post_major_review.Github")
+@patch("scripts.post_major_review.enable_auto_merge", return_value=None)
+def test_safe_verdict_approves_and_merges(
+    mock_merge, mock_gh_cls, monkeypatch, tmp_path
+):
+    """Safe + high confidence verdict approves and enables auto-merge."""
+    (tmp_path / ".blender-verdict.json").write_text(_safe_verdict())
 
     monkeypatch.setenv("PR_NUMBER", "10")
     monkeypatch.setenv("REPO", "owner/repo")
@@ -83,3 +85,36 @@ def test_safe_verdict_approves_and_merges(mock_merge, mock_gh_cls, monkeypatch, 
     pr.create_issue_comment.assert_called_once()
     comment_text = pr.create_issue_comment.call_args.args[0]
     assert comment_text.startswith("SAFE:")
+    assert "auto-merge could not be enabled" not in comment_text
+
+
+@patch("scripts.post_major_review.Github")
+@patch(
+    "scripts.post_major_review.enable_auto_merge",
+    return_value="Resource not accessible by integration",
+)
+def test_safe_verdict_posts_comment_when_automerge_fails(
+    mock_merge, mock_gh_cls, monkeypatch, tmp_path
+):
+    """Auto-merge failure still approves and posts a comment with a note."""
+    (tmp_path / ".blender-verdict.json").write_text(_safe_verdict())
+
+    monkeypatch.setenv("PR_NUMBER", "10")
+    monkeypatch.setenv("REPO", "owner/repo")
+    monkeypatch.setenv("GH_TOKEN", "fake-token")
+    monkeypatch.setenv("DRY_RUN", "false")
+    monkeypatch.chdir(tmp_path)
+
+    pr = MagicMock()
+    pr.get_issue_comments.return_value = []
+    pr.get_reviews.return_value = []
+    mock_gh_cls.return_value.get_repo.return_value.get_pull.return_value = pr
+
+    main()
+
+    pr.create_review.assert_called_once()
+    pr.create_issue_comment.assert_called_once()
+    comment_text = pr.create_issue_comment.call_args.args[0]
+    assert comment_text.startswith("SAFE:")
+    assert "auto-merge could not be enabled" in comment_text
+    assert "enable auto-merge" in comment_text
