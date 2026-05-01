@@ -89,11 +89,11 @@ jobs:
             echo "Dispatching review for PR #${pr_number} (${dep_name} ${new_version})..."
             gh workflow run chore-review-major-dependabot-update.yml \
               --ref "$REF" \
-              --field target_repo="$TARGET_REPO" \
-              --field pr_number="$pr_number" \
-              --field dep_name="$dep_name" \
-              --field new_version="$new_version" \
-              --field dry_run="${DRY_RUN}"
+              --raw-field target_repo="$TARGET_REPO" \
+              --raw-field pr_number="$pr_number" \
+              --raw-field dep_name="$dep_name" \
+              --raw-field new_version="$new_version" \
+              --raw-field dry_run="${DRY_RUN}"
           done
         env:
           GH_TOKEN: ${{ github.token }}
