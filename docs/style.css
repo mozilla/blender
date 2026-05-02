@@ -188,19 +188,23 @@ body {
 .activity-icon {
   width: 42%;
   aspect-ratio: 1;
-  background-image: url('assets/sprites.png');
-  background-size: 400% 100%;
-  image-rendering: pixelated;
+  color: white;
   position: absolute;
   top: -5%;
   filter: drop-shadow(0 0 4px white);
   z-index: 11;
 }
 
-.activity-icon.sweep { background-position: 0% 0; }
-.activity-icon.mergecheck { background-position: 42% 0; }
-.activity-icon.review { background-position: 70% 0; }
-.activity-icon.fix { background-position: 100% 0; }
+.activity-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.activity-icon.fail {
+  color: var(--color-red);
+  filter: drop-shadow(0 0 4px var(--color-red));
+}
 
 /* Repo name link */
 .repo-link {
@@ -253,18 +257,18 @@ body {
   position: absolute;
   width: clamp(12px, 1.5vw, 24px);
   aspect-ratio: 1;
-  background-image: url('assets/sprites.png');
-  background-size: 400% 100%;
-  image-rendering: pixelated;
+  color: white;
+  filter: drop-shadow(0 0 3px var(--color-green));
   transition: top 0.4s ease-in, left 0.4s ease-in, opacity 0.3s;
   z-index: 100;
   pointer-events: none;
 }
 
-.beam.sweep { background-position: 0% 0; }
-.beam.mergecheck { background-position: 42% 0; }
-.beam.review { background-position: 70% 0; }
-.beam.fix { background-position: 100% 0; }
+.beam svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 
 /* Mission clock — T+ mission clock */
 #mission-clock {
