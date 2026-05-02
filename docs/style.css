@@ -1,0 +1,384 @@
+/* BLEnder Mission Control Dashboard */
+
+/* Self-hosted Press Start 2P (latin subset) */
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('assets/PressStart2P-latin.woff2') format('woff2');
+}
+
+:root {
+  --color-green: #0f0;
+  --color-green-dim: #0a0;
+  --color-red: #f44;
+  --color-red-dim: #a00;
+  --color-magenta: #f0f;
+  --color-magenta-dim: #a0a;
+  --color-bg-panel: #000422;
+  --font-pixel: 'Press Start 2P', monospace;
+  --glow-green: 0 0 8px var(--color-green), 0 0 16px var(--color-green-dim);
+  --glow-red: 0 0 8px var(--color-red), 0 0 16px var(--color-red-dim);
+  --glow-magenta: 0 0 6px var(--color-magenta), 0 0 12px var(--color-magenta-dim);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0a0a12;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-family: var(--font-pixel);
+}
+
+/* Scene container — maintains aspect ratio of background (1672:941) */
+#scene {
+  position: relative;
+  width: 100vw;
+  max-width: 1672px;
+  aspect-ratio: 1672 / 941;
+}
+
+#bg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* Counter panels — positioned over the upper screens */
+.counter-panel {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-green);
+  text-shadow: var(--glow-green);
+  text-decoration: none;
+}
+
+.counter-label {
+  font-size: clamp(4px, 0.6vw, 10px);
+  opacity: 0.7;
+  margin-bottom: 0.3em;
+}
+
+.counter-value {
+  font-size: clamp(8px, 1.4vw, 22px);
+  transition: transform 0.15s;
+}
+
+.counter-value.pulse {
+  transform: scale(1.4);
+  text-shadow: 0 0 12px var(--color-green), 0 0 24px var(--color-green);
+}
+
+.counter-fail {
+  color: var(--color-red);
+  text-shadow: var(--glow-red);
+}
+
+/* Screen positions (% of scene) */
+/* Sweeps — left stacked pair, top */
+#counter-sweeps {
+  left: 17%;
+  top: 32%;
+  width: 5%;
+  height: 8%;
+}
+
+/* Fail rate — left stacked pair, bottom */
+#counter-fail-rate {
+  left: 17%;
+  top: 46%;
+  width: 5%;
+  height: 8%;
+}
+
+/* Reviews — center-left large screen */
+#counter-reviews {
+  left: 32%;
+  top: 32%;
+  width: 22%;
+  height: 22%;
+}
+
+.counter-large .counter-value {
+  font-size: clamp(12px, 2.5vw, 40px);
+}
+
+/* Merge checks — center-right stacked pair, top */
+#counter-merge-checks {
+  left: 64%;
+  top: 33%;
+  width: 5%;
+  height: 8%;
+}
+
+#counter-merge-checks .counter-label {
+  font-size: clamp(3px, 0.4vw, 7px);
+}
+
+/* Merges (actual merged PRs) — center-right stacked pair, bottom */
+#counter-merges {
+  left: 64%;
+  top: 47%;
+  width: 5%;
+  height: 8%;
+}
+
+/* Fixes — right screen */
+#counter-fixes {
+  left: 74.5%;
+  top: 32%;
+  width: 16%;
+  height: 22%;
+}
+
+.counter-medium .counter-value {
+  font-size: clamp(10px, 1.8vw, 30px);
+}
+
+/* Desk slots */
+.desk-slot {
+  position: absolute;
+  width: 7%;
+  height: 18%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.desk-slot[data-desk="0"] { left: 8%;   top: 56%; }
+.desk-slot[data-desk="1"] { left: 30%;  top: 56%; }
+.desk-slot[data-desk="2"] { left: 46%;  top: 56%; }
+.desk-slot[data-desk="3"] { left: 64%;  top: 56%; }
+.desk-slot[data-desk="4"] { left: 82%;  top: 56%; }
+
+/* Robot sprite */
+.robot {
+  width: 80%;
+  image-rendering: pixelated;
+  opacity: 0;
+  transition: opacity 0.5s;
+  position: absolute;
+  bottom: 10%;
+}
+
+.robot.active {
+  opacity: 1;
+}
+
+.robot.fading {
+  opacity: 0;
+}
+
+/* Activity icon */
+.activity-icon {
+  width: 42%;
+  aspect-ratio: 1;
+  background-image: url('assets/sprites.png');
+  background-size: 400% 100%;
+  image-rendering: pixelated;
+  position: absolute;
+  top: -5%;
+  filter: drop-shadow(0 0 4px white);
+  z-index: 11;
+}
+
+.activity-icon.sweep { background-position: 0% 0; }
+.activity-icon.mergecheck { background-position: 42% 0; }
+.activity-icon.review { background-position: 70% 0; }
+.activity-icon.fix { background-position: 100% 0; }
+
+/* Repo name link */
+.repo-link {
+  position: absolute;
+  bottom: -25%;
+  font-size: clamp(3px, 0.45vw, 7px);
+  color: var(--color-green);
+  text-decoration: none;
+  text-shadow: 0 0 4px var(--color-green);
+  white-space: nowrap;
+  max-width: 130%;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.repo-link .link-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.repo-link:hover {
+  color: #4f4;
+  text-shadow: 0 0 8px var(--color-green);
+}
+
+/* Spinning indicator — matches GitHub's in-progress icon */
+.run-spinner {
+  width: 1.4em;
+  height: 1.4em;
+  flex-shrink: 0;
+  margin-right: 0.6em;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Loading spinner for counter values */
+.counter-value.loading {
+  animation: spin 1.5s linear infinite;
+  display: inline-block;
+}
+
+/* Beam animation */
+.beam {
+  position: absolute;
+  width: clamp(12px, 1.5vw, 24px);
+  aspect-ratio: 1;
+  background-image: url('assets/sprites.png');
+  background-size: 400% 100%;
+  image-rendering: pixelated;
+  transition: top 0.4s ease-in, left 0.4s ease-in, opacity 0.3s;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.beam.sweep { background-position: 0% 0; }
+.beam.mergecheck { background-position: 42% 0; }
+.beam.review { background-position: 70% 0; }
+.beam.fix { background-position: 100% 0; }
+
+/* Mission clock — T+ mission clock */
+#mission-clock {
+  position: absolute;
+  top: 22%;
+  right: 28.3%;
+  font-size: clamp(6px, 0.8vw, 11px);
+  color: var(--color-magenta);
+  text-shadow: var(--glow-magenta);
+  background-color: var(--color-bg-panel);
+  padding: 0.4em 0.6em;
+  pointer-events: none;
+}
+
+/* Status bar */
+#status-bar {
+  position: absolute;
+  top: 21.5%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--color-bg-panel);
+  padding: 0.6em 0.9em;
+  font-size: clamp(6px, 0.7vw, 12px);
+  color: var(--color-magenta);
+  text-shadow: var(--glow-magenta);
+  display: flex;
+  gap: 1.5em;
+}
+
+#status-bar .error {
+  color: var(--color-red);
+  text-shadow: var(--glow-red);
+}
+
+/* Music player — overlays SYSTEM STATUS panel */
+#music-player {
+  position: absolute;
+  left: 2%;
+  top: 30%;
+  width: 11%;
+  background: rgba(0, 4, 34, 1);
+  height: 28%;
+  color: var(--color-green);
+  text-shadow: var(--glow-green);
+  font-family: var(--font-pixel);
+  padding: 0.6em 0.5em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8em;
+  z-index: 10;
+}
+
+#player-logo {
+  display: block;
+  width: 60%;
+  margin: 0 auto;
+  image-rendering: auto;
+}
+
+#player-title {
+  text-align: center;
+  font-size: clamp(4px, 0.55vw, 9px);
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#player-artist {
+  font-size: clamp(3px, 0.4vw, 6px);
+  text-align: center;
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#player-controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.4em;
+}
+
+#player-controls button {
+  background: transparent;
+  border: 1px solid var(--color-green);
+  color: var(--color-green);
+  text-shadow: 0 0 4px var(--color-green);
+  font-family: var(--font-pixel);
+  font-size: clamp(4px, 0.5vw, 8px);
+  padding: 0.3em 0.5em;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+#player-controls button:hover {
+  background: rgba(0, 255, 0, 0.15);
+  box-shadow: 0 0 8px var(--color-green);
+}
+
+#player-attribution {
+  text-align: center;
+  font-size: clamp(4px, 0.5vw, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+}
+
+#attr-link {
+  color: var(--color-green);
+  text-decoration: none;
+}
+
+#attr-link:hover {
+  text-shadow: 0 0 8px var(--color-green);
+}

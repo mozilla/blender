@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLEnder Mission Control</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="scene">
+    <img id="bg" src="assets/mission-control-bg.png" alt="Mission Control">
+
+    <!-- Upper screen overlays -->
+    <a id="counter-sweeps" class="counter-panel counter-small" href="https://github.com/mozilla/blender/actions/workflows/scheduled-sweep.yml?query=is%3Asuccess" target="_blank" rel="noopener">
+      <div class="counter-label">SWEEPS</div>
+      <div class="counter-value" data-type="sweep">↻</div>
+    </a>
+
+    <a id="counter-fail-rate" class="counter-panel counter-small counter-bottom" href="https://github.com/mozilla/blender/actions?query=is%3Afailure" target="_blank" rel="noopener">
+      <div class="counter-label">FAIL%</div>
+      <div class="counter-value counter-fail" data-type="failrate">↻</div>
+    </a>
+
+    <a id="counter-reviews" class="counter-panel counter-large" href="https://github.com/mozilla/blender/actions/workflows/chore-review-major-dependabot-update.yml?query=is%3Asuccess" target="_blank" rel="noopener">
+      <div class="counter-label">REVIEWS</div>
+      <div class="counter-value" data-type="review">↻</div>
+    </a>
+
+    <a id="counter-merge-checks" class="counter-panel counter-small" href="https://github.com/mozilla/blender/actions/workflows/chore-automerge-dependabot-prs.yml?query=is%3Asuccess" target="_blank" rel="noopener">
+      <div class="counter-label">MERGE CHECKS</div>
+      <div class="counter-value" data-type="mergecheck">↻</div>
+    </a>
+
+    <a id="counter-merges" class="counter-panel counter-small counter-bottom" href="https://github.com/search?q=is%3Apr+is%3Amerged+%22BLEnder+auto-merge%22+in%3Acomments&type=pullrequests" target="_blank" rel="noopener">
+      <div class="counter-label">MERGES</div>
+      <div class="counter-value" data-type="merge">↻</div>
+    </a>
+
+    <a id="counter-fixes" class="counter-panel counter-medium" href="https://github.com/mozilla/blender/actions/workflows/fix-dependabot-pr.yml?query=is%3Asuccess" target="_blank" rel="noopener">
+      <div class="counter-label">FIXES</div>
+      <div class="counter-value" data-type="fix">↻</div>
+    </a>
+
+    <!-- Mission clock -->
+    <div id="mission-clock">T+ 00:00:00</div>
+
+    <!-- Desk slots -->
+    <div class="desk-slot" data-desk="0"></div>
+    <div class="desk-slot" data-desk="1"></div>
+    <div class="desk-slot" data-desk="2">
+      <img id="idle-robot" class="robot active" src="assets/robot.png" alt="BLEnder">
+    </div>
+    <div class="desk-slot" data-desk="3"></div>
+    <div class="desk-slot" data-desk="4"></div>
+
+    <!-- Music player -->
+    <div id="music-player">
+      <a href="https://ccmixter.org" target="_blank" rel="noopener">
+        <img id="player-logo" src="assets/ccmixter-logo.jpg" alt="ccMixter">
+      </a>
+      <div id="player-title"></div>
+      <div id="player-attribution">
+        <a id="attr-link" href="#" target="_blank" rel="noopener"></a>
+      </div>
+      <div id="player-artist"></div>
+      <div id="player-controls">
+        <button id="btn-prev" aria-label="Previous">|◁</button>
+        <button id="btn-play" aria-label="Play">▶</button>
+        <button id="btn-next" aria-label="Next">▷|</button>
+      </div>
+    </div>
+
+    <!-- Beam animation layer -->
+    <div id="beam-layer"></div>
+
+    <!-- Status bar -->
+    <div id="status-bar">
+      <span id="status-text">Connecting...</span>
+      <span id="status-time"></span>
+    </div>
+  </div>
+
+  <script src="playlist.js"></script>
+  <script src="music-player.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
