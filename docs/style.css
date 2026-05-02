@@ -273,10 +273,10 @@ body {
 /* Branding panel — covers static top-left screen */
 #branding-panel {
   position: absolute;
-  left: 23.5%;
+  left: 28.5%;
   top: 21%;
-  width: 9%;
-  height: 5%;
+  width: 8.5%;
+  height: 4%;
   background-color: var(--color-bg-panel);
   display: flex;
   align-items: center;
