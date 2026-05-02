@@ -303,7 +303,10 @@ function populateDesk(idx, run, type) {
   link.appendChild(spinner);
 
   const label = runLabel(run);
-  link.append(label);
+  const textSpan = document.createElement('span');
+  textSpan.className = 'link-text';
+  textSpan.textContent = label;
+  link.appendChild(textSpan);
   link.title = label;
   slot.appendChild(link);
 

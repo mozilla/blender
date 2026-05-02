@@ -207,14 +207,17 @@ body {
   text-decoration: none;
   text-shadow: 0 0 4px var(--color-green);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   max-width: 130%;
-  text-align: center;
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.repo-link .link-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .repo-link:hover {
