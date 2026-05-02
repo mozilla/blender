@@ -9,21 +9,29 @@ import pytest
 
 from scripts.sweep import process_repo
 
+# --- Shared timestamps ---
 
-def _make_commit(message: str, date: datetime | None = None):
+T_EARLY = datetime(2025, 1, 1, tzinfo=timezone.utc)
+T_LATE = datetime(2025, 1, 2, tzinfo=timezone.utc)
+
+
+# --- Mock builders ---
+
+
+def _make_commit(message: str, date: datetime = T_EARLY):
     """Build a mock commit object."""
     c = MagicMock()
     c.commit.message = message
-    c.commit.committer.date = date or datetime(2025, 1, 1, tzinfo=timezone.utc)
+    c.commit.committer.date = date
     return c
 
 
-def _make_comment(login: str, body: str, created_at: datetime | None = None):
+def _make_comment(login: str, body: str, created_at: datetime = T_EARLY):
     """Build a mock issue comment."""
     c = MagicMock()
     c.user.login = login
     c.body = body
-    c.created_at = created_at or datetime(2025, 1, 1, tzinfo=timezone.utc)
+    c.created_at = created_at
     return c
 
 
@@ -41,40 +49,28 @@ def _make_pr(
     """
     pr = MagicMock()
     pr.number = number
-    pr.title = f"Bump foo from 1.0.0 to 2.0.0"
+    pr.title = "Bump foo from 1.0.0 to 2.0.0"
     pr.user.login = "dependabot[bot]" if is_dependabot else "octocat"
     type(pr.head).sha = PropertyMock(return_value="abc123")
 
-    # Commits
     commit_list = list(commits or [])
     if blender_commit:
-        commit_list.append(
-            _make_commit(
-                "BLEnder fix(foo): update lockfile",
-                datetime(2025, 1, 2, tzinfo=timezone.utc),
-            )
-        )
+        commit_list.append(_make_commit("BLEnder fix(foo): update lockfile", T_LATE))
     if not commit_list:
         commit_list.append(_make_commit("Bump foo from 1.0.0 to 2.0.0"))
     pr.get_commits.return_value = commit_list
-
-    # Comments
     pr.get_issue_comments.return_value = list(comments or [])
 
     return pr, ci_status
 
 
-def _build_repo(prs: list[tuple[MagicMock, str]]):
-    """Build a mock repo with .blender config and given PRs."""
+def _run_sweep(prs: list[tuple[MagicMock, str]]) -> list:
+    """Build a mock repo, patch check_pr_status, and run process_repo."""
     repo = MagicMock()
     repo.full_name = "owner/repo"
-    # has_blender_config returns True
     repo.get_contents.return_value = True
+    repo.get_pulls.return_value = [pr for pr, _ in prs]
 
-    pr_objects = [pr for pr, _ in prs]
-    repo.get_pulls.return_value = pr_objects
-
-    # Patch check_pr_status to return the configured status
     status_map = {pr.number: status for pr, status in prs}
 
     def mock_check_pr_status(_repo, pr):
@@ -83,10 +79,10 @@ def _build_repo(prs: list[tuple[MagicMock, str]]):
             return "automerge"
         elif s == "failing":
             return "fix"
-        else:
-            return None
+        return None
 
-    return repo, mock_check_pr_status
+    with patch("scripts.sweep.check_pr_status", side_effect=mock_check_pr_status):
+        return process_repo(repo)
 
 
 # --- CI-failing PRs (result == "fix") ---
@@ -94,102 +90,78 @@ def _build_repo(prs: list[tuple[MagicMock, str]]):
 
 class TestFixDispatch:
     def test_fresh_pr_dispatches_fix(self):
-        """#1: No BLEnder activity -> dispatch fix."""
-        pr, status = _make_pr(1, "failing")
-        repo, checker = _build_repo([(pr, status)])
-        with patch("scripts.sweep.check_pr_status", side_effect=checker):
-            actions = process_repo(repo)
+        """No BLEnder activity -> dispatch fix."""
+        actions = _run_sweep([_make_pr(1, "failing")])
         assert len(actions) == 1
         assert actions[0].action == "fix"
 
     def test_blender_commit_skips(self):
-        """#2: BLEnder commit exists -> skip."""
-        pr, status = _make_pr(2, "failing", blender_commit=True)
-        repo, checker = _build_repo([(pr, status)])
-        with patch("scripts.sweep.check_pr_status", side_effect=checker):
-            actions = process_repo(repo)
+        """BLEnder commit exists -> skip."""
+        actions = _run_sweep([_make_pr(2, "failing", blender_commit=True)])
         assert actions == []
 
     def test_fresh_picked_up_comment_skips(self):
-        """#3: Fresh 'picked up' comment -> skip."""
-        commit_date = datetime(2025, 1, 1, tzinfo=timezone.utc)
-        comment_date = datetime(2025, 1, 2, tzinfo=timezone.utc)
+        """Fresh 'picked up' comment -> skip."""
         pr, status = _make_pr(
             3,
             "failing",
-            commits=[_make_commit("Bump foo", commit_date)],
+            commits=[_make_commit("Bump foo", T_EARLY)],
             comments=[
-                _make_comment("blender[bot]", "BLEnder picked up this PR.", comment_date)
+                _make_comment("blender[bot]", "BLEnder picked up this PR.", T_LATE)
             ],
         )
-        repo, checker = _build_repo([(pr, status)])
-        with patch("scripts.sweep.check_pr_status", side_effect=checker):
-            actions = process_repo(repo)
-        assert actions == []
+        assert _run_sweep([(pr, status)]) == []
 
     def test_stale_picked_up_comment_dispatches(self):
-        """#4: Stale 'picked up' comment (before force-push) -> dispatch fix."""
-        comment_date = datetime(2025, 1, 1, tzinfo=timezone.utc)
-        commit_date = datetime(2025, 1, 2, tzinfo=timezone.utc)
+        """Stale 'picked up' comment (before force-push) -> dispatch fix."""
         pr, status = _make_pr(
             4,
             "failing",
-            commits=[_make_commit("Bump foo", commit_date)],
+            commits=[_make_commit("Bump foo", T_LATE)],
             comments=[
-                _make_comment("blender[bot]", "BLEnder picked up this PR.", comment_date)
+                _make_comment("blender[bot]", "BLEnder picked up this PR.", T_EARLY)
             ],
         )
-        repo, checker = _build_repo([(pr, status)])
-        with patch("scripts.sweep.check_pr_status", side_effect=checker):
-            actions = process_repo(repo)
+        actions = _run_sweep([(pr, status)])
         assert len(actions) == 1
         assert actions[0].action == "fix"
 
     def test_fresh_could_not_fix_skips(self):
-        """#5: Fresh 'could not fix' comment -> skip."""
-        commit_date = datetime(2025, 1, 1, tzinfo=timezone.utc)
-        comment_date = datetime(2025, 1, 2, tzinfo=timezone.utc)
+        """Fresh 'could not fix' comment -> skip."""
         pr, status = _make_pr(
             5,
             "failing",
-            commits=[_make_commit("Bump foo", commit_date)],
+            commits=[_make_commit("Bump foo", T_EARLY)],
             comments=[
                 _make_comment(
                     "blender[bot]",
                     "BLEnder could not fix this PR automatically.",
-                    comment_date,
+                    T_LATE,
                 )
             ],
         )
-        repo, checker = _build_repo([(pr, status)])
-        with patch("scripts.sweep.check_pr_status", side_effect=checker):
-            actions = process_repo(repo)
-        assert actions == []
+        assert _run_sweep([(pr, status)]) == []
 
     def test_stale_could_not_fix_dispatches(self):
-        """#6: Stale 'could not fix' comment -> dispatch fix."""
-        comment_date = datetime(2025, 1, 1, tzinfo=timezone.utc)
-        commit_date = datetime(2025, 1, 2, tzinfo=timezone.utc)
+        """Stale 'could not fix' comment -> dispatch fix."""
         pr, status = _make_pr(
             6,
             "failing",
-            commits=[_make_commit("Bump foo", commit_date)],
+            commits=[_make_commit("Bump foo", T_LATE)],
             comments=[
                 _make_comment(
                     "blender[bot]",
                     "BLEnder could not fix this PR automatically.",
-                    comment_date,
+                    T_EARLY,
                 )
             ],
         )
-        repo, checker = _build_repo([(pr, status)])
-        with patch("scripts.sweep.check_pr_status", side_effect=checker):
-            actions = process_repo(repo)
+        actions = _run_sweep([(pr, status)])
         assert len(actions) == 1
         assert actions[0].action == "fix"
 
     def test_automerge_comment_does_not_block_fix(self):
-        """#7: 'will not auto-merge' comment only -> dispatch fix."""
+        """'will not auto-merge' comment only -> dispatch fix."""
         pr, status = _make_pr(
             7,
             "failing",
@@ -197,18 +169,16 @@ class TestFixDispatch:
                 _make_comment(
                     "blender[bot]",
                     "BLEnder: will not auto-merge (CI has 1 failure(s)).",
-                    datetime(2025, 1, 2, tzinfo=timezone.utc),
+                    T_LATE,
                 )
             ],
         )
-        repo, checker = _build_repo([(pr, status)])
-        with patch("scripts.sweep.check_pr_status", side_effect=checker):
-            actions = process_repo(repo)
+        actions = _run_sweep([(pr, status)])
         assert len(actions) == 1
         assert actions[0].action == "fix"
 
     def test_retry_comment_does_not_block_fix(self):
-        """#8: 'skipped (...). Will retry' comment only -> dispatch fix."""
+        """'skipped (...). Will retry' comment only -> dispatch fix."""
         pr, status = _make_pr(
             8,
             "failing",
@@ -216,33 +186,26 @@ class TestFixDispatch:
                 _make_comment(
                     "blender[bot]",
                     "BLEnder: skipped (score unknown). Will retry on next scheduled run.",
-                    datetime(2025, 1, 2, tzinfo=timezone.utc),
+                    T_LATE,
                 )
             ],
         )
-        repo, checker = _build_repo([(pr, status)])
-        with patch("scripts.sweep.check_pr_status", side_effect=checker):
-            actions = process_repo(repo)
+        actions = _run_sweep([(pr, status)])
         assert len(actions) == 1
         assert actions[0].action == "fix"
 
     def test_blender_commit_takes_precedence_over_stale_comment(self):
-        """#9: BLEnder commit + stale comment -> skip (commit wins)."""
-        comment_date = datetime(2025, 1, 1, tzinfo=timezone.utc)
-        commit_date = datetime(2025, 1, 2, tzinfo=timezone.utc)
+        """BLEnder commit + stale comment -> skip (commit wins)."""
         pr, status = _make_pr(
             9,
             "failing",
             blender_commit=True,
-            commits=[_make_commit("Bump foo", commit_date)],
+            commits=[_make_commit("Bump foo", T_LATE)],
             comments=[
-                _make_comment("blender[bot]", "BLEnder picked up this PR.", comment_date)
+                _make_comment("blender[bot]", "BLEnder picked up this PR.", T_EARLY)
             ],
         )
-        repo, checker = _build_repo([(pr, status)])
-        with patch("scripts.sweep.check_pr_status", side_effect=checker):
-            actions = process_repo(repo)
-        assert actions == []
+        assert _run_sweep([(pr, status)]) == []
 
 
 # --- CI-passing PRs (result == "automerge") ---
@@ -250,30 +213,21 @@ class TestFixDispatch:
 
 class TestAutomergeDispatch:
     def test_passing_pr_dispatches_automerge(self):
-        """#10: No activity -> dispatch automerge."""
-        pr, status = _make_pr(10, "passing")
-        repo, checker = _build_repo([(pr, status)])
-        with patch("scripts.sweep.check_pr_status", side_effect=checker):
-            actions = process_repo(repo)
+        """No activity -> dispatch automerge."""
+        actions = _run_sweep([_make_pr(10, "passing")])
         assert len(actions) == 1
         assert actions[0].action == "automerge"
 
     def test_blender_comments_do_not_block_automerge(self):
-        """#11: BLEnder comments don't block automerge dispatch."""
+        """BLEnder comments don't block automerge dispatch."""
         pr, status = _make_pr(
             11,
             "passing",
             comments=[
-                _make_comment(
-                    "blender[bot]",
-                    "BLEnder picked up this PR.",
-                    datetime(2025, 1, 2, tzinfo=timezone.utc),
-                )
+                _make_comment("blender[bot]", "BLEnder picked up this PR.", T_LATE)
             ],
         )
-        repo, checker = _build_repo([(pr, status)])
-        with patch("scripts.sweep.check_pr_status", side_effect=checker):
-            actions = process_repo(repo)
+        actions = _run_sweep([(pr, status)])
         assert len(actions) == 1
         assert actions[0].action == "automerge"
 
@@ -283,12 +237,8 @@ class TestAutomergeDispatch:
 
 class TestPendingPR:
     def test_pending_pr_skipped(self):
-        """#12: Pending checks -> skip."""
-        pr, status = _make_pr(12, "pending")
-        repo, checker = _build_repo([(pr, status)])
-        with patch("scripts.sweep.check_pr_status", side_effect=checker):
-            actions = process_repo(repo)
-        assert actions == []
+        """Pending checks -> skip."""
+        assert _run_sweep([_make_pr(12, "pending")]) == []
 
 
 # --- Edge cases ---
@@ -296,24 +246,19 @@ class TestPendingPR:
 
 class TestEdgeCases:
     def test_non_dependabot_pr_skipped(self):
-        """#13: Non-dependabot PR -> not in the list at all."""
-        pr, status = _make_pr(13, "failing", is_dependabot=False)
-        repo, checker = _build_repo([(pr, status)])
-        with patch("scripts.sweep.check_pr_status", side_effect=checker):
-            actions = process_repo(repo)
-        assert actions == []
+        """Non-dependabot PR -> not in the list at all."""
+        assert _run_sweep([_make_pr(13, "failing", is_dependabot=False)]) == []
 
     def test_no_blender_config_skips(self):
-        """#14: No .blender config -> skip repo."""
+        """No .blender config -> skip repo."""
         from github.GithubException import UnknownObjectException
 
         repo = MagicMock()
         repo.get_contents.side_effect = UnknownObjectException(404, {}, {})
-        actions = process_repo(repo)
-        assert actions == []
+        assert process_repo(repo) == []
 
     def test_check_pr_status_exception_continues(self):
-        """#15: Exception in check_pr_status -> skip PR, don't crash."""
+        """Exception in check_pr_status -> skip PR, don't crash."""
         pr, _ = _make_pr(15, "failing")
         repo = MagicMock()
         repo.full_name = "owner/repo"
@@ -323,5 +268,4 @@ class TestEdgeCases:
         with patch(
             "scripts.sweep.check_pr_status", side_effect=RuntimeError("API error")
         ):
-            actions = process_repo(repo)
-        assert actions == []
+            assert process_repo(repo) == []

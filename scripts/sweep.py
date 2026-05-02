@@ -132,7 +132,9 @@ def process_repo(repo: Repository) -> list[Action]:
             continue
 
         if result == "fix":
-            # Check for BLEnder commits on the PR
+            # Check for BLEnder commits on the PR.
+            # Only bot commits with the "BLEnder fix(" prefix count.
+            # Human commits use different messages and don't block dispatch.
             commits = pr.get_commits()
             has_blender_commit = any(
                 (c.commit.message or "").startswith("BLEnder fix(") for c in commits
@@ -141,9 +143,10 @@ def process_repo(repo: Repository) -> list[Action]:
                 print(f"    PR #{pr.number}: BLEnder already committed a fix, skipping")
                 continue
 
-            # Only skip if a fix-related comment was posted AFTER the
-            # latest commit.  Stale comments (before a force-push) are
-            # ignored so the fix can be retried on new code.
+            # Only skip if a bot fix-related comment was posted AFTER the
+            # latest commit.  Human comments are ignored (login must end
+            # with "[bot]").  Stale comments (before a force-push) are
+            # also ignored so the fix can be retried on new code.
             latest_commit_date = max(
                 (c.commit.committer.date for c in commits), default=None
             )

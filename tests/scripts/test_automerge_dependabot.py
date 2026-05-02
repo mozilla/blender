@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -17,6 +18,7 @@ from scripts.automerge_dependabot import (
     _post_dependabot_recreate,
     gate_advisories,
     gate_versions,
+    main,
     version_in_range,
 )
 from scripts.github_utils import Verdict, has_blender_verdict
@@ -235,8 +237,6 @@ def test_main_loop_recreate_on_advisory_skip_only(
     expect_recreate,
     monkeypatch,
 ):
-    from scripts.automerge_dependabot import main
-
     monkeypatch.setenv("REPO", "owner/repo")
     monkeypatch.setenv("GH_TOKEN", "fake-token")
     monkeypatch.setenv("DRY_RUN", "false")
@@ -288,9 +288,6 @@ def test_gate_versions_raises_major_bump_pr():
 @patch("scripts.automerge_dependabot.process_pr")
 def test_main_outputs_major_bumps_json(mock_process, monkeypatch, tmp_path):
     """MajorBumpPR exceptions are collected and written to GITHUB_OUTPUT."""
-    import json
-    from scripts.automerge_dependabot import main
-
     monkeypatch.setenv("REPO", "owner/repo")
     monkeypatch.setenv("GH_TOKEN", "fake-token")
     monkeypatch.setenv("DRY_RUN", "false")
@@ -344,8 +341,6 @@ def test_main_outputs_major_bumps_json(mock_process, monkeypatch, tmp_path):
 @patch("scripts.automerge_dependabot.process_pr")
 def test_main_no_comment_when_review_major(mock_process, monkeypatch):
     """When REVIEW_MAJOR=true, MajorBumpPR posts no comment (workflow handles it)."""
-    from scripts.automerge_dependabot import main
-
     monkeypatch.setenv("REPO", "owner/repo")
     monkeypatch.setenv("GH_TOKEN", "fake-token")
     monkeypatch.setenv("DRY_RUN", "false")
@@ -431,8 +426,6 @@ def test_has_blender_verdict_ignores_human_comments():
 @patch("scripts.automerge_dependabot.process_pr")
 def test_main_skips_dispatch_when_already_reviewed(mock_process, monkeypatch, tmp_path):
     """Already-reviewed major bumps are not dispatched again."""
-    from scripts.automerge_dependabot import main
-
     monkeypatch.setenv("REPO", "owner/repo")
     monkeypatch.setenv("GH_TOKEN", "fake-token")
     monkeypatch.setenv("DRY_RUN", "false")
@@ -486,9 +479,7 @@ def test_main_skips_dispatch_when_already_reviewed(mock_process, monkeypatch, tm
 
 @patch("scripts.automerge_dependabot.process_pr")
 def test_main_no_comment_on_ci_failure(mock_process, monkeypatch):
-    """#16: CIFailurePR skips without posting a comment."""
-    from scripts.automerge_dependabot import main
-
+    """CIFailurePR skips without posting a comment."""
     monkeypatch.setenv("REPO", "owner/repo")
     monkeypatch.setenv("GH_TOKEN", "fake-token")
     monkeypatch.setenv("DRY_RUN", "false")
