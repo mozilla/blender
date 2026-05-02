@@ -204,3 +204,18 @@ jobs:
             --raw-field dep_name="$DEP_NAME" \
             --raw-field new_version="$NEW_VERSION" \
             --raw-field dry_run="false"
+
+      - name: Comment if fix failed
+        if: >-
+          always()
+          && inputs.dry_run != 'true'
+          && steps.commit.outputs.pushed != 'true'
+        working-directory: target
+        run: |
+          gh pr comment "$PR_NUMBER" \
+            --body "BLEnder could not fix this PR automatically. [Workflow run](${RUN_URL})"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          RUN_URL: >-
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
