@@ -104,8 +104,8 @@ body {
   height: 8%;
 }
 
-/* Merges — center-left large screen */
-#counter-merges {
+/* Reviews — center-left large screen */
+#counter-reviews {
   left: 32%;
   top: 32%;
   width: 22%;
@@ -116,16 +116,20 @@ body {
   font-size: clamp(12px, 2.5vw, 40px);
 }
 
-/* Reviews — center-right stacked pair, top */
-#counter-reviews {
+/* Merge checks — center-right stacked pair, top */
+#counter-merge-checks {
   left: 64%;
   top: 33%;
   width: 5%;
   height: 8%;
 }
 
-/* Failures — center-right stacked pair, bottom */
-#counter-failures {
+#counter-merge-checks .counter-label {
+  font-size: clamp(3px, 0.4vw, 7px);
+}
+
+/* Merges (actual merged PRs) — center-right stacked pair, bottom */
+#counter-merges {
   left: 64%;
   top: 47%;
   width: 5%;
@@ -194,7 +198,7 @@ body {
 }
 
 .activity-icon.sweep { background-position: 0% 0; }
-.activity-icon.merge { background-position: 42% 0; }
+.activity-icon.mergecheck { background-position: 42% 0; }
 .activity-icon.review { background-position: 70% 0; }
 .activity-icon.fix { background-position: 100% 0; }
 
@@ -258,7 +262,7 @@ body {
 }
 
 .beam.sweep { background-position: 0% 0; }
-.beam.merge { background-position: 42% 0; }
+.beam.mergecheck { background-position: 42% 0; }
 .beam.review { background-position: 70% 0; }
 .beam.fix { background-position: 100% 0; }
 
@@ -377,24 +381,4 @@ body {
 
 #attr-link:hover {
   text-shadow: 0 0 8px var(--color-green);
-}
-
-/* Debug overlay */
-.debug-box {
-  position: absolute;
-  border: 2px solid red;
-  background: rgba(255, 0, 0, 0.15);
-  pointer-events: none;
-  z-index: 200;
-}
-
-.debug-box::after {
-  content: attr(data-label);
-  position: absolute;
-  top: -1em;
-  left: 0;
-  font-size: 8px;
-  color: red;
-  font-family: monospace;
-  white-space: nowrap;
 }

@@ -21,19 +21,19 @@
       <div class="counter-value counter-fail" data-type="failrate">↻</div>
     </a>
 
-    <a id="counter-merges" class="counter-panel counter-large" href="https://github.com/search?q=is%3Apr+is%3Amerged+%22BLEnder+auto-merge%22+in%3Acomments&type=pullrequests" target="_blank" rel="noopener">
-      <div class="counter-label">MERGES</div>
-      <div class="counter-value" data-type="merge">↻</div>
-    </a>
-
-    <a id="counter-reviews" class="counter-panel counter-small" href="https://github.com/mozilla/blender/actions/workflows/chore-review-major-dependabot-update.yml?query=is%3Asuccess" target="_blank" rel="noopener">
+    <a id="counter-reviews" class="counter-panel counter-large" href="https://github.com/mozilla/blender/actions/workflows/chore-review-major-dependabot-update.yml?query=is%3Asuccess" target="_blank" rel="noopener">
       <div class="counter-label">REVIEWS</div>
       <div class="counter-value" data-type="review">↻</div>
     </a>
 
-    <a id="counter-failures" class="counter-panel counter-small counter-bottom" href="https://github.com/mozilla/blender/actions?query=is%3Afailure" target="_blank" rel="noopener">
-      <div class="counter-label">FAILED</div>
-      <div class="counter-value counter-fail" data-type="fail">↻</div>
+    <a id="counter-merge-checks" class="counter-panel counter-small" href="https://github.com/mozilla/blender/actions/workflows/chore-automerge-dependabot-prs.yml?query=is%3Asuccess" target="_blank" rel="noopener">
+      <div class="counter-label">MERGE CHECKS</div>
+      <div class="counter-value" data-type="mergecheck">↻</div>
+    </a>
+
+    <a id="counter-merges" class="counter-panel counter-small counter-bottom" href="https://github.com/search?q=is%3Apr+is%3Amerged+%22BLEnder+auto-merge%22+in%3Acomments&type=pullrequests" target="_blank" rel="noopener">
+      <div class="counter-label">MERGES</div>
+      <div class="counter-value" data-type="merge">↻</div>
     </a>
 
     <a id="counter-fixes" class="counter-panel counter-medium" href="https://github.com/mozilla/blender/actions/workflows/fix-dependabot-pr.yml?query=is%3Asuccess" target="_blank" rel="noopener">
@@ -80,6 +80,8 @@
     </div>
   </div>
 
+  <script src="playlist.js"></script>
+  <script src="music-player.js"></script>
   <script src="dashboard.js"></script>
 </body>
 </html>
