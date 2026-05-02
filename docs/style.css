@@ -270,6 +270,31 @@ body {
   display: block;
 }
 
+/* Branding panel — covers static top-left screen */
+#branding-panel {
+  position: absolute;
+  left: 28.5%;
+  top: 21%;
+  width: 8.5%;
+  height: 4%;
+  background-color: var(--color-bg-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  color: var(--color-magenta);
+  text-shadow: var(--glow-magenta);
+  font-family: var(--font-pixel);
+  font-size: clamp(5px, 0.65vw, 10px);
+  pointer-events: none;
+  z-index: 5;
+}
+
+#branding-panel img {
+  height: 80%;
+  image-rendering: pixelated;
+}
+
 /* Mission clock — T+ mission clock */
 #mission-clock {
   position: absolute;

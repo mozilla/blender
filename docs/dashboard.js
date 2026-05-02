@@ -177,7 +177,7 @@ function restoreIdleRobot() {
   const robot = document.createElement('img');
   robot.id = 'idle-robot';
   robot.className = 'robot active';
-  robot.src = 'assets/robot.png';
+  robot.src = 'assets/dino-bot.png';
   robot.alt = 'BLEnder';
   slot.appendChild(robot);
 }
@@ -198,7 +198,7 @@ function populateDesk(idx, run, type, beamTarget) {
 
   // Robot
   const robot = document.createElement('img');
-  robot.src = 'assets/robot.png';
+  robot.src = 'assets/dino-bot.png';
   robot.className = 'robot';
   slot.appendChild(robot);
   requestAnimationFrame(() => robot.classList.add('active'));
