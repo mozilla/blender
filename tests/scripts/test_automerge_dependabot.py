@@ -220,6 +220,43 @@ def test_post_dependabot_recreate_skips_when_rejected():
     pr.create_issue_comment.assert_not_called()
 
 
+# --- Helpers for main-loop tests ---
+
+
+def _make_dependabot_pr(
+    number: int = 42,
+    ref: str = "dependabot/npm_and_yarn/lodash-4.17.21",
+    comments: list | None = None,
+    reviews: list | None = None,
+):
+    """Build a mock dependabot PR for main-loop tests."""
+    pr = MagicMock()
+    pr.number = number
+    pr.title = "Bump something"
+    pr.user.login = "dependabot[bot]"
+    pr.head.ref = ref
+    pr.get_issue_comments.return_value = comments or []
+    pr.get_reviews.return_value = reviews or []
+    return pr
+
+
+def _run_main(monkeypatch, pr, process_side_effect, extra_env=None):
+    """Set up env, mock process_pr, run main(), return the mock PR."""
+    monkeypatch.setenv("REPO", "owner/repo")
+    monkeypatch.setenv("GH_TOKEN", "fake-token")
+    monkeypatch.setenv("DRY_RUN", "false")
+    for k, v in (extra_env or {}).items():
+        monkeypatch.setenv(k, v)
+
+    with (
+        patch("scripts.automerge_dependabot.process_pr") as mock_process,
+        patch("scripts.automerge_dependabot.Github") as gh_cls,
+    ):
+        mock_process.side_effect = process_side_effect
+        gh_cls.return_value.get_repo.return_value.get_pulls.return_value = [pr]
+        main()
+
+
 # --- main loop: advisory skip triggers recreate, regular skip does not ---
 
 
@@ -230,28 +267,13 @@ def test_post_dependabot_recreate_skips_when_rejected():
         (SkipPR("major version bump"), False),
     ],
 )
-@patch("scripts.automerge_dependabot.process_pr")
 def test_main_loop_recreate_on_advisory_skip_only(
-    mock_process,
     exception,
     expect_recreate,
     monkeypatch,
 ):
-    monkeypatch.setenv("REPO", "owner/repo")
-    monkeypatch.setenv("GH_TOKEN", "fake-token")
-    monkeypatch.setenv("DRY_RUN", "false")
-
-    pr = MagicMock()
-    pr.number = 7
-    pr.user.login = "dependabot[bot]"
-    pr.head.ref = "dependabot/npm_and_yarn/lodash-4.17.21"
-    pr.get_issue_comments.return_value = []
-
-    mock_process.side_effect = exception
-
-    with patch("scripts.automerge_dependabot.Github") as gh_cls:
-        gh_cls.return_value.get_repo.return_value.get_pulls.return_value = [pr]
-        main()
+    pr = _make_dependabot_pr(number=7)
+    _run_main(monkeypatch, pr, exception)
 
     recreate_calls = [
         c
@@ -285,50 +307,37 @@ def test_gate_versions_raises_major_bump_pr():
     assert exc_info.value.meta is meta
 
 
-@patch("scripts.automerge_dependabot.process_pr")
-def test_main_outputs_major_bumps_json(mock_process, monkeypatch, tmp_path):
-    """MajorBumpPR exceptions are collected and written to GITHUB_OUTPUT."""
-    monkeypatch.setenv("REPO", "owner/repo")
-    monkeypatch.setenv("GH_TOKEN", "fake-token")
-    monkeypatch.setenv("DRY_RUN", "false")
-    monkeypatch.setenv("REVIEW_MAJOR", "true")
-
-    output_file = tmp_path / "github_output"
-    output_file.write_text("")
-    monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
-
+def _major_bump_exception(dep_name="ipware", old="6.0.5", new="7.0.0", **meta_kw):
+    """Build a MajorBumpPR exception with sensible defaults."""
     dep = DependencyUpdate(
-        name="ipware",
-        version="7.0.0",
+        name=dep_name,
+        version=new,
         dependency_type="direct:production",
         update_type="version-update:semver-major",
-        old_version="6.0.5",
+        old_version=old,
     )
     meta = PRMetadata(
         dependencies=[dep],
         has_major=True,
-        ecosystem="pip",
-        raw_ecosystem="pip",
-        old_version="6.0.5",
-        new_version="7.0.0",
+        old_version=old,
+        new_version=new,
+        **meta_kw,
     )
-    mock_process.side_effect = MajorBumpPR(
-        "major version bump on ipware",
-        dep=dep,
-        meta=meta,
+    return MajorBumpPR(f"major version bump on {dep_name}", dep=dep, meta=meta)
+
+
+def test_main_outputs_major_bumps_json(monkeypatch, tmp_path):
+    """MajorBumpPR exceptions are collected and written to GITHUB_OUTPUT."""
+    output_file = tmp_path / "github_output"
+    output_file.write_text("")
+
+    pr = _make_dependabot_pr(number=42, ref="dependabot/pip/ipware-7.0.0")
+    _run_main(
+        monkeypatch,
+        pr,
+        _major_bump_exception(ecosystem="pip", raw_ecosystem="pip"),
+        extra_env={"REVIEW_MAJOR": "true", "GITHUB_OUTPUT": str(output_file)},
     )
-
-    pr = MagicMock()
-    pr.number = 42
-    pr.title = "Bump ipware from 6.0.5 to 7.0.0"
-    pr.user.login = "dependabot[bot]"
-    pr.head.ref = "dependabot/pip/ipware-7.0.0"
-    pr.get_issue_comments.return_value = []
-    pr.get_reviews.return_value = []
-
-    with patch("scripts.automerge_dependabot.Github") as gh_cls:
-        gh_cls.return_value.get_repo.return_value.get_pulls.return_value = [pr]
-        main()
 
     output = output_file.read_text()
     assert "major_bumps=" in output
@@ -338,39 +347,15 @@ def test_main_outputs_major_bumps_json(mock_process, monkeypatch, tmp_path):
     assert bumps[0]["dep_name"] == "ipware"
 
 
-@patch("scripts.automerge_dependabot.process_pr")
-def test_main_no_comment_when_review_major(mock_process, monkeypatch):
+def test_main_no_comment_when_review_major(monkeypatch):
     """When REVIEW_MAJOR=true, MajorBumpPR posts no comment (workflow handles it)."""
-    monkeypatch.setenv("REPO", "owner/repo")
-    monkeypatch.setenv("GH_TOKEN", "fake-token")
-    monkeypatch.setenv("DRY_RUN", "false")
-    monkeypatch.setenv("REVIEW_MAJOR", "true")
-
-    dep = DependencyUpdate(
-        name="ipware",
-        version="7.0.0",
-        dependency_type="direct:production",
-        update_type="version-update:semver-major",
+    pr = _make_dependabot_pr(number=42, ref="dependabot/pip/ipware-7.0.0")
+    _run_main(
+        monkeypatch,
+        pr,
+        _major_bump_exception(),
+        extra_env={"REVIEW_MAJOR": "true"},
     )
-    meta = PRMetadata(dependencies=[dep], has_major=True)
-    mock_process.side_effect = MajorBumpPR(
-        "major version bump on ipware",
-        dep=dep,
-        meta=meta,
-    )
-
-    pr = MagicMock()
-    pr.number = 42
-    pr.title = "Bump ipware from 6.0.5 to 7.0.0"
-    pr.user.login = "dependabot[bot]"
-    pr.head.ref = "dependabot/pip/ipware-7.0.0"
-    pr.get_issue_comments.return_value = []
-    pr.get_reviews.return_value = []
-
-    with patch("scripts.automerge_dependabot.Github") as gh_cls:
-        gh_cls.return_value.get_repo.return_value.get_pulls.return_value = [pr]
-        main()
-
     pr.create_issue_comment.assert_not_called()
 
 
@@ -423,53 +408,25 @@ def test_has_blender_verdict_ignores_human_comments():
     assert has_blender_verdict(pr) is False
 
 
-@patch("scripts.automerge_dependabot.process_pr")
-def test_main_skips_dispatch_when_already_reviewed(mock_process, monkeypatch, tmp_path):
+def test_main_skips_dispatch_when_already_reviewed(monkeypatch, tmp_path):
     """Already-reviewed major bumps are not dispatched again."""
-    monkeypatch.setenv("REPO", "owner/repo")
-    monkeypatch.setenv("GH_TOKEN", "fake-token")
-    monkeypatch.setenv("DRY_RUN", "false")
-    monkeypatch.setenv("REVIEW_MAJOR", "true")
-
     output_file = tmp_path / "github_output"
     output_file.write_text("")
-    monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
 
-    dep = DependencyUpdate(
-        name="ipware",
-        version="7.0.0",
-        dependency_type="direct:production",
-        update_type="version-update:semver-major",
-        old_version="6.0.5",
+    pr = _make_dependabot_pr(
+        number=42,
+        ref="dependabot/pip/ipware-7.0.0",
+        comments=[
+            _gh_comment(body=Verdict.NO_VERDICT.comment("Manual review needed."))
+        ],
     )
-    meta = PRMetadata(
-        dependencies=[dep],
-        has_major=True,
-        ecosystem="pip",
-        raw_ecosystem="pip",
-        old_version="6.0.5",
-        new_version="7.0.0",
-    )
-    mock_process.side_effect = MajorBumpPR(
-        "major version bump on ipware", dep=dep, meta=meta
+    _run_main(
+        monkeypatch,
+        pr,
+        _major_bump_exception(ecosystem="pip", raw_ecosystem="pip"),
+        extra_env={"REVIEW_MAJOR": "true", "GITHUB_OUTPUT": str(output_file)},
     )
 
-    pr = MagicMock()
-    pr.number = 42
-    pr.title = "Bump ipware from 6.0.5 to 7.0.0"
-    pr.user.login = "dependabot[bot]"
-    pr.head.ref = "dependabot/pip/ipware-7.0.0"
-    # Simulate existing verdict comment
-    pr.get_issue_comments.return_value = [
-        _gh_comment(body=Verdict.NO_VERDICT.comment("Manual review needed."))
-    ]
-    pr.get_reviews.return_value = []
-
-    with patch("scripts.automerge_dependabot.Github") as gh_cls:
-        gh_cls.return_value.get_repo.return_value.get_pulls.return_value = [pr]
-        main()
-
-    # No major_bumps output written
     output = output_file.read_text()
     assert "major_bumps=" not in output
 
@@ -477,22 +434,8 @@ def test_main_skips_dispatch_when_already_reviewed(mock_process, monkeypatch, tm
 # --- CIFailurePR: no comment posted ---
 
 
-@patch("scripts.automerge_dependabot.process_pr")
-def test_main_no_comment_on_ci_failure(mock_process, monkeypatch):
+def test_main_no_comment_on_ci_failure(monkeypatch):
     """CIFailurePR skips without posting a comment."""
-    monkeypatch.setenv("REPO", "owner/repo")
-    monkeypatch.setenv("GH_TOKEN", "fake-token")
-    monkeypatch.setenv("DRY_RUN", "false")
-
-    mock_process.side_effect = CIFailurePR("CI has 1 failure(s)")
-
-    pr = MagicMock()
-    pr.number = 99
-    pr.user.login = "dependabot[bot]"
-    pr.head.ref = "dependabot/npm_and_yarn/lodash-4.17.21"
-
-    with patch("scripts.automerge_dependabot.Github") as gh_cls:
-        gh_cls.return_value.get_repo.return_value.get_pulls.return_value = [pr]
-        main()
-
+    pr = _make_dependabot_pr(number=99)
+    _run_main(monkeypatch, pr, CIFailurePR("CI has 1 failure(s)"))
     pr.create_issue_comment.assert_not_called()

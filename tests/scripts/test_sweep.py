@@ -5,8 +5,6 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, PropertyMock, patch
 
-import pytest
-
 from scripts.sweep import process_repo
 
 # --- Shared timestamps ---
