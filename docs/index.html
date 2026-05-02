@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BLEnder Mission Control</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,7 +13,7 @@
     <!-- Upper screen overlays -->
     <a id="counter-sweeps" class="counter-panel counter-small" href="https://github.com/mozilla/blender/actions/workflows/scheduled-sweep.yml?query=is%3Asuccess" target="_blank" rel="noopener">
       <div class="counter-label">SWEEPS</div>
-      <div class="counter-value" data-type="sweep">0</div>
+      <div class="counter-value" data-type="sweep">↻</div>
     </a>
 
     <a id="counter-fail-rate" class="counter-panel counter-small counter-bottom" href="https://github.com/mozilla/blender/actions?query=is%3Afailure" target="_blank" rel="noopener">
@@ -26,22 +23,22 @@
 
     <a id="counter-merges" class="counter-panel counter-large" href="https://github.com/search?q=is%3Apr+is%3Amerged+%22BLEnder+auto-merge%22+in%3Acomments&type=pullrequests" target="_blank" rel="noopener">
       <div class="counter-label">MERGES</div>
-      <div class="counter-value" data-type="merge">0</div>
+      <div class="counter-value" data-type="merge">↻</div>
     </a>
 
     <a id="counter-reviews" class="counter-panel counter-small" href="https://github.com/mozilla/blender/actions/workflows/chore-review-major-dependabot-update.yml?query=is%3Asuccess" target="_blank" rel="noopener">
       <div class="counter-label">REVIEWS</div>
-      <div class="counter-value" data-type="review">0</div>
+      <div class="counter-value" data-type="review">↻</div>
     </a>
 
     <a id="counter-failures" class="counter-panel counter-small counter-bottom" href="https://github.com/mozilla/blender/actions?query=is%3Afailure" target="_blank" rel="noopener">
       <div class="counter-label">FAILED</div>
-      <div class="counter-value counter-fail" data-type="fail">0</div>
+      <div class="counter-value counter-fail" data-type="fail">↻</div>
     </a>
 
     <a id="counter-fixes" class="counter-panel counter-medium" href="https://github.com/mozilla/blender/actions/workflows/fix-dependabot-pr.yml?query=is%3Asuccess" target="_blank" rel="noopener">
       <div class="counter-label">FIXES</div>
-      <div class="counter-value" data-type="fix">0</div>
+      <div class="counter-value" data-type="fix">↻</div>
     </a>
 
     <!-- Mission clock -->

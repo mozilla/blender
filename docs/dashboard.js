@@ -187,6 +187,7 @@ function runLabel(run) {
 function updateCounter(type, value) {
   const el = document.querySelector(`.counter-value[data-type="${type}"]`);
   if (!el) return;
+  el.classList.remove('loading');
   el.textContent = value;
   el.classList.add('pulse');
   setTimeout(() => el.classList.remove('pulse'), 200);
@@ -195,13 +196,17 @@ function updateCounter(type, value) {
 function renderCounters() {
   for (const [type, val] of Object.entries(counters)) {
     const el = document.querySelector(`.counter-value[data-type="${type}"]`);
-    if (el) el.textContent = val;
+    if (el) {
+      el.textContent = val;
+      el.classList.remove('loading');
+    }
   }
 }
 
 function renderFailRate() {
   const el = document.querySelector('.counter-value[data-type="failrate"]');
   if (!el) return;
+  el.classList.remove('loading');
   if (totalRuns === 0) { el.textContent = '—'; return; }
   el.textContent = `${Math.round((counters.fail / totalRuns) * 100)}%`;
 }
@@ -297,7 +302,9 @@ function populateDesk(idx, run, type) {
     '<path fill="#dbab0a" d="M14 8a6 6 0 0 0-6-6V0a8 8 0 0 1 8 8h-2Z"/>';
   link.appendChild(spinner);
 
-  link.append(runLabel(run));
+  const label = runLabel(run);
+  link.append(label);
+  link.title = label;
   slot.appendChild(link);
 
   desks[idx] = { run, type };
@@ -754,6 +761,9 @@ function initPlayer() {
 if (new URLSearchParams(window.location.search).has('debug')) {
   showDebug();
 }
+
+// Mark all counter values as loading (spinning ↻)
+document.querySelectorAll('.counter-value').forEach(el => el.classList.add('loading'));
 
 setInterval(updateClocks, 1000);
 initPlayer();

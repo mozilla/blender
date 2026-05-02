@@ -1,5 +1,28 @@
 /* BLEnder Mission Control Dashboard */
 
+/* Self-hosted Press Start 2P (latin subset) */
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('assets/PressStart2P-latin.woff2') format('woff2');
+}
+
+:root {
+  --color-green: #0f0;
+  --color-green-dim: #0a0;
+  --color-red: #f44;
+  --color-red-dim: #a00;
+  --color-magenta: #f0f;
+  --color-magenta-dim: #a0a;
+  --color-bg-panel: #000422;
+  --font-pixel: 'Press Start 2P', monospace;
+  --glow-green: 0 0 8px var(--color-green), 0 0 16px var(--color-green-dim);
+  --glow-red: 0 0 8px var(--color-red), 0 0 16px var(--color-red-dim);
+  --glow-magenta: 0 0 6px var(--color-magenta), 0 0 12px var(--color-magenta-dim);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -13,7 +36,7 @@ body {
   align-items: flex-start;
   min-height: 100vh;
   overflow-x: hidden;
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-pixel);
 }
 
 /* Scene container — maintains aspect ratio of background (1672:941) */
@@ -38,8 +61,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #0f0;
-  text-shadow: 0 0 8px #0f0, 0 0 16px #0a0;
+  color: var(--color-green);
+  text-shadow: var(--glow-green);
   text-decoration: none;
 }
 
@@ -56,12 +79,12 @@ body {
 
 .counter-value.pulse {
   transform: scale(1.4);
-  text-shadow: 0 0 12px #0f0, 0 0 24px #0f0;
+  text-shadow: 0 0 12px var(--color-green), 0 0 24px var(--color-green);
 }
 
 .counter-fail {
-  color: #f44;
-  text-shadow: 0 0 8px #f44, 0 0 16px #a00;
+  color: var(--color-red);
+  text-shadow: var(--glow-red);
 }
 
 /* Screen positions (% of scene) */
@@ -166,7 +189,7 @@ body {
   image-rendering: pixelated;
   position: absolute;
   top: -5%;
-  filter: drop-shadow(0 0 4px #fff);
+  filter: drop-shadow(0 0 4px white);
   z-index: 11;
 }
 
@@ -180,13 +203,13 @@ body {
   position: absolute;
   bottom: -25%;
   font-size: clamp(3px, 0.45vw, 7px);
-  color: #0f0;
+  color: var(--color-green);
   text-decoration: none;
-  text-shadow: 0 0 4px #0f0;
+  text-shadow: 0 0 4px var(--color-green);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200%;
+  max-width: 130%;
   text-align: center;
   pointer-events: auto;
   display: inline-flex;
@@ -196,7 +219,7 @@ body {
 
 .repo-link:hover {
   color: #4f4;
-  text-shadow: 0 0 8px #0f0;
+  text-shadow: 0 0 8px var(--color-green);
 }
 
 /* Spinning indicator — matches GitHub's in-progress icon */
@@ -210,6 +233,12 @@ body {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Loading spinner for counter values */
+.counter-value.loading {
+  animation: spin 1.5s linear infinite;
+  display: inline-block;
 }
 
 /* Beam animation */
@@ -236,9 +265,9 @@ body {
   top: 22%;
   right: 28.3%;
   font-size: clamp(6px, 0.8vw, 11px);
-  color: #f0f;
-  text-shadow: 0 0 6px #f0f, 0 0 12px #a0a;
-  background-color: #000422;
+  color: var(--color-magenta);
+  text-shadow: var(--glow-magenta);
+  background-color: var(--color-bg-panel);
   padding: 0.4em 0.6em;
   pointer-events: none;
 }
@@ -249,18 +278,18 @@ body {
   top: 21.5%;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #000422;
+  background-color: var(--color-bg-panel);
   padding: 0.6em 0.9em;
   font-size: clamp(6px, 0.7vw, 12px);
-  color: #f0f;
-  text-shadow: 0 0 6px #f0f, 0 0 12px #a0a;
+  color: var(--color-magenta);
+  text-shadow: var(--glow-magenta);
   display: flex;
   gap: 1.5em;
 }
 
 #status-bar .error {
-  color: #f44;
-  text-shadow: 0 0 6px #f44, 0 0 12px #a00;
+  color: var(--color-red);
+  text-shadow: var(--glow-red);
 }
 
 /* Music player — overlays SYSTEM STATUS panel */
@@ -271,9 +300,9 @@ body {
   width: 11%;
   background: rgba(0, 4, 34, 1);
   height: 28%;
-  color: #0f0;
-  text-shadow: 0 0 6px #0f0, 0 0 12px #0a0;
-  font-family: 'Press Start 2P', monospace;
+  color: var(--color-green);
+  text-shadow: var(--glow-green);
+  font-family: var(--font-pixel);
   padding: 0.6em 0.5em;
   display: flex;
   flex-direction: column;
@@ -315,10 +344,10 @@ body {
 
 #player-controls button {
   background: transparent;
-  border: 1px solid #0f0;
-  color: #0f0;
-  text-shadow: 0 0 4px #0f0;
-  font-family: 'Press Start 2P', monospace;
+  border: 1px solid var(--color-green);
+  color: var(--color-green);
+  text-shadow: 0 0 4px var(--color-green);
+  font-family: var(--font-pixel);
   font-size: clamp(4px, 0.5vw, 8px);
   padding: 0.3em 0.5em;
   cursor: pointer;
@@ -327,7 +356,7 @@ body {
 
 #player-controls button:hover {
   background: rgba(0, 255, 0, 0.15);
-  box-shadow: 0 0 8px #0f0;
+  box-shadow: 0 0 8px var(--color-green);
 }
 
 #player-attribution {
@@ -339,12 +368,12 @@ body {
 }
 
 #attr-link {
-  color: #0f0;
+  color: var(--color-green);
   text-decoration: none;
 }
 
 #attr-link:hover {
-  text-shadow: 0 0 8px #0f0;
+  text-shadow: 0 0 8px var(--color-green);
 }
 
 /* Debug overlay */
