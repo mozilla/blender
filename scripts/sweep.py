@@ -141,21 +141,28 @@ def process_repo(repo: Repository) -> list[Action]:
                 print(f"    PR #{pr.number}: BLEnder already committed a fix, skipping")
                 continue
 
-            # Check for any BLEnder comment (covers fix attempts AND
-            # automerge skip/reject decisions like "will not auto-merge")
-            comments = pr.get_issue_comments()
-            blender_comment = next(
-                (
-                    c.body
-                    for c in comments
-                    if c.user.login.endswith("[bot]")
-                    and (c.body or "").startswith("BLEnder")
-                ),
-                None,
+            # Only skip if a fix-related comment was posted AFTER the
+            # latest commit.  Stale comments (before a force-push) are
+            # ignored so the fix can be retried on new code.
+            latest_commit_date = max(
+                (c.commit.committer.date for c in commits), default=None
             )
-            if blender_comment:
-                print(f"    PR #{pr.number}: BLEnder already commented, skipping")
-                continue
+            if latest_commit_date is not None:
+                fix_comments = [
+                    c
+                    for c in pr.get_issue_comments()
+                    if c.user.login.endswith("[bot]")
+                    and (
+                        (c.body or "").startswith("BLEnder picked up")
+                        or (c.body or "").startswith("BLEnder could not fix")
+                    )
+                ]
+                fresh_fix_comment = any(
+                    c.created_at >= latest_commit_date for c in fix_comments
+                )
+                if fresh_fix_comment:
+                    print(f"    PR #{pr.number}: fresh BLEnder fix comment, skipping")
+                    continue
 
         print(f"    PR #{pr.number}: {result}")
         actions.append(

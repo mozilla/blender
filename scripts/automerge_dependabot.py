@@ -48,6 +48,10 @@ class AdvisorySkipPR(SkipPR):
     """Skip caused by a GHSA advisory on the new version."""
 
 
+class CIFailurePR(SkipPR):
+    """CI failures are handled by the fix workflow; suppress the comment."""
+
+
 class MajorBumpPR(SkipPR):
     """Skip caused by a major version bump. Carries dep/meta for dispatch."""
 
@@ -350,7 +354,7 @@ def gate_ci(repo: Repository, sha: str) -> None:
             pending += 1
 
     if failing > 0:
-        raise SkipPR(f"CI has {failing} failure(s)")
+        raise CIFailurePR(f"CI has {failing} failure(s)")
     if pending > 0:
         raise SkipPR(f"CI has {pending} pending check(s)")
 
@@ -781,6 +785,12 @@ def main() -> None:
                 )
             else:
                 _post_skip_comment(pr, str(e), False, config.dry_run)
+
+        except CIFailurePR as e:
+            print(f"  SKIP (CI failure, fix workflow handles it): {e}")
+            skipped += 1
+            pkg = _package_name_from_branch(pr.head.ref)
+            skip_reasons.append(f"#{pr.number} ({pkg}): {e}")
 
         except SkipPR as e:
             is_retry = isinstance(e, RetryPR)

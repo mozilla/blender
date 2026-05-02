@@ -8,6 +8,7 @@ import pytest
 
 from scripts.automerge_dependabot import (
     AdvisorySkipPR,
+    CIFailurePR,
     DependencyUpdate,
     MajorBumpPR,
     PRMetadata,
@@ -478,3 +479,29 @@ def test_main_skips_dispatch_when_already_reviewed(mock_process, monkeypatch, tm
     # No major_bumps output written
     output = output_file.read_text()
     assert "major_bumps=" not in output
+
+
+# --- CIFailurePR: no comment posted ---
+
+
+@patch("scripts.automerge_dependabot.process_pr")
+def test_main_no_comment_on_ci_failure(mock_process, monkeypatch):
+    """#16: CIFailurePR skips without posting a comment."""
+    from scripts.automerge_dependabot import main
+
+    monkeypatch.setenv("REPO", "owner/repo")
+    monkeypatch.setenv("GH_TOKEN", "fake-token")
+    monkeypatch.setenv("DRY_RUN", "false")
+
+    mock_process.side_effect = CIFailurePR("CI has 1 failure(s)")
+
+    pr = MagicMock()
+    pr.number = 99
+    pr.user.login = "dependabot[bot]"
+    pr.head.ref = "dependabot/npm_and_yarn/lodash-4.17.21"
+
+    with patch("scripts.automerge_dependabot.Github") as gh_cls:
+        gh_cls.return_value.get_repo.return_value.get_pulls.return_value = [pr]
+        main()
+
+    pr.create_issue_comment.assert_not_called()
