@@ -42,6 +42,23 @@ const DESK_POSITIONS = [
   { left: 85.5, top: 67 },
 ];
 
+// SVG icons (GitHub octicons, fill="currentColor" for CSS color inheritance)
+const ICONS = {
+  sweep: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm5.024-3.672 4.232 3.206a.575.575 0 0 1 0 .932l-4.232 3.206A.575.575 0 0 1 5.6 11.206V4.794a.575.575 0 0 1 .924-.466Z"/></svg>',
+  mergecheck: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 3.25a2.25 2.25 0 1 1 3 2.122v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.25 2.25 0 0 1 1.5 3.25Zm5.677-.177L9.573.677A.25.25 0 0 1 10 .854V2.5h1A2.5 2.5 0 0 1 13.5 5v5.628a2.251 2.251 0 1 1-1.5 0V5a1 1 0 0 0-1-1h-1v1.646a.25.25 0 0 1-.427.177L7.177 3.427a.25.25 0 0 1 0-.354ZM3.75 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm0 9.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm8.25.75a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Z"/></svg>',
+  review: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M1.75 1h8.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 10.25 10H7.061l-2.574 2.573A1.458 1.458 0 0 1 2 11.543V10h-.25A1.75 1.75 0 0 1 0 8.25v-5.5C0 1.784.784 1 1.75 1ZM1.5 2.75v5.5c0 .138.112.25.25.25h1a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h3.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25Zm13 2a.25.25 0 0 0-.25-.25h-.5a.75.75 0 0 1 0-1.5h.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 14.25 12H14v1.543a1.458 1.458 0 0 1-2.487 1.03L9.22 12.28a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l2.22 2.22v-2.19a.75.75 0 0 1 .75-.75h1a.25.25 0 0 0 .25-.25Z"/></svg>',
+  fix: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8.75 1.75V5H12a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75H8.75v3.25H12a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75H8.75v2a.75.75 0 0 1-1.5 0v-2H4a.75.75 0 0 1-.75-.75v-.5A.75.75 0 0 1 4 10.25h3.25V7H4a.75.75 0 0 1-.75-.75v-.5A.75.75 0 0 1 4 5h3.25V1.75a.75.75 0 0 1 1.5 0Z"/></svg>',
+  merge: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M5.45 5.154A4.25 4.25 0 0 0 9.25 7.5h1.378a2.251 2.251 0 1 1 0 1.5H9.25A5.734 5.734 0 0 1 5 7.123v3.505a2.25 2.25 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.95-.218ZM4.25 13.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm8-8a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM4.25 4a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"/></svg>',
+  fail: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M2.343 13.657A8 8 0 1 1 13.658 2.343 8 8 0 0 1 2.343 13.657ZM6.03 4.97a.751.751 0 0 0-1.042.018.751.751 0 0 0-.018 1.042L6.94 8 4.97 9.97a.749.749 0 0 0 .326 1.275.749.749 0 0 0 .734-.215L8 9.06l1.97 1.97a.749.749 0 0 0 1.275-.326.749.749 0 0 0-.215-.734L9.06 8l1.97-1.97a.749.749 0 0 0-.326-1.275.749.749 0 0 0-.734.215L8 6.94Z"/></svg>',
+};
+
+function createIconEl(type, className) {
+  const el = document.createElement('div');
+  el.className = `${className} ${type}`;
+  el.innerHTML = ICONS[type] || '';
+  return el;
+}
+
 // State
 const seenRunIds = new Set();
 const counters = { sweep: 0, mergecheck: 0, merge: 0, review: 0, fix: 0, fail: 0 };
@@ -187,8 +204,7 @@ function populateDesk(idx, run, type, beamTarget) {
   requestAnimationFrame(() => robot.classList.add('active'));
 
   // Activity icon
-  const icon = document.createElement('div');
-  icon.className = `activity-icon ${type}`;
+  const icon = createIconEl(type, 'activity-icon');
   slot.appendChild(icon);
 
   // Run label link with spinner
@@ -249,7 +265,12 @@ function completeWork(deskIdx, run, type) {
   const isFailed = run.conclusion === 'failure';
   const target = desks[deskIdx].beamTarget || type;
   if (isFailed) {
-    // Track for fail rate — no beam (FAILED counter removed)
+    // Swap activity icon to fail X, then track for fail rate
+    const oldIcon = slot?.querySelector('.activity-icon');
+    if (oldIcon) {
+      const failIcon = createIconEl('fail', 'activity-icon');
+      oldIcon.replaceWith(failIcon);
+    }
     counters.fail++;
     totalRuns++;
     renderFailRate();
@@ -264,8 +285,7 @@ function fireBeam(deskIdx, iconType, counterType) {
   const deskPos = DESK_POSITIONS[deskIdx];
   const targetPos = COUNTER_TARGETS[counterType];
 
-  const beam = document.createElement('div');
-  beam.className = `beam ${iconType}`;
+  const beam = createIconEl(iconType, 'beam');
   beam.style.left = `${deskPos.left}%`;
   beam.style.top = `${deskPos.top}%`;
   beamLayer.appendChild(beam);
@@ -320,7 +340,7 @@ function celebrateMerges(delta) {
         display_title: 'Auto-merged PR',
         conclusion: 'success',
       };
-      assignRun(run, 'mergecheck', 3000, 'merge');
+      assignRun(run, 'merge', 3000, 'merge');
     }, i * 1500);
   }
   // If delta exceeds the visual cap, set the remainder directly
