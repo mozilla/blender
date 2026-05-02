@@ -29,6 +29,7 @@ const COUNTER_TARGETS = {
   sweep:      { left: 19.5, top: 36 },
   review:     { left: 43, top: 43 },
   mergecheck: { left: 66.5, top: 37 },
+  merge:      { left: 66.5, top: 51 },
   fix:        { left: 82.5, top: 43 },
 };
 
@@ -48,6 +49,7 @@ let totalRuns = 0;
 const desks = [null, null, null, null, null];
 const runQueue = [];
 let pollEtag = null;
+let mergeTarget = 0; // Search API count we're animating toward (prevents duplicate celebrations)
 
 // DOM refs
 const beamLayer = document.getElementById('beam-layer');
@@ -171,7 +173,7 @@ function freeDesk(idx) {
   processQueue();
 }
 
-function populateDesk(idx, run, type) {
+function populateDesk(idx, run, type, beamTarget) {
   const slot = getDeskSlot(idx);
   if (!slot) return;
 
@@ -206,22 +208,22 @@ function populateDesk(idx, run, type) {
   link.title = label;
   slot.appendChild(link);
 
-  desks[idx] = { run, type };
+  desks[idx] = { run, type, beamTarget };
 }
 
 function processQueue() {
   while (runQueue.length > 0) {
     const idx = claimDesk();
     if (idx === -1) break;
-    const { run, type, duration } = runQueue.shift();
-    startWork(idx, run, type, duration);
+    const { run, type, duration, beamTarget } = runQueue.shift();
+    startWork(idx, run, type, duration, beamTarget);
   }
 }
 
 // ── Work lifecycle ──
 
-function startWork(deskIdx, run, type, duration) {
-  populateDesk(deskIdx, run, type);
+function startWork(deskIdx, run, type, duration, beamTarget) {
+  populateDesk(deskIdx, run, type, beamTarget);
 
   const timerId = setTimeout(() => {
     completeWork(deskIdx, run, type);
@@ -245,13 +247,14 @@ function completeWork(deskIdx, run, type) {
   }
 
   const isFailed = run.conclusion === 'failure';
+  const target = desks[deskIdx].beamTarget || type;
   if (isFailed) {
     // Track for fail rate — no beam (FAILED counter removed)
     counters.fail++;
     totalRuns++;
     renderFailRate();
   } else {
-    fireBeam(deskIdx, type, type);
+    fireBeam(deskIdx, type, target);
   }
 
   setTimeout(() => freeDesk(deskIdx), 600);
@@ -282,7 +285,9 @@ function fireBeam(deskIdx, iconType, counterType) {
 
   beam.addEventListener('transitionend', () => {
     counters[counterType]++;
-    totalRuns++;
+    // Merge celebrations come from the Search API, not workflow runs —
+    // don't count them toward totalRuns (avoids inflating the fail rate)
+    if (counterType !== 'merge') totalRuns++;
     updateCounter(counterType, counters[counterType]);
     renderFailRate();
     beam.style.opacity = '0';
@@ -292,12 +297,36 @@ function fireBeam(deskIdx, iconType, counterType) {
 
 // ── Assign run to desk or queue ──
 
-function assignRun(run, type, duration) {
+function assignRun(run, type, duration, beamTarget) {
   const idx = claimDesk();
   if (idx === -1) {
-    runQueue.push({ run, type, duration });
+    runQueue.push({ run, type, duration, beamTarget });
   } else {
-    startWork(idx, run, type, duration);
+    startWork(idx, run, type, duration, beamTarget);
+  }
+}
+
+// ── Merge celebrations ──
+// When the Search API reports new merges, queue robots that fire beams to the
+// MERGES counter. Each robot uses the mergecheck sprite but targets "merge".
+
+function celebrateMerges(delta) {
+  const cap = Math.min(delta, 5);
+  for (let i = 0; i < cap; i++) {
+    setTimeout(() => {
+      const run = {
+        id: `merge-celebrate-${Date.now()}-${i}`,
+        html_url: `https://github.com/search?q=${encodeURIComponent(MERGE_SEARCH_QUERY)}&type=pullrequests`,
+        display_title: 'Auto-merged PR',
+        conclusion: 'success',
+      };
+      assignRun(run, 'mergecheck', 3000, 'merge');
+    }, i * 1500);
+  }
+  // If delta exceeds the visual cap, set the remainder directly
+  if (delta > cap) {
+    counters.merge += (delta - cap);
+    updateCounter('merge', counters.merge);
   }
 }
 
@@ -437,10 +466,11 @@ async function initialLoad() {
       }
     }
 
-    // Fetch actual merge count from Search API
+    // Fetch actual merge count from Search API (set directly on initial load)
     const mergeCount = await fetchMergeCount();
     if (mergeCount !== null) {
       counters.merge = mergeCount;
+      mergeTarget = mergeCount;
     }
 
     renderCounters();
@@ -514,10 +544,15 @@ async function poll() {
       }
     }
 
-    // Refresh actual merge count
+    // Refresh actual merge count — animate new merges with desk robots
     const mergeCount = await fetchMergeCount();
-    if (mergeCount !== null && mergeCount !== counters.merge) {
+    if (mergeCount !== null && mergeCount > mergeTarget) {
+      celebrateMerges(mergeCount - mergeTarget);
+      mergeTarget = mergeCount;
+    } else if (mergeCount !== null && mergeCount < mergeTarget) {
+      // Rare: count decreased (reverted PR) — correct directly
       counters.merge = mergeCount;
+      mergeTarget = mergeCount;
       updateCounter('merge', counters.merge);
     }
 
