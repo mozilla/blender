@@ -190,7 +190,7 @@ body {
   aspect-ratio: 1;
   color: white;
   position: absolute;
-  top: -5%;
+  top: 50%;
   filter: drop-shadow(0 0 4px white);
   z-index: 11;
 }
