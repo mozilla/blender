@@ -1,6 +1,5 @@
 .envrc
 .secrets
 .claude/settings.local.json
-CLAUDE.md
 .venv/
 __pycache__/
