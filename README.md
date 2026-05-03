@@ -1,23 +1,96 @@
 # BLEnder
 
-Dependabot PRs break CI. BLEnder fixes them.
+<img src="docs/assets/dino-avatar.png" alt="BLEnder" width="200" />
 
-It reads the CI logs, runs Claude Code in a sandbox, and commits the fix. It can also auto-merge safe PRs — patch or minor bumps with high compatibility and no advisories.
+## What BLEnder does
 
-Everything runs from this repo via a GitHub App. No workflows or secrets needed in the target repo.
+Software projects depend on hundreds of libraries. Those libraries release updates constantly. Each update creates a small task: check the change, run the tests, merge it in. Multiply that across dozens of projects and the backlog grows fast.
 
-## Install & quick start
+BLEnder handles it. It watches your projects for dependency updates, decides which ones are safe, and merges them. For big updates that might change how a library works, BLEnder reviews the change to merge it or flag it for you to review. When an update breaks something, BLEnder reads the error, and commits a fix for you to review. 
 
-1. Install the BLEnder GitHub App on your org. Grant it access to the target repo.
-2. Go to [BLEnder Setup](https://github.com/mozilla/blender/actions/workflows/build-setup.yml) → **Run workflow** → enter the target repo (e.g. `mozilla/blurts-server`)
-3. Review the PR that BLEnder opens on your repo. It adds a `.blender/` directory with config and a prompt template. Check that the prompt lists the right test commands, linters, and formatters.
-4. Merge the PR. BLEnder will start scanning your repo on its next sweep.
+**One install covers all the orgs.** BLEnder runs on its own. Your projects don't need secrets or processes to get started beyond a short onboarding step.
 
-## Config
+### At a glance
 
-### `.blender/blender.yml`
+- **Safe small updates get merged.** Small, compatible updates with clean tests are approved and merged with no human involvement.
+- **Major updates get reviewed.** Major version changes are analyzed for breaking changes. Safe ones merge. Uncertain ones get a written report for a human to decide.
+- **Broken updates get fixed.** When an update breaks the build, BLEnder reads the errors, writes a code fix, and commits it.
+- **Everything is auditable.** Every decision is posted as a comment on the update. Nothing happens in the dark.
 
-Setup generates this file for your repo. A minimal example:
+---
+
+## How it works
+
+BLEnder sweeps your projects every 30 minutes looking for dependency updates from [Dependabot](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide). Each update goes through one of three paths:
+
+### Auto-merge
+
+For patch and minor updates, BLEnder checks:
+
+3. The version change is small (patch or minor)
+1. The update was created by Dependabot
+2. All tests pass
+4. The library's compatibility score is 80% or higher
+5. No security advisories affect the new version
+
+All five must pass. If any check fails, the update waits or gets routed elsewhere.
+
+### Major version review
+
+Major version bumps can change how a library works. When BLEnder sees a major update, it uses [Claude Code](https://claude.com/product/claude-code) to:
+
+1. Read the library's release notes and new code
+2. Scan your code for affected areas
+3. Check that your tests cover the affected areas
+
+- If BLEnder determines the major update is low-risk, it merges the major update.
+- If not, BLEnder adds a comment with a detailed report for review.
+
+### Fix
+
+When BLEnder sees an update the breaks the repos checks, BLEnder:
+
+1. Collects the test output and error logs
+2. Sends them to [Claude Code](https://claude.com/product/claude-code) (Anthropic's AI) inside a locked-down sandbox with no network access and no credentials
+3. Validates the fix — rejects changes to sensitive files and scans for leaked secrets
+4. Commits the fix to the update
+
+The AI cannot access the internet, call any APIs, or see any credentials. Its output is validated before anything is committed.
+
+---
+
+## Dashboard
+
+BLEnder has a [live mission control dashboard](https://mozilla.github.io/blender/) that tracks sweeps, fixes, merges, and reviews in real time.
+
+---
+
+## Getting started
+
+### 1. Install the GitHub App
+
+Install the BLEnder GitHub App on your organization. Grant it access to the repositories you want covered.
+
+### 2. Run onboarding
+
+Go to **BLEnder Setup** in the Actions tab and run the workflow for your project. BLEnder will analyze the project and open a pull request with a tailored configuration.
+
+### 3. Review the onboarding pull request
+
+The pull request adds a `.blender/` directory with two files:
+
+- **`blender.yml`** — project metadata (name, language versions, install commands)
+- **`fix-dependabot-prompt.md`** — instructions BLEnder uses when fixing broken updates, tailored to your project's test commands, linters, and patterns
+
+Review that the configuration looks right and merge it. BLEnder starts working on the next sweep.
+
+---
+
+## Configuration
+
+### Project config (`.blender/blender.yml`)
+
+Onboarding generates this file. A minimal example:
 
 ```yaml
 repo_name: "My Project"
@@ -30,22 +103,23 @@ Available fields:
 |-------|----------|-------------|
 | `repo_name` | yes | Human-readable project name |
 | `install_command` | no | Command to install dependencies |
-| `node_version` | no | Node.js version for `setup-node` |
-| `python_version` | no | Python version for `setup-python` |
+| `node_version` | no | Node.js version |
+| `python_version` | no | Python version |
 
 Omit fields that don't apply.
 
-### `.blender/fix-dependabot-prompt.md`
+### Prompt template (`.blender/fix-dependabot-prompt.md`)
 
-Prompt template with `{{PR_TITLE}}`, `{{FAILING_CHECKS}}`, and `{{CI_LOGS}}` placeholders. Lists the repo's test commands, linters, and common fix patterns.
+A prompt with placeholders (`{{PR_TITLE}}`, `{{FAILING_CHECKS}}`, `{{CI_LOGS}}`) that BLEnder fills in at runtime. Lists the project's test commands, linters, and common fix patterns.
 
 ### Default settings
 
-BLEnder ships with defaults in `config/defaults.yml`:
+BLEnder ships with defaults in [`config/defaults.yml`](config/defaults.yml):
 
 ```yaml
 automerge:
   allow_major: false
+  review_major: true
   min_compatibility_score: 80
   check_advisories: true
 
@@ -55,74 +129,45 @@ fix:
   max_budget_usd: 2.00
 ```
 
-Per-repo overrides go in the target repo's `.blender/blender.yml`.
-
-## Manual triggers
-
-### Fix a failing Dependabot PR
-
-1. Go to [BLEnder Fix](https://github.com/mozilla/blender/actions/workflows/fix-dependabot-pr.yml)
-2. Click **Run workflow**
-3. Enter the target repo and PR number
-4. Set dry run to `true` first to preview
-5. Run again with dry run `false` to commit the fix
-
-### Auto-merge safe PRs
-
-1. Go to [BLEnder Auto-merge](https://github.com/mozilla/blender/actions/workflows/chore-automerge-dependabot-prs.yml)
-2. Click **Run workflow**
-3. Enter the target repo
-4. Set dry run to `true` to preview
-5. Run again with dry run `false` to merge
+Override any of these in your project's `.blender/blender.yml`.
 
 ---
 
-## How it works
+## Manual triggers
 
-### Sweep
+All workflows support manual runs from the Actions tab with a dry-run option to preview before committing.
 
-A scheduled job runs every 30 minutes. It authenticates as the BLEnder GitHub App, lists all installations, and checks each repo for work:
+| Workflow | What it does |
+|----------|-------------|
+| **Scheduled Sweep** | Scan all projects for work |
+| **Fix Dependabot PR** | Fix a specific failing update |
+| **Auto-merge Dependabot PRs** | Merge safe updates for a project |
+| **Review Major Update** | Evaluate a major version bump |
+| **Setup** | Onboard a new project |
 
-- **Failing Dependabot PRs** → triggers a fix workflow
-- **Green Dependabot PRs** that pass safety gates → triggers an auto-merge workflow
+Set dry run to `true` to preview what BLEnder would do without making changes.
 
-The sweep can also be triggered manually from [Scheduled Sweep](https://github.com/mozilla/blender/actions/workflows/scheduled-sweep.yml).
+---
 
-### Fix workflow
+## Security model
 
-1. Generate a GitHub App token for the target repo
-2. Check out the Dependabot PR branch
-3. Read config from `.blender/blender.yml` in the target repo
-4. Install dependencies per config
-5. Fetch failing checks and CI logs from the GitHub API
-6. Sanitize inputs against prompt injection
-7. Revoke the GitHub token — Claude cannot call GitHub
-8. Run Claude Code in a sandbox — no network, no secrets
-9. Reject changes to `.github/`, `.env`, `.circleci/`
-10. Detect leaked nonces and API keys in the diff
-11. Revert whitespace-only changes
-12. Commit via the GitHub API, signed by `github-actions[bot]`
+- **Sandboxed AI.** Claude runs with no network access and no credentials. The GitHub token is revoked before Claude starts.
+- **Input sanitization.** Update metadata is scrubbed for injection attempts before it enters the prompt.
+- **Secret detection.** Diffs are scanned for leaked API keys and cryptographic nonces. Any detection aborts the run.
+- **Restricted file changes.** Changes to workflow files, environment files, and CI config are rejected.
+- **Signed commits.** All commits are signed and attributed to `github-actions[bot]`.
+- **Pinned dependencies.** All action references use commit SHA pins, not version tags.
+- **No secrets in target projects.** The API key lives in BLEnder, not in your project.
 
-### Auto-merge workflow
+---
 
-Checks all open Dependabot PRs against five gates:
+## Repo layout
 
-1. **Author** is `dependabot[bot]`
-2. **CI** is green
-3. **Version bump** is patch or minor
-4. **Compatibility score** >= 80%
-5. **No security advisories** on the new version
-
-PRs that pass all five gates get approved and merged.
-
-### Security model
-
-- Claude runs in a sandbox. No network. No GitHub token.
-- PR metadata is sanitized before it enters the prompt.
-- Leaked API keys and nonces in the diff abort the run.
-- Changes to `.github/`, `.env`, and `.circleci/` are rejected.
-- Whitespace-only changes are reverted.
-- Claude's output is suppressed from job logs by default.
-- Commits are signed by `github-actions[bot]` via the API.
-- All action references are pinned to commit SHAs.
-- Target repos never hold the Anthropic API key.
+```
+.github/workflows/   GitHub Actions workflows
+scripts/             Python and shell scripts
+config/              Default configuration
+prompts/             Prompt templates for Claude
+tests/               Test suite
+docs/                Dashboard web app
+```
