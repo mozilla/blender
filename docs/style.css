@@ -286,8 +286,12 @@ body {
   text-shadow: var(--glow-magenta);
   font-family: var(--font-pixel);
   font-size: clamp(5px, 0.65vw, 10px);
-  pointer-events: none;
+  text-decoration: none;
   z-index: 5;
+}
+
+#branding-panel:hover {
+  text-shadow: 0 0 10px var(--color-magenta), 0 0 20px var(--color-magenta-dim);
 }
 
 #branding-panel img {
