@@ -69,8 +69,9 @@ jobs:
           repositories: ${{ steps.parse.outputs.name }}
           permission-contents: write
           permission-pull-requests: write
-          permission-vulnerability-alerts: read
+          permission-vulnerability-alerts: write
           permission-security-events: write
+          permission-issues: write
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
@@ -92,6 +93,7 @@ jobs:
             echo "python_version=$(yq '.python_version // ""' "$CONFIG_FILE")"
             echo "install_command=$(yq '.install_command // ""' "$CONFIG_FILE")"
             echo "repo_name=$(yq '.repo_name // ""' "$CONFIG_FILE")"
+            echo "dismiss_not_affected=$(yq '.investigate.dismiss_not_affected // "false"' "$CONFIG_FILE")"
           } >> "$GITHUB_OUTPUT"
 
       # --- Conditional setup ---
@@ -157,8 +159,10 @@ jobs:
           ALERT_NUMBER: ${{ inputs.alert_number }}
           ALERT_PACKAGE: ${{ inputs.alert_package }}
           ALERT_ECOSYSTEM: ${{ inputs.alert_ecosystem }}
+          ALERT_SEVERITY: ${{ inputs.alert_severity }}
           ALERT_PATCHED_VERSION: ${{ inputs.alert_patched_version }}
           DRY_RUN: ${{ inputs.dry_run }}
+          DISMISS_NOT_AFFECTED: ${{ steps.config.outputs.dismiss_not_affected }}
 
   remediate:
     needs: investigate

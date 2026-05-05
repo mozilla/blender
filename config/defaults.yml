@@ -20,3 +20,4 @@ investigate:
   max_budget_usd: 1.50
   run_tests: true
   severity_threshold: ""
+  dismiss_not_affected: false

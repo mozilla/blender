@@ -3,9 +3,13 @@
 
 Reads .blender-alert-verdict.json and takes the appropriate action:
 
+  not-affected + dismiss enabled        -> dismiss the alert via API
   not-affected + existing Dependabot PR -> no-op (existing pipeline handles it)
-  not-affected + no PR                 -> open a bump PR
-  affected                             -> create advisory with private fork
+  not-affected + no PR                  -> open a bump PR
+  affected                              -> create advisory with private fork
+
+Each run posts a row to a tracking issue on the target repo so the
+owner can see all results in one place.
 
 Environment variables:
   GH_TOKEN              -- GitHub token (required)
@@ -13,8 +17,10 @@ Environment variables:
   ALERT_NUMBER          -- Dependabot alert number (required)
   ALERT_PACKAGE         -- Package name (required)
   ALERT_ECOSYSTEM       -- Ecosystem, e.g. npm or pip (required)
+  ALERT_SEVERITY        -- Alert severity (optional, for summary report)
   ALERT_PATCHED_VERSION -- Version to bump to (required for bump PRs)
   DRY_RUN               -- Set to "true" to skip mutations (default: false)
+  DISMISS_NOT_AFFECTED  -- Set to "true" to dismiss non-affected alerts
 """
 
 from __future__ import annotations
@@ -185,14 +191,94 @@ def create_advisory_and_fork(
     return (ghsa_id, fork_full_name)
 
 
+SUMMARY_ISSUE_TITLE = "BLEnder: Dependabot alert investigation summary"
+SUMMARY_TABLE_HEADER = (
+    "| Alert | Package | Severity | Action | Reason |\n"
+    "| ----- | ------- | -------- | ------ | ------ |"
+)
+
+
+def dismiss_alert(
+    repo,
+    alert_number: int,
+    reason: str,
+    dry_run: bool,
+) -> None:
+    """Dismiss a Dependabot alert as inaccurate (not affected)."""
+    if dry_run:
+        print(f"  DRY_RUN: would dismiss alert #{alert_number}")
+        return
+
+    url = f"/repos/{repo.full_name}/dependabot/alerts/{alert_number}"
+    payload = {
+        "state": "dismissed",
+        "dismissed_reason": "inaccurate",
+        "dismissed_comment": f"BLEnder: {reason}",
+    }
+    repo._requester.requestJsonAndCheck("PATCH", url, input=payload)
+    print(f"  Dismissed alert #{alert_number}")
+
+
+def post_summary_comment(
+    repo,
+    alert_number: int,
+    package: str,
+    severity: str,
+    action: str,
+    reason: str,
+    dry_run: bool,
+) -> None:
+    """Post a row to the summary tracking issue.
+
+    Creates the issue on first run. Each row is a comment to avoid
+    read-modify-write races when many workflows run at once.
+    """
+    if dry_run:
+        print("  DRY_RUN: would post summary comment")
+        return
+
+    # Find existing summary issue
+    issues = repo.get_issues(state="open")
+    summary_issue = None
+    for issue in issues:
+        if issue.title == SUMMARY_ISSUE_TITLE:
+            summary_issue = issue
+            break
+
+    # Create issue if missing
+    if summary_issue is None:
+        summary_issue = repo.create_issue(
+            title=SUMMARY_ISSUE_TITLE,
+            body=(
+                "BLEnder posts a comment here for each investigated "
+                "Dependabot alert.\n\n" + SUMMARY_TABLE_HEADER
+            ),
+            labels=["blender"],
+        )
+        print(f"  Created summary issue #{summary_issue.number}")
+
+    alert_url = (
+        f"https://github.com/{repo.full_name}/security/dependabot/{alert_number}"
+    )
+    row = f"| [#{alert_number}]({alert_url}) | {package} | {severity} | {action} | {reason} |"
+    summary_issue.create_comment(row)
+    print(f"  Posted summary row to issue #{summary_issue.number}")
+
+
 def main() -> None:
     token = os.environ.get("GH_TOKEN", "")
     repo_name = os.environ.get("REPO", "")
     alert_number = int(os.environ.get("ALERT_NUMBER", "0"))
     package_name = os.environ.get("ALERT_PACKAGE", "unknown")
     ecosystem = os.environ.get("ALERT_ECOSYSTEM", "unknown")
+    severity = os.environ.get("ALERT_SEVERITY", "unknown")
     patched_version = os.environ.get("ALERT_PATCHED_VERSION", "")
     dry_run = os.environ.get("DRY_RUN", "false").lower() in ("true", "1", "yes")
+    dismiss_enabled = os.environ.get("DISMISS_NOT_AFFECTED", "false").lower() in (
+        "true",
+        "1",
+        "yes",
+    )
 
     if not token or not repo_name:
         print("Error: GH_TOKEN and REPO are required.")
@@ -216,24 +302,32 @@ def main() -> None:
     print(f"Verdict: affected={affected}, recommended={recommended}")
     print(f"  Reason: {verdict.get('reason', '(none)')}")
 
-    if not affected:
-        # Check for existing Dependabot PR
-        has_pr = find_existing_pr(repo, package_name)
+    reason = verdict.get("reason", "(none)")
 
-        if has_pr or recommended == "existing_pr":
-            print("  Not affected + existing PR. No action needed.")
-            write_output("action", "noop")
+    if not affected:
+        if dismiss_enabled:
+            print("  Not affected + dismiss enabled. Dismissing alert.")
+            dismiss_alert(repo, alert_number, reason, dry_run)
+            action = "dismissed"
         else:
-            print("  Not affected + no PR. Opening bump PR.")
-            open_bump_pr(
-                repo,
-                alert_number,
-                package_name,
-                patched_version,
-                ecosystem,
-                dry_run,
-            )
-            write_output("action", "bump_pr")
+            # Check for existing Dependabot PR
+            has_pr = find_existing_pr(repo, package_name)
+
+            if has_pr or recommended == "existing_pr":
+                print("  Not affected + existing PR. No action needed.")
+                action = "noop"
+            else:
+                print("  Not affected + no PR. Opening bump PR.")
+                open_bump_pr(
+                    repo,
+                    alert_number,
+                    package_name,
+                    patched_version,
+                    ecosystem,
+                    dry_run,
+                )
+                action = "bump_pr"
+        write_output("action", action)
     else:
         print("  Affected. Creating advisory and private fork.")
         ghsa_id, fork_repo = create_advisory_and_fork(
@@ -242,9 +336,14 @@ def main() -> None:
             package_name,
             dry_run,
         )
-        write_output("action", "private_fork")
+        action = "private_fork"
+        write_output("action", action)
         write_output("advisory_ghsa_id", ghsa_id)
         write_output("fork_repo", fork_repo)
+
+    post_summary_comment(
+        repo, alert_number, package_name, severity, action, reason, dry_run
+    )
 
 
 def write_output(key: str, value: str) -> None:
