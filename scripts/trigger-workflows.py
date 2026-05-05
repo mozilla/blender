@@ -26,6 +26,7 @@ RETRY_DELAY = 5  # seconds
 WORKFLOW_MAP = {
     "fix": "fix-dependabot-pr.yml",
     "automerge": "chore-automerge-dependabot-prs.yml",
+    "investigate": "investigate-security-alert.yml",
 }
 
 
@@ -59,11 +60,14 @@ def main() -> None:
     # Deduplicate automerge: one trigger per repo
     automerge_repos: set[str] = set()
     fix_actions = []
+    investigate_actions = []
     for a in actions:
         if a["action"] == "automerge":
             automerge_repos.add(a["repo"])
         elif a["action"] == "fix":
             fix_actions.append(a)
+        elif a["action"] == "investigate":
+            investigate_actions.append(a)
         else:
             print(f"Unknown action: {a['action']}")
 
@@ -103,6 +107,33 @@ def main() -> None:
         ]
         print(f"Triggering {workflow} for {a['repo']} PR #{a['pr_number']}")
         if not trigger_workflow(cmd, f"fix {a['repo']} #{a['pr_number']}"):
+            failures += 1
+
+    # Trigger investigate once per alert
+    for a in investigate_actions:
+        workflow = WORKFLOW_MAP["investigate"]
+        cmd = [
+            "gh",
+            "workflow",
+            "run",
+            workflow,
+            "-f",
+            f"target_repo={a['repo']}",
+            "-f",
+            f"alert_number={a['alert_number']}",
+            "-f",
+            f"alert_package={a.get('alert_package', '')}",
+            "-f",
+            f"alert_ecosystem={a.get('alert_ecosystem', '')}",
+            "-f",
+            f"alert_severity={a.get('alert_severity', '')}",
+            "-f",
+            f"alert_patched_version={a.get('alert_patched_version', '')}",
+            "-f",
+            "dry_run=false",
+        ]
+        print(f"Triggering {workflow} for {a['repo']} alert #{a['alert_number']}")
+        if not trigger_workflow(cmd, f"investigate {a['repo']} #{a['alert_number']}"):
             failures += 1
 
     if failures:

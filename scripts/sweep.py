@@ -36,18 +36,30 @@ from github.Repository import Repository
 
 @dataclass
 class Action:
-    action: str  # "fix" or "automerge"
+    action: str  # "fix", "automerge", or "investigate"
     repo: str
     pr_number: int
     pr_title: str
+    alert_number: int | None = None
+    alert_package: str | None = None
+    alert_ecosystem: str | None = None
+    alert_severity: str | None = None
+    alert_patched_version: str | None = None
 
     def to_dict(self) -> dict:
-        return {
+        d: dict = {
             "action": self.action,
             "repo": self.repo,
             "pr_number": self.pr_number,
             "pr_title": self.pr_title,
         }
+        if self.alert_number is not None:
+            d["alert_number"] = self.alert_number
+            d["alert_package"] = self.alert_package
+            d["alert_ecosystem"] = self.alert_ecosystem
+            d["alert_severity"] = self.alert_severity
+            d["alert_patched_version"] = self.alert_patched_version
+        return d
 
 
 def has_blender_config(repo: Repository) -> bool:
@@ -174,6 +186,80 @@ def process_repo(repo: Repository) -> list[Action]:
                 repo=repo.full_name,
                 pr_number=pr.number,
                 pr_title=pr.title,
+            )
+        )
+
+    # Check Dependabot security alerts
+    try:
+        alert_actions = check_alerts(repo)
+        actions.extend(alert_actions)
+    except Exception as e:
+        print(f"    Error checking alerts: {e}")
+
+    return actions
+
+
+def check_alerts(repo: Repository) -> list[Action]:
+    """Check for open Dependabot security alerts and emit investigate actions.
+
+    Uses PyGithub's raw requester because there is no built-in method
+    for the Dependabot alerts API.
+    """
+    actions: list[Action] = []
+
+    url = f"/repos/{repo.full_name}/dependabot/alerts"
+    try:
+        headers, data = repo._requester.requestJsonAndCheck(
+            "GET", url, parameters={"state": "open", "per_page": "100"}
+        )
+    except Exception as e:
+        print(f"    Could not fetch alerts: {e}")
+        return actions
+
+    if not data:
+        print("    No open Dependabot alerts")
+        return actions
+
+    print(f"    Found {len(data)} open Dependabot alert(s)")
+
+    # Fetch existing branches for dedup
+    existing_branches: set[str] = set()
+    try:
+        for branch in repo.get_branches():
+            if branch.name.startswith("blender/security/"):
+                existing_branches.add(branch.name)
+    except Exception:
+        pass  # branch listing may fail; proceed without dedup
+
+    for alert in data:
+        alert_number = alert.get("number")
+        vuln = alert.get("security_vulnerability", {})
+        pkg = vuln.get("package", {})
+        advisory = alert.get("security_advisory", {})
+        package_name = pkg.get("name", "unknown")
+        ecosystem = pkg.get("ecosystem", "unknown")
+        severity = advisory.get("severity", "unknown")
+        patched = vuln.get("first_patched_version", {})
+        patched_version = patched.get("identifier", "") if patched else ""
+
+        # Skip if a blender/security branch already exists for this alert
+        branch_prefix = f"blender/security/{alert_number}-"
+        if any(b.startswith(branch_prefix) for b in existing_branches):
+            print(f"    Alert #{alert_number}: branch exists, skipping")
+            continue
+
+        print(f"    Alert #{alert_number}: {package_name} ({severity})")
+        actions.append(
+            Action(
+                action="investigate",
+                repo=repo.full_name,
+                pr_number=0,
+                pr_title=f"Security alert: {package_name}",
+                alert_number=alert_number,
+                alert_package=package_name,
+                alert_ecosystem=ecosystem,
+                alert_severity=severity,
+                alert_patched_version=patched_version,
             )
         )
 

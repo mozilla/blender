@@ -47,7 +47,12 @@ CLAUDE_SETTINGS="$BLENDER_DIR/claude-settings.json"
 CLAUDE_LOG=$(mktemp /tmp/blender-claude-XXXXXX.log)
 
 # --- Mode-specific settings ---
-if [ "$BLENDER_MODE" = "major" ]; then
+if [ "$BLENDER_MODE" = "investigate" ]; then
+  ALLOWED_TOOLS="Read,Bash"
+  MAX_TURNS=20
+  MAX_BUDGET="1.50"
+  SYSTEM_PROMPT="You are BLEnder, a security analysis agent for ${REPO_DISPLAY_NAME}. Investigate the Dependabot security alert described in the prompt. Read the codebase to determine if the vulnerability affects this repo. Write your verdict to .blender-alert-verdict.json. Do not edit any tracked files. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
+elif [ "$BLENDER_MODE" = "major" ]; then
   ALLOWED_TOOLS="Read,Bash"
   MAX_TURNS=15
   MAX_BUDGET="1.00"
@@ -86,9 +91,9 @@ rm -f "$CLAUDE_LOG"
 
 if [ "$claude_exit" -ne 0 ]; then
   echo "Claude exited with code ${claude_exit} (likely hit max-turns or budget)."
-  # In major mode, a non-zero exit is not fatal — post-review handles missing verdict
-  if [ "$BLENDER_MODE" = "major" ]; then
-    echo "Continuing to post-review step (verdict may be missing)."
+  # In major/investigate mode, a non-zero exit is not fatal — post steps handle missing verdict
+  if [ "$BLENDER_MODE" = "major" ] || [ "$BLENDER_MODE" = "investigate" ]; then
+    echo "Continuing to post step (verdict may be missing)."
     exit 0
   fi
   exit 1
@@ -106,11 +111,18 @@ for secret_label in "ANTHROPIC_API_KEY" "PROMPT_NONCE"; do
     git checkout -- .
     exit 1
   fi
-  # Also check verdict file in major mode
+  # Also check verdict files in major/investigate mode
   if [ "$BLENDER_MODE" = "major" ] && [ -f .blender-verdict.json ]; then
     if grep -qF "$secret_value" .blender-verdict.json; then
       echo "ABORT: ${secret_label} leaked into verdict file."
       rm -f .blender-verdict.json
+      exit 1
+    fi
+  fi
+  if [ "$BLENDER_MODE" = "investigate" ] && [ -f .blender-alert-verdict.json ]; then
+    if grep -qF "$secret_value" .blender-alert-verdict.json; then
+      echo "ABORT: ${secret_label} leaked into alert verdict file."
+      rm -f .blender-alert-verdict.json
       exit 1
     fi
   fi
@@ -151,6 +163,39 @@ if [ "$BLENDER_MODE" = "major" ]; then
     echo "Verdict file validated."
   else
     echo "No verdict file produced. Post-review will handle this."
+  fi
+
+  exit 0
+fi
+
+# --- Investigate mode: verdict validation ---
+if [ "$BLENDER_MODE" = "investigate" ]; then
+  # No tracked files should be modified
+  if ! git diff --quiet; then
+    echo "ABORT: Claude modified tracked files in investigate mode."
+    git diff --name-only
+    git checkout -- .
+    exit 1
+  fi
+
+  # Alert verdict file must exist and be valid JSON
+  if [ -f .blender-alert-verdict.json ]; then
+    if ! jq empty .blender-alert-verdict.json 2>/dev/null; then
+      echo "ABORT: .blender-alert-verdict.json is not valid JSON."
+      rm -f .blender-alert-verdict.json
+      exit 1
+    fi
+    # Check required keys
+    for key in affected confidence reason vulnerable_paths recommended_action; do
+      if ! jq -e "has(\"$key\")" .blender-alert-verdict.json > /dev/null 2>&1; then
+        echo "ABORT: .blender-alert-verdict.json missing required key: $key"
+        rm -f .blender-alert-verdict.json
+        exit 1
+      fi
+    done
+    echo "Alert verdict file validated."
+  else
+    echo "No alert verdict file produced. Post-action will handle this."
   fi
 
   exit 0
