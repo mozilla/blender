@@ -33,7 +33,6 @@ on:
 
 permissions:
   contents: read
-  actions: write
 
 concurrency:
   group: >-
@@ -43,6 +42,9 @@ concurrency:
 jobs:
   investigate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     outputs:
       action: ${{ steps.post-action.outputs.action }}
       fork_repo: ${{ steps.post-action.outputs.fork_repo }}
