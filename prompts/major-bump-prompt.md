@@ -32,34 +32,24 @@ Search the codebase for imports, requires, API calls, and configuration referenc
 - Test files that exercise the dependency
 - Build scripts or CI config that reference it
 
-### Step 2: Read the dependency source code
+### Step 2: Review breaking changes from release notes
 
-Read the installed dependency code directly (in `node_modules/`, `site-packages/`, or equivalent) to understand what changed between versions. Compare the public API surface.
-
-### Step 3: Identify test coverage
-
-For each callsite you found, determine:
-- Is there a test that exercises this code path?
-- Would the test catch a breaking change in the dependency's behavior?
-
-### Step 4: Review breaking changes
-
-From the release notes, PR body, and the dependency source code, identify all breaking changes. This includes:
+Use the release notes and PR body above to identify breaking changes. Do NOT read the dependency's own source code in `node_modules/`, `site-packages/`, or equivalent — that wastes turns on large libraries. The release notes are your primary source. Breaking changes include:
 - Removed functions, classes, or methods
 - Changed function signatures
 - Dropped runtime version support (Python, Node, etc.)
 - Changed default behavior
 - Renamed exports
 
-### Step 5: Cross-reference
+### Step 3: Cross-reference usage against breaking changes
 
-For each breaking change, check: does this codebase use the affected API? If yes, would existing tests catch the breakage?
+For each breaking change from the release notes, check: does this codebase use the affected API? For each callsite, is there a test that would catch the breakage?
 
-### Step 6: Check CI status
+### Step 4: Check CI status
 
 Are all CI checks passing on this PR? If not, what failed and is it related to the major bump?
 
-### Step 7: Write your verdict
+### Step 5: Write your verdict
 
 Write your verdict to `.blender-verdict.json` using the Bash tool:
 

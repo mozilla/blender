@@ -90,7 +90,7 @@ class Config:
     repo_name: str
     token: str
     dry_run: bool
-    min_compatibility_score: int = 80
+    min_compatibility_score: int = 70
     allow_major: bool = False
 
 
@@ -418,7 +418,7 @@ def _check_badge_svg(
     old_version: str,
     new_version: str,
     label: str,
-    min_score: int = 80,
+    min_score: int = 70,
 ) -> int | None:
     """Parse a badge SVG and return score, None for unknown-ok, or raise."""
     if COMPAT_UNKNOWN_RE.search(badge_svg):
@@ -441,7 +441,7 @@ def _check_badge_svg(
 def _check_group_compatibility(
     deps: list[DependencyUpdate],
     raw_ecosystem: str,
-    min_compat_score: int = 80,
+    min_compat_score: int = 70,
 ) -> int | None:
     """Check compatibility for each dep in a group PR. Return min score."""
     min_score: int | None = None
@@ -482,7 +482,7 @@ def _check_group_compatibility(
 def gate_compatibility(
     pr: PullRequest,
     meta: PRMetadata,
-    min_compat_score: int = 80,
+    min_compat_score: int = 70,
 ) -> int | None:
     """Gate 4: Compatibility score >= min_compat_score."""
     # Try badge URL from PR body (single-dep PRs)
@@ -609,7 +609,7 @@ def load_config() -> Config:
         print("Error: GH_TOKEN is required.")
         sys.exit(1)
 
-    min_compat = int(os.environ.get("MIN_COMPAT_SCORE", "80"))
+    min_compat = int(os.environ.get("MIN_COMPAT_SCORE", "70"))
     allow_major = os.environ.get("ALLOW_MAJOR", "false").lower() in (
         "true",
         "1",

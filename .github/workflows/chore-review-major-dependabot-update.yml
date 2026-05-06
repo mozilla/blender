@@ -56,7 +56,7 @@ jobs:
           private-key: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
           owner: ${{ steps.parse.outputs.owner }}
           repositories: ${{ steps.parse.outputs.name }}
-          permission-contents: read
+          permission-contents: write
           permission-pull-requests: write
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
