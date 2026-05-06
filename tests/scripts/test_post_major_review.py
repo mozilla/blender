@@ -81,11 +81,12 @@ def test_safe_verdict_approves_and_merges(
     main()
 
     pr.create_review.assert_called_once()
+    review_body = pr.create_review.call_args[1]["body"]
+    assert review_body.startswith("APPROVED:")
+    assert "No breaking changes" in review_body
     mock_merge.assert_called_once_with(pr)
-    pr.create_issue_comment.assert_called_once()
-    comment_text = pr.create_issue_comment.call_args.args[0]
-    assert comment_text.startswith("SAFE:")
-    assert "auto-merge could not be enabled" not in comment_text
+    # No separate comment when auto-merge succeeds
+    pr.create_issue_comment.assert_not_called()
 
 
 @patch("scripts.post_major_review.Github")
@@ -113,8 +114,10 @@ def test_safe_verdict_posts_comment_when_automerge_fails(
     main()
 
     pr.create_review.assert_called_once()
+    review_body = pr.create_review.call_args[1]["body"]
+    assert review_body.startswith("APPROVED:")
+    assert "No breaking changes" in review_body
+    # Auto-merge failure posts a separate warning comment
     pr.create_issue_comment.assert_called_once()
     comment_text = pr.create_issue_comment.call_args.args[0]
-    assert comment_text.startswith("SAFE:")
     assert "auto-merge could not be enabled" in comment_text
-    assert "enable auto-merge" in comment_text
