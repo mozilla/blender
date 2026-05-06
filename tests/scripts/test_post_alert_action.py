@@ -8,14 +8,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from scripts.alert_report import read_code_snippet, render_html, write_summary
 from scripts.post_alert_action import (
     create_advisory_and_fork,
     dismiss_alert,
     load_verdict,
     main,
-    read_code_snippet,
-    render_html,
-    write_summary,
 )
 
 
@@ -120,11 +118,11 @@ class TestReadCodeSnippet:
 class TestRenderHtml:
     def test_contains_key_elements(self):
         verdict = {**SAMPLE_VERDICT, "vulnerable_paths": []}
-        html = render_html("owner/repo", 42, "lodash", "high", "dismissed", verdict)
-        assert "Alert #42" in html
-        assert "lodash" in html
-        assert "UNAFFECTED" in html
-        assert "not used in codebase" in html
+        result = render_html("owner/repo", 42, "lodash", "high", "dismissed", verdict)
+        assert "Alert #42" in result
+        assert "lodash" in result
+        assert "UNAFFECTED" in result
+        assert "not used in codebase" in result
 
     def test_affected_with_code_snippets(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
@@ -137,7 +135,9 @@ class TestRenderHtml:
             "vulnerable_paths": ["server.js:2"],
             "recommended_action": "private_fork",
         }
-        result = render_html("owner/repo", 42, "lodash", "high", "private_fork", verdict)
+        result = render_html(
+            "owner/repo", 42, "lodash", "high", "private_fork", verdict
+        )
         assert "AFFECTED" in result
         assert "server.js:2" in result
         assert "x.merge" in result
@@ -148,7 +148,9 @@ class TestRenderHtml:
             "affected": True,
             "vulnerable_paths": ["/nonexistent/file.py:10"],
         }
-        result = render_html("owner/repo", 42, "lodash", "high", "private_fork", verdict)
+        result = render_html(
+            "owner/repo", 42, "lodash", "high", "private_fork", verdict
+        )
         assert "Source file not available" in result
 
     def test_path_without_line_number(self):
@@ -157,14 +159,18 @@ class TestRenderHtml:
             "affected": True,
             "vulnerable_paths": ["some/file.py"],
         }
-        result = render_html("owner/repo", 42, "lodash", "high", "private_fork", verdict)
+        result = render_html(
+            "owner/repo", 42, "lodash", "high", "private_fork", verdict
+        )
         assert "No line number specified" in result
 
 
 class TestWriteSummary:
     def test_writes_html(self, tmp_path):
         path = str(tmp_path / "summary.html")
-        write_summary(path, "owner/repo", 42, "lodash", "high", "dismissed", SAMPLE_VERDICT)
+        write_summary(
+            path, "owner/repo", 42, "lodash", "high", "dismissed", SAMPLE_VERDICT
+        )
         content = open(path).read()
         assert content.startswith("<!DOCTYPE html>")
         assert "Alert #42" in content
