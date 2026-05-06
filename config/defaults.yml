@@ -5,7 +5,7 @@ automerge:
   dry_run: false
   allow_major: false
   review_major: true
-  min_compatibility_score: 80
+  min_compatibility_score: 70
   check_advisories: true
 
 fix:
