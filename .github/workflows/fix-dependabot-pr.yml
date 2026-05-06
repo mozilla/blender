@@ -129,15 +129,6 @@ jobs:
           PROMPT_TEMPLATE: .blender/fix-dependabot-prompt.md
           INSTALL_FAILED: ${{ steps.install.outcome == 'failure' && 'true' || 'false' }}
           INSTALL_LOG_FILE: /tmp/install-output.log
-          CIRCLECI_TOKEN: ${{ secrets.CIRCLECI_TOKEN }}
-
-      - name: Upload gathered context
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
-        with:
-          name: blender-context
-          path: target/.blender-context/
-          retention-days: 14
 
       - name: Comment on PR
         working-directory: target
