@@ -179,6 +179,14 @@ jobs:
           NEW_VERSION: ${{ steps.pr-meta.outputs.new_version }}
           ECOSYSTEM: ${{ steps.pr-meta.outputs.ecosystem }}
 
+      - name: Upload gathered context
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: blender-context
+          path: target/.blender-context/
+          retention-days: 14
+
       - name: Run Claude review
         working-directory: target
         run: ${{ github.workspace }}/scripts/run-claude.sh

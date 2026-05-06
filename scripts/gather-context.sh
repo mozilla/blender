@@ -165,10 +165,15 @@ if [ -n "$failing_checks" ]; then
       ci_logs="${ci_logs}Annotations:
 ${annotations}
 "
-    elif [ -n "$target_url" ]; then
-      ci_logs="${ci_logs}CircleCI URL: ${target_url}
-(Log not available via API. Run the check locally to see errors.)
+    elif [ -n "$target_url" ] && [[ "$target_url" == *circleci* ]]; then
+      ci_logs="${ci_logs}CircleCI check: ${check_name}
+URL: ${target_url}
+WARNING: BLEnder cannot fetch CircleCI log output. You must reproduce
+the failure locally using the commands in the fix prompt. If you cannot
+determine the root cause, say so — do not guess.
 "
+      echo "  Warning: CircleCI failure — logs not available."
+      echo "HAS_CIRCLECI_FAILURE=true" >> "${GITHUB_OUTPUT:-/dev/null}"
     else
       ci_logs="${ci_logs}(No log annotations available. Run the check locally to see errors.)
 "
@@ -218,5 +223,17 @@ prompt="${prompt//\{\{INSTALL_ERROR\}\}/$install_error}"
 
 # Write prompt to file for run-claude.sh
 echo "$prompt" > .blender-prompt
-
 echo "Prompt written to .blender-prompt"
+
+# --- Save gathered context for workflow artifacts ---
+CONTEXT_DIR="${CONTEXT_DIR:-.blender-context}"
+mkdir -p "$CONTEXT_DIR"
+echo "$safe_diff"    > "$CONTEXT_DIR/pr-diff.txt"
+echo "$safe_body"    > "$CONTEXT_DIR/pr-body.md"
+echo "$safe_notes"   > "$CONTEXT_DIR/release-notes.md"
+echo "$safe_ci"      > "$CONTEXT_DIR/ci-status.txt"
+echo "$safe_checks"  > "$CONTEXT_DIR/failing-checks.txt"
+echo "$safe_logs"    > "$CONTEXT_DIR/ci-logs.txt"
+cp "$PROMPT_TEMPLATE" "$CONTEXT_DIR/prompt-template.md"
+cp .blender-prompt     "$CONTEXT_DIR/prompt-final.md"
+echo "Context saved to $CONTEXT_DIR/"
