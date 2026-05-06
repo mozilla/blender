@@ -58,6 +58,56 @@ sanitize_for_prompt() {
   echo "$input"
 }
 
+# --- Fetch CircleCI job logs via v1.1 API ---
+fetch_circleci_log() {
+  local url="$1"
+  # Parse job number and project from CircleCI URL:
+  # https://app.circleci.com/pipelines/github/ORG/REPO/PIPELINE/workflows/WF_ID/jobs/JOB_NUM
+  local job_number org project
+  if [[ "$url" =~ app\.circleci\.com/pipelines/github/([^/]+)/([^/]+)/[0-9]+/workflows/[^/]+/jobs/([0-9]+) ]]; then
+    org="${BASH_REMATCH[1]}"
+    project="${BASH_REMATCH[2]}"
+    job_number="${BASH_REMATCH[3]}"
+  else
+    return 1
+  fi
+
+  local slug="gh/${org}/${project}"
+
+  # Fetch build details (includes steps with output URLs)
+  local build_json
+  build_json=$(curl -sf -H "Circle-Token: ${CIRCLECI_TOKEN}" \
+    "https://circleci.com/api/v1.1/project/${slug}/${job_number}" 2>/dev/null) || return 1
+
+  # Find failed steps and fetch their output
+  local output_urls
+  output_urls=$(echo "$build_json" | jq -r '
+    .steps[]
+    | .actions[]
+    | select(.status == "failed" and .has_output == true)
+    | .output_url' 2>/dev/null) || return 1
+
+  if [ -z "$output_urls" ]; then
+    return 1
+  fi
+
+  local log_text=""
+  while IFS= read -r output_url; do
+    [ -z "$output_url" ] && continue
+    local step_log
+    step_log=$(curl -sf "$output_url" 2>/dev/null \
+      | jq -r '.[].message // empty' 2>/dev/null) || continue
+    log_text="${log_text}${step_log}"
+  done <<< "$output_urls"
+
+  if [ -z "$log_text" ]; then
+    return 1
+  fi
+
+  # Return last 200 lines to keep prompt size reasonable
+  echo "$log_text" | tail -200
+}
+
 echo "BLEnder gather-context: PR #${PR_NUMBER} repo=${REPO}"
 
 # --- Fetch PR metadata ---
@@ -166,9 +216,20 @@ if [ -n "$failing_checks" ]; then
 ${annotations}
 "
     elif [ -n "$target_url" ]; then
-      ci_logs="${ci_logs}CircleCI URL: ${target_url}
+      # Try to fetch CircleCI logs via their API
+      circleci_log=""
+      if [ -n "${CIRCLECI_TOKEN:-}" ]; then
+        circleci_log=$(fetch_circleci_log "$target_url" || true)
+      fi
+      if [ -n "$circleci_log" ]; then
+        ci_logs="${ci_logs}CircleCI log (last 200 lines):
+${circleci_log}
+"
+      else
+        ci_logs="${ci_logs}CircleCI URL: ${target_url}
 (Log not available via API. Run the check locally to see errors.)
 "
+      fi
     else
       ci_logs="${ci_logs}(No log annotations available. Run the check locally to see errors.)
 "
@@ -220,3 +281,16 @@ prompt="${prompt//\{\{INSTALL_ERROR\}\}/$install_error}"
 echo "$prompt" > .blender-prompt
 
 echo "Prompt written to .blender-prompt"
+
+# --- Save gathered context for workflow artifacts ---
+CONTEXT_DIR="${CONTEXT_DIR:-.blender-context}"
+mkdir -p "$CONTEXT_DIR"
+echo "$safe_diff"    > "$CONTEXT_DIR/pr-diff.txt"
+echo "$safe_body"    > "$CONTEXT_DIR/pr-body.md"
+echo "$safe_notes"   > "$CONTEXT_DIR/release-notes.md"
+echo "$safe_ci"      > "$CONTEXT_DIR/ci-status.txt"
+echo "$safe_checks"  > "$CONTEXT_DIR/failing-checks.txt"
+echo "$safe_logs"    > "$CONTEXT_DIR/ci-logs.txt"
+cp "$PROMPT_TEMPLATE" "$CONTEXT_DIR/prompt-template.md"
+cp .blender-prompt     "$CONTEXT_DIR/prompt-final.md"
+echo "Context saved to $CONTEXT_DIR/"
