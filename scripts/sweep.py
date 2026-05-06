@@ -222,14 +222,14 @@ def check_alerts(repo: Repository) -> list[Action]:
 
     print(f"    Found {len(data)} open Dependabot alert(s)")
 
-    # Fetch existing branches for dedup
+    # Fetch existing branches to prevent creating duplicates
     existing_branches: set[str] = set()
     try:
         for branch in repo.get_branches():
             if branch.name.startswith("blender/security/"):
                 existing_branches.add(branch.name)
     except Exception:
-        pass  # branch listing may fail; proceed without dedup
+        pass  # branch listing may fail; proceed without duplicate check
 
     for alert in data:
         alert_number = alert.get("number")

@@ -11,11 +11,9 @@ import pytest
 from scripts.post_alert_action import (
     create_advisory_and_fork,
     dismiss_alert,
-    find_existing_pr,
     load_verdict,
     main,
-    open_bump_pr,
-    post_summary_comment,
+    write_summary,
 )
 
 
@@ -50,41 +48,6 @@ class TestLoadVerdict:
     def test_missing_keys(self, verdict_file):
         verdict_file({"affected": True})
         assert load_verdict() is None
-
-
-class TestFindExistingPR:
-    def test_finds_matching_pr(self):
-        pr = MagicMock()
-        pr.user.login = "dependabot[bot]"
-        pr.title = "Bump lodash from 4.17.20 to 4.17.21"
-        pr.number = 99
-        repo = MagicMock()
-        repo.get_pulls.return_value = [pr]
-
-        assert find_existing_pr(repo, "lodash") is True
-
-    def test_no_matching_pr(self):
-        pr = MagicMock()
-        pr.user.login = "dependabot[bot]"
-        pr.title = "Bump express from 4.0 to 5.0"
-        repo = MagicMock()
-        repo.get_pulls.return_value = [pr]
-
-        assert find_existing_pr(repo, "lodash") is False
-
-
-class TestOpenBumpPR:
-    def test_dry_run_skips_creation(self):
-        repo = MagicMock()
-        open_bump_pr(repo, 42, "lodash", "4.17.21", "npm", dry_run=True)
-        repo.create_git_ref.assert_not_called()
-        repo.create_pull.assert_not_called()
-
-    def test_existing_branch_skips(self):
-        repo = MagicMock()
-        repo.get_branch.return_value = MagicMock()  # branch exists
-        open_bump_pr(repo, 42, "lodash", "4.17.21", "npm", dry_run=False)
-        repo.create_git_ref.assert_not_called()
 
 
 class TestCreateAdvisoryAndFork:
@@ -127,43 +90,22 @@ class TestDismissAlert:
         repo._requester.requestJsonAndCheck.assert_not_called()
 
 
-class TestPostSummaryComment:
-    def test_creates_issue_when_missing(self):
-        repo = MagicMock()
-        repo.full_name = "owner/repo"
-        repo.get_issues.return_value = iter([])
-        new_issue = MagicMock()
-        new_issue.number = 10
-        repo.create_issue.return_value = new_issue
-
-        post_summary_comment(repo, 42, "lodash", "high", "dismissed", "not used", False)
-
-        repo.create_issue.assert_called_once()
-        new_issue.create_comment.assert_called_once()
-        comment = new_issue.create_comment.call_args[0][0]
-        assert "#42" in comment
-        assert "lodash" in comment
-
-    def test_reuses_existing_issue(self):
-        repo = MagicMock()
-        repo.full_name = "owner/repo"
-        existing = MagicMock()
-        existing.title = "BLEnder: Dependabot alert investigation summary"
-        repo.get_issues.return_value = iter([existing])
-
-        post_summary_comment(repo, 7, "express", "medium", "bump_pr", "outdated", False)
-
-        repo.create_issue.assert_not_called()
-        existing.create_comment.assert_called_once()
-
-    def test_dry_run_skips(self):
-        repo = MagicMock()
-        post_summary_comment(repo, 42, "lodash", "high", "dismissed", "not used", True)
-        repo.get_issues.assert_not_called()
+class TestWriteSummary:
+    def test_writes_json(self, tmp_path):
+        path = str(tmp_path / "summary.json")
+        write_summary(path, 42, "lodash", "high", "dismissed", "not used")
+        data = json.loads(open(path).read())
+        assert data == {
+            "alert_number": 42,
+            "package": "lodash",
+            "severity": "high",
+            "action": "dismissed",
+            "reason": "not used",
+        }
 
 
 class TestMainDismissFlow:
-    def test_not_affected_dismiss_enabled(self, verdict_file, monkeypatch):
+    def test_unaffected_dismiss_enabled(self, verdict_file, tmp_path, monkeypatch):
         verdict_file({
             "affected": False,
             "confidence": "high",
@@ -177,16 +119,12 @@ class TestMainDismissFlow:
         monkeypatch.setenv("ALERT_PACKAGE", "lodash")
         monkeypatch.setenv("ALERT_ECOSYSTEM", "npm")
         monkeypatch.setenv("ALERT_SEVERITY", "high")
-        monkeypatch.setenv("DISMISS_NOT_AFFECTED", "true")
+        monkeypatch.setenv("DISMISS_UNAFFECTED", "true")
         monkeypatch.setenv("DRY_RUN", "false")
         monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
 
         mock_repo = MagicMock()
         mock_repo.full_name = "owner/repo"
-        mock_repo.get_issues.return_value = iter([])
-        mock_issue = MagicMock()
-        mock_issue.number = 1
-        mock_repo.create_issue.return_value = mock_issue
 
         with patch("scripts.post_alert_action.Github") as mock_gh:
             mock_gh.return_value.get_repo.return_value = mock_repo
@@ -202,5 +140,43 @@ class TestMainDismissFlow:
                 "dismissed_comment": "BLEnder: not used in codebase",
             },
         )
-        # Summary comment was posted
-        mock_issue.create_comment.assert_called_once()
+        # Summary was written to file
+        summary_path = str(tmp_path / ".blender-alert-summary.json")
+        assert os.path.exists(summary_path)
+        data = json.loads(open(summary_path).read())
+        assert data["action"] == "dismissed"
+        assert data["alert_number"] == 42
+
+    def test_unaffected_dismiss_disabled_is_noop(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        verdict_file({
+            "affected": False,
+            "confidence": "high",
+            "reason": "not used in codebase",
+            "vulnerable_paths": [],
+            "recommended_action": "bump_pr",
+        })
+        monkeypatch.setenv("GH_TOKEN", "fake")
+        monkeypatch.setenv("REPO", "owner/repo")
+        monkeypatch.setenv("ALERT_NUMBER", "42")
+        monkeypatch.setenv("ALERT_PACKAGE", "lodash")
+        monkeypatch.setenv("ALERT_ECOSYSTEM", "npm")
+        monkeypatch.setenv("DISMISS_UNAFFECTED", "false")
+        monkeypatch.setenv("DRY_RUN", "false")
+        monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+
+        with patch("scripts.post_alert_action.Github") as mock_gh:
+            mock_gh.return_value.get_repo.return_value = mock_repo
+            main()
+
+        # No API mutations
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+        # Summary still written
+        summary_path = str(tmp_path / ".blender-alert-summary.json")
+        assert os.path.exists(summary_path)
+        data = json.loads(open(summary_path).read())
+        assert data["action"] == "noop"

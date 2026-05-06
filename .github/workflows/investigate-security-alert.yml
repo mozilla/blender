@@ -71,7 +71,6 @@ jobs:
           permission-pull-requests: write
           permission-vulnerability-alerts: write
           permission-security-events: write
-          permission-issues: write
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
@@ -93,7 +92,7 @@ jobs:
             echo "python_version=$(yq '.python_version // ""' "$CONFIG_FILE")"
             echo "install_command=$(yq '.install_command // ""' "$CONFIG_FILE")"
             echo "repo_name=$(yq '.repo_name // ""' "$CONFIG_FILE")"
-            echo "dismiss_not_affected=$(yq '.investigate.dismiss_not_affected // "false"' "$CONFIG_FILE")"
+            echo "dismiss_unaffected=$(yq '.investigate.dismiss_unaffected // "false"' "$CONFIG_FILE")"
           } >> "$GITHUB_OUTPUT"
 
       # --- Conditional setup ---
@@ -162,7 +161,14 @@ jobs:
           ALERT_SEVERITY: ${{ inputs.alert_severity }}
           ALERT_PATCHED_VERSION: ${{ inputs.alert_patched_version }}
           DRY_RUN: ${{ inputs.dry_run }}
-          DISMISS_NOT_AFFECTED: ${{ steps.config.outputs.dismiss_not_affected }}
+          DISMISS_UNAFFECTED: ${{ steps.config.outputs.dismiss_unaffected }}
+
+      - name: Upload alert summary
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: alert-${{ inputs.alert_number }}-summary
+          path: target/.blender-alert-summary.json
 
   remediate:
     needs: investigate
