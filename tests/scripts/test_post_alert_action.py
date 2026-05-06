@@ -124,7 +124,7 @@ class TestRenderHtml:
         assert "UNAFFECTED" in result
         assert "not used in codebase" in result
 
-    def test_affected_with_code_snippets(self, tmp_path, monkeypatch):
+    def test_affected_redacts_details(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         src = tmp_path / "server.js"
         src.write_text("const x = require('lodash');\nx.merge({}, input);\n")
@@ -139,28 +139,43 @@ class TestRenderHtml:
             "owner/repo", 42, "lodash", "high", "private_fork", verdict
         )
         assert "AFFECTED" in result
-        assert "server.js:2" in result
-        assert "x.merge" in result
+        # Sensitive details must not appear in the public artifact
+        assert "lodash.merge called" not in result
+        assert "server.js:2" not in result
+        assert "x.merge" not in result
+        assert "see the security advisory" in result.lower()
+
+    def test_unaffected_shows_code_snippets(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        src = tmp_path / "util.js"
+        src.write_text("function safe() {}\nmodule.exports = safe;\n")
+        verdict = {
+            **SAMPLE_VERDICT,
+            "vulnerable_paths": ["util.js:1"],
+        }
+        result = render_html(
+            "owner/repo", 42, "lodash", "high", "dismissed", verdict
+        )
+        assert "util.js:1" in result
+        assert "function safe" in result
 
     def test_missing_source_file(self):
         verdict = {
             **SAMPLE_VERDICT,
-            "affected": True,
             "vulnerable_paths": ["/nonexistent/file.py:10"],
         }
         result = render_html(
-            "owner/repo", 42, "lodash", "high", "private_fork", verdict
+            "owner/repo", 42, "lodash", "high", "dismissed", verdict
         )
         assert "Source file not available" in result
 
     def test_path_without_line_number(self):
         verdict = {
             **SAMPLE_VERDICT,
-            "affected": True,
             "vulnerable_paths": ["some/file.py"],
         }
         result = render_html(
-            "owner/repo", 42, "lodash", "high", "private_fork", verdict
+            "owner/repo", 42, "lodash", "high", "dismissed", verdict
         )
         assert "No line number specified" in result
 

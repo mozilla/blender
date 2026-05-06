@@ -47,8 +47,16 @@ def render_html(
     """Build a self-contained HTML summary report."""
     affected = verdict.get("affected", False)
     confidence = verdict.get("confidence", "unknown")
-    reason = verdict.get("reason", "(none)")
     vulnerable_paths = verdict.get("vulnerable_paths", [])
+
+    # Redact sensitive details for affected alerts — the artifact is
+    # world-readable on public repos.  The full analysis lives in the
+    # private security advisory.
+    if affected:
+        reason = "Details redacted — see the security advisory for this alert."
+        vulnerable_paths = []
+    else:
+        reason = verdict.get("reason", "(none)")
 
     status_label = "AFFECTED" if affected else "UNAFFECTED"
     status_color = "#dc3545" if affected else "#28a745"
