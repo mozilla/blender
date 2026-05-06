@@ -168,7 +168,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: alert-${{ inputs.alert_number }}-summary
-          path: target/.blender-alert-summary.json
+          path: target/.blender-alert-summary.html
 
   remediate:
     needs: investigate
