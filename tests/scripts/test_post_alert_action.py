@@ -193,14 +193,16 @@ class TestWriteSummary:
 
 
 class TestMainDismissFlow:
-    def test_unaffected_dismiss_enabled(self, verdict_file, tmp_path, monkeypatch):
+    def test_unaffected_dismiss_enabled_low_severity(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
         verdict_file(SAMPLE_VERDICT)
         monkeypatch.setenv("GH_TOKEN", "fake")
         monkeypatch.setenv("REPO", "owner/repo")
         monkeypatch.setenv("ALERT_NUMBER", "42")
         monkeypatch.setenv("ALERT_PACKAGE", "lodash")
         monkeypatch.setenv("ALERT_ECOSYSTEM", "npm")
-        monkeypatch.setenv("ALERT_SEVERITY", "high")
+        monkeypatch.setenv("ALERT_SEVERITY", "low")
         monkeypatch.setenv("DISMISS_UNAFFECTED", "true")
         monkeypatch.setenv("DRY_RUN", "false")
         monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
@@ -225,6 +227,32 @@ class TestMainDismissFlow:
         assert os.path.exists(summary_path)
         content = open(summary_path).read()
         assert "dismissed" in content.lower()
+
+    def test_unaffected_dismiss_skips_high_severity(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        verdict_file(SAMPLE_VERDICT)
+        monkeypatch.setenv("GH_TOKEN", "fake")
+        monkeypatch.setenv("REPO", "owner/repo")
+        monkeypatch.setenv("ALERT_NUMBER", "42")
+        monkeypatch.setenv("ALERT_PACKAGE", "lodash")
+        monkeypatch.setenv("ALERT_ECOSYSTEM", "npm")
+        monkeypatch.setenv("ALERT_SEVERITY", "high")
+        monkeypatch.setenv("DISMISS_UNAFFECTED", "true")
+        monkeypatch.setenv("DRY_RUN", "false")
+        monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+
+        with patch("scripts.post_alert_action.Github") as mock_gh:
+            mock_gh.return_value.get_repo.return_value = mock_repo
+            main()
+
+        # High severity: no dismiss call, even with dismiss enabled
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+        summary_path = str(tmp_path / ".blender-alert-summary.html")
+        assert os.path.exists(summary_path)
 
     def test_unaffected_dismiss_disabled_is_noop(
         self, verdict_file, tmp_path, monkeypatch

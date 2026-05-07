@@ -3,7 +3,8 @@
 
 Reads .blender-alert-verdict.json and takes the appropriate action:
 
-  unaffected + dismiss enabled  -> dismiss the alert via API
+  unaffected + dismiss enabled (low/medium) -> dismiss the alert via API
+  unaffected + dismiss enabled (high/critical) -> no-op (require human review)
   unaffected + dismiss disabled -> no-op (suggest bumping the package)
   affected                      -> create advisory with private fork
 
@@ -33,6 +34,7 @@ from github import Auth, Github
 
 from scripts.alert_report import write_summary
 
+DISMISS_BLOCKED_SEVERITIES = {"critical", "high"}
 VERDICT_FILE = ".blender-alert-verdict.json"
 SUMMARY_FILE = ".blender-alert-summary.html"
 REQUIRED_KEYS = {
@@ -188,10 +190,16 @@ def main() -> None:
     reason = verdict.get("reason", "(none)")
 
     if not affected:
-        if dismiss_enabled:
+        if dismiss_enabled and severity.lower() not in DISMISS_BLOCKED_SEVERITIES:
             print("  Unaffected + dismiss enabled. Dismissing alert.")
             dismiss_alert(repo, alert_number, reason, dry_run)
             action = "dismissed"
+        elif dismiss_enabled:
+            print(
+                f"  Unaffected but severity is {severity}."
+                " Recommend manual review before dismissing."
+            )
+            action = "noop"
         else:
             print("  Unaffected + dismiss disabled. Consider bumping the package.")
             action = "noop"
