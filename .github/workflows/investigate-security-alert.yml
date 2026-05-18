@@ -164,14 +164,6 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
           DISMISS_UNAFFECTED: ${{ steps.config.outputs.dismiss_unaffected }}
 
-      - name: Upload alert summary
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
-        with:
-          name: alert-${{ inputs.alert_number }}-summary
-          path: target/.blender-alert-summary.html
-          include-hidden-files: true
-
   remediate:
     needs: investigate
     if: needs.investigate.outputs.action == 'private_fork'

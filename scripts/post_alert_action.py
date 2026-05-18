@@ -3,13 +3,12 @@
 
 Reads .blender-alert-verdict.json and takes the appropriate action:
 
-  unaffected + dismiss enabled (low/medium) -> dismiss the alert via API
-  unaffected + dismiss enabled (high/critical) -> no-op (require human review)
-  unaffected + dismiss disabled -> no-op (suggest bumping the package)
-  affected                      -> create advisory with private fork
+  unaffected + existing PR       -> comment on the PR, let other workflows handle
+  unaffected + no PR             -> trigger Dependabot security update
+  unaffected + dismiss enabled   -> dismiss the alert (low/medium only)
+  affected                       -> create advisory with private fork
 
-Writes an HTML summary report to .blender-alert-summary.html for upload
-as a workflow artifact (visible only to users with Actions access).
+Writes a summary to $GITHUB_STEP_SUMMARY and emits an annotation.
 
 Environment variables:
   GH_TOKEN              -- GitHub token (required)
@@ -39,11 +38,10 @@ if _repo_root not in sys.path:
 
 from github import Auth, Github  # noqa: E402
 
-from scripts.alert_report import write_summary  # noqa: E402
+from scripts.alert_report import write_step_summary  # noqa: E402
 
 DISMISS_BLOCKED_SEVERITIES = {"critical", "high"}
 VERDICT_FILE = ".blender-alert-verdict.json"
-SUMMARY_FILE = ".blender-alert-summary.html"
 REQUIRED_KEYS = {
     "affected",
     "confidence",
@@ -138,6 +136,208 @@ def create_advisory_and_fork(
     return (ghsa_id, fork_full_name)
 
 
+def find_existing_bump_pr(
+    repo,
+    package_name: str,
+) -> int | None:
+    """Find an open PR that bumps this package.
+
+    Checks for both Dependabot PRs and BLEnder bump PRs.
+    Returns the PR number if found, None otherwise.
+    """
+    pulls = repo.get_pulls(state="open")
+    package_lower = package_name.lower()
+    for pr in pulls:
+        title_lower = pr.title.lower()
+        is_dependabot = pr.user.login == "dependabot[bot]"
+        is_blender = pr.head.ref.startswith("blender/security-bump-")
+        if (is_dependabot or is_blender) and package_lower in title_lower:
+            print(f"  Found existing PR #{pr.number}: {pr.title}")
+            return pr.number
+    return None
+
+
+def comment_on_pr(
+    repo,
+    pr_number: int,
+    reason: str,
+    dry_run: bool,
+) -> None:
+    """Comment on a PR with BLEnder's investigation results."""
+    body = (
+        "**BLEnder investigation:** This dependency has an open security alert, "
+        f"but the repo is **not affected**.\n\n> {reason}\n\n"
+        "This PR can be reviewed and merged as a normal dependency update."
+    )
+    if dry_run:
+        print(f"  DRY_RUN: would comment on PR #{pr_number}")
+        return
+
+    pr = repo.get_pull(pr_number)
+    pr.create_issue_comment(body)
+    print(f"  Commented on PR #{pr_number}")
+
+
+def find_dependency_pin(
+    repo,
+    package_name: str,
+    ecosystem: str,
+) -> tuple[str, str, str] | None:
+    """Find the file and line that pins a dependency.
+
+    Returns (file_path, old_content, new_line_pattern) or None if not found.
+    Searches common dependency files for the package pin.
+    """
+    import re
+
+    if ecosystem == "pip":
+        candidates = [
+            "requirements.txt",
+            "requirements.in",
+        ]
+        # Also check requirements/*.txt
+        try:
+            contents = repo.get_contents("requirements")
+            if isinstance(contents, list):
+                for item in contents:
+                    if item.name.endswith(".txt"):
+                        candidates.append(item.path)
+        except Exception:
+            pass
+
+        pin_pattern = re.compile(
+            rf"^{re.escape(package_name)}\s*[=~><]=", re.IGNORECASE | re.MULTILINE
+        )
+        for path in candidates:
+            try:
+                file_content = repo.get_contents(path)
+                text = file_content.decoded_content.decode("utf-8")
+                if pin_pattern.search(text):
+                    print(f"  Found {package_name} pin in {path}")
+                    return (path, text, file_content.sha)
+            except Exception:
+                continue
+
+    elif ecosystem == "npm":
+        try:
+            file_content = repo.get_contents("package.json")
+            text = file_content.decoded_content.decode("utf-8")
+            if package_name.lower() in text.lower():
+                print(f"  Found {package_name} in package.json")
+                return ("package.json", text, file_content.sha)
+        except Exception:
+            pass
+
+    return None
+
+
+def create_bump_pr(
+    repo,
+    package_name: str,
+    ecosystem: str,
+    patched_version: str,
+    alert_number: int,
+    dry_run: bool,
+) -> int | None:
+    """Create a PR that bumps a dependency to the patched version.
+
+    Returns the PR number on success, None on failure.
+    """
+    import re
+
+    if not patched_version:
+        print("  No patched version available. Cannot create bump PR.")
+        return None
+
+    pin_info = find_dependency_pin(repo, package_name, ecosystem)
+    if pin_info is None:
+        print(f"  Cannot find {package_name} pin in repo. Cannot create bump PR.")
+        return None
+
+    file_path, old_text, file_sha = pin_info
+
+    # Build the updated file content
+    if ecosystem == "pip":
+        # Replace version pins like: Django==5.2.13 or Django>=5.2.13
+        new_text = re.sub(
+            rf"(?im)^({re.escape(package_name)}\s*==\s*)\S+",
+            rf"\g<1>{patched_version}",
+            old_text,
+        )
+        if new_text == old_text:
+            print(f"  Could not update version pin in {file_path}.")
+            return None
+    elif ecosystem == "npm":
+        # For npm, updating package.json alone isn't enough (lock file
+        # needs regenerating). Log and skip for now.
+        print("  npm bump PRs require lock file regeneration. Not yet supported.")
+        return None
+    else:
+        print(f"  Unsupported ecosystem: {ecosystem}")
+        return None
+
+    branch_name = f"blender/security-bump-{package_name.lower()}"
+    pr_title = f"Bump {package_name} to {patched_version} (security)"
+    pr_body = (
+        f"## Summary\n\n"
+        f"Bumps **{package_name}** to `{patched_version}` to resolve "
+        f"[open security alerts]"
+        f"(https://github.com/{repo.full_name}/security/dependabot"
+        f"?q=is%3Aopen+{package_name}).\n\n"
+        f"BLEnder investigated and determined the repo is **not affected**, "
+        f"but bumping the dependency is good hygiene.\n\n"
+        f"---\n"
+        f"*Created by [BLEnder](https://github.com/mozilla/blender)*"
+    )
+
+    if dry_run:
+        print(f"  DRY_RUN: would create bump PR: {pr_title}")
+        print(f"  DRY_RUN: branch={branch_name}, file={file_path}")
+        return 0
+
+    try:
+        # Create branch from default branch
+        default_branch = repo.default_branch
+        ref = repo.get_git_ref(f"heads/{default_branch}")
+        sha = ref.object.sha
+
+        # Check if branch already exists
+        try:
+            repo.get_git_ref(f"heads/{branch_name}")
+            print(f"  Branch {branch_name} already exists. Skipping.")
+            return None
+        except Exception:
+            pass  # Branch doesn't exist, good
+
+        repo.create_git_ref(f"refs/heads/{branch_name}", sha)
+        print(f"  Created branch {branch_name}")
+
+        # Update the file
+        repo.update_file(
+            file_path,
+            f"Bump {package_name} to {patched_version}\n\n"
+            f"Resolves security alert #{alert_number}.",
+            new_text,
+            file_sha,
+            branch=branch_name,
+        )
+        print(f"  Updated {file_path} on {branch_name}")
+
+        # Open the PR
+        pr = repo.create_pull(
+            title=pr_title,
+            body=pr_body,
+            head=branch_name,
+            base=default_branch,
+        )
+        print(f"  Created PR #{pr.number}: {pr.html_url}")
+        return pr.number
+
+    except Exception as e:
+        print(f"  Failed to create bump PR: {e}")
+        return None
+
+
 def dismiss_alert(
     repo,
     alert_number: int,
@@ -164,7 +364,9 @@ def main() -> None:
     repo_name = os.environ.get("REPO", "")
     alert_number = int(os.environ.get("ALERT_NUMBER", "0"))
     package_name = os.environ.get("ALERT_PACKAGE", "unknown")
+    ecosystem = os.environ.get("ALERT_ECOSYSTEM", "unknown")
     severity = os.environ.get("ALERT_SEVERITY", "unknown")
+    patched_version = os.environ.get("ALERT_PATCHED_VERSION", "")
     dry_run = os.environ.get("DRY_RUN", "false").lower() in ("true", "1", "yes")
     dismiss_enabled = os.environ.get("DISMISS_UNAFFECTED", "false").lower() in (
         "true",
@@ -197,7 +399,26 @@ def main() -> None:
     reason = verdict.get("reason", "(none)")
 
     if not affected:
-        if dismiss_enabled and severity.lower() not in DISMISS_BLOCKED_SEVERITIES:
+        # Check for an existing PR (Dependabot or BLEnder) that bumps this package
+        existing_pr = find_existing_bump_pr(repo, package_name)
+
+        if existing_pr:
+            print(f"  Existing PR #{existing_pr} covers this package.")
+            comment_on_pr(repo, existing_pr, reason, dry_run)
+            action = "existing_pr"
+        elif recommended == "bump_pr":
+            print("  No existing PR. Creating bump PR.")
+            pr_num = create_bump_pr(
+                repo, package_name, ecosystem, patched_version,
+                alert_number, dry_run,
+            )
+            if pr_num is not None:
+                action = "bump_pr_created"
+                if pr_num > 0:
+                    write_output("bump_pr_number", str(pr_num))
+            else:
+                action = "noop"
+        elif dismiss_enabled and severity.lower() not in DISMISS_BLOCKED_SEVERITIES:
             print("  Unaffected + dismiss enabled. Dismissing alert.")
             dismiss_alert(repo, alert_number, reason, dry_run)
             action = "dismissed"
@@ -208,7 +429,6 @@ def main() -> None:
             )
             action = "noop"
         else:
-            print("  Unaffected + dismiss disabled. Consider bumping the package.")
             action = "noop"
         write_output("action", action)
     else:
@@ -224,8 +444,8 @@ def main() -> None:
         write_output("advisory_ghsa_id", ghsa_id)
         write_output("fork_repo", fork_repo)
 
-    write_summary(
-        SUMMARY_FILE, repo_name, alert_number, package_name, severity, action, verdict
+    write_step_summary(
+        repo_name, alert_number, package_name, severity, action, verdict
     )
 
 
