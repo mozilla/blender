@@ -29,10 +29,17 @@ import json
 import os
 import sys
 import time
+from pathlib import Path
 
-from github import Auth, Github
+# Ensure the repo root is on sys.path so `scripts.alert_report` resolves
+# when this file is invoked as `python /path/to/scripts/post_alert_action.py`.
+_repo_root = str(Path(__file__).resolve().parent.parent)
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
 
-from scripts.alert_report import write_summary
+from github import Auth, Github  # noqa: E402
+
+from scripts.alert_report import write_summary  # noqa: E402
 
 DISMISS_BLOCKED_SEVERITIES = {"critical", "high"}
 VERDICT_FILE = ".blender-alert-verdict.json"

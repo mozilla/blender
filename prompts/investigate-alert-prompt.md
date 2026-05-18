@@ -25,43 +25,39 @@ Determine whether this vulnerability affects the target repo's code.
 Many Dependabot alerts flag transitive dependencies or code paths the
 repo never exercises. Your job is to distinguish real impact from noise.
 
-### Step 1: Run the ecosystem audit tool
+**You have a limited turn budget. Be efficient. Your final response
+must include the verdict JSON — that is the only deliverable that matters.**
 
-Run the appropriate audit command for structured data:
-- npm: `npm audit --json 2>/dev/null || true`
-- pip: `pip-audit --format=json 2>/dev/null || true`
-
-This confirms whether the package is a direct or transitive dependency
-and which versions are installed.
-
-### Step 2: Search for usage
+### Step 1: Search for usage
 
 Search the codebase for imports, requires, and references to
 `{{ALERT_PACKAGE}}`. Check:
 - Source code imports and usage
 - Configuration files
 - Lock files (to confirm installed version)
-- Test files
 
-### Step 3: Trace vulnerable code paths
+### Step 2: Trace vulnerable code paths
 
 Read the advisory description. Identify the specific functions,
 methods, or protocols that are vulnerable. Then check whether this
 repo calls those functions or exposes those code paths.
 
-### Step 4: Assess transitive exposure
+### Step 3: Assess transitive exposure
 
 If the package is a transitive dependency:
 - Identify which direct dependency pulls it in
 - Check whether the direct dependency exposes the vulnerable API
 - A transitive dep used only at build time is not affected at runtime
 
-### Step 5: Write your verdict
+**If you already have enough evidence, skip to Step 4 now.**
 
-Write your verdict to `.blender-alert-verdict.json` using the Bash tool:
+### Step 4: Output your verdict
 
-```bash
-cat > .blender-alert-verdict.json << 'VERDICT_EOF'
+Your final response MUST end with the verdict as a fenced JSON block
+labeled `VERDICT_JSON`. Do not write any files. Just output this block:
+
+````
+```VERDICT_JSON
 {
   "affected": false,
   "confidence": "high",
@@ -69,8 +65,8 @@ cat > .blender-alert-verdict.json << 'VERDICT_EOF'
   "vulnerable_paths": [],
   "recommended_action": "bump_pr"
 }
-VERDICT_EOF
 ```
+````
 
 **Fields:**
 - `affected`: true if the vulnerability impacts this repo's code
@@ -89,7 +85,7 @@ VERDICT_EOF
 
 ## Rules
 
-- Do NOT edit any tracked files. Read and analyze only.
+- Do NOT edit or create any files. Read and analyze only.
 - Do NOT run `git` commands.
-- Write ONLY `.blender-alert-verdict.json` via Bash.
+- Your final response MUST end with the ```VERDICT_JSON``` block.
 - Be conservative. When in doubt, mark as affected.

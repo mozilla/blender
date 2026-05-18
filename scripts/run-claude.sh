@@ -45,15 +45,16 @@ unset ACTIONS_CACHE_URL 2>/dev/null || true
 
 CLAUDE_SETTINGS="$BLENDER_DIR/claude-settings.json"
 CLAUDE_LOG=$(mktemp /tmp/blender-claude-XXXXXX.log)
+trap 'rm -f "$CLAUDE_LOG"' EXIT
 
 # --- Mode-specific settings ---
 if [ "$BLENDER_MODE" = "investigate" ]; then
   ALLOWED_TOOLS="Read,Bash"
-  MAX_TURNS=20
+  MAX_TURNS=25
   MAX_BUDGET="1.50"
-  SYSTEM_PROMPT="You are BLEnder, a security analysis agent for ${REPO_DISPLAY_NAME}. Investigate the Dependabot security alert described in the prompt. Read the codebase to determine if the vulnerability affects this repo. Write your verdict to .blender-alert-verdict.json. Do not edit any tracked files. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
+  SYSTEM_PROMPT="You are BLEnder, a security analysis agent for ${REPO_DISPLAY_NAME}. Investigate the Dependabot security alert described in the prompt. Read the codebase to determine if the vulnerability affects this repo. Output your verdict as a VERDICT_JSON block in your final response. Do not create or edit any files. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
 elif [ "$BLENDER_MODE" = "major" ]; then
-  ALLOWED_TOOLS="Read,Bash"
+  ALLOWED_TOOLS="Read,Write,Bash"
   MAX_TURNS=15
   MAX_BUDGET="1.00"
   SYSTEM_PROMPT="You are BLEnder, a dependency analysis agent for ${REPO_DISPLAY_NAME}. Evaluate the major version bump described in the prompt. Read the codebase and the dependency source code. Write your verdict to .blender-verdict.json. Do not edit any tracked files. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
@@ -87,8 +88,6 @@ if [ "${CLAUDE_VERBOSE:-false}" = "true" ]; then
 else
   echo "Set CLAUDE_VERBOSE=true to see full output."
 fi
-rm -f "$CLAUDE_LOG"
-
 if [ "$claude_exit" -ne 0 ]; then
   echo "Claude exited with code ${claude_exit} (likely hit max-turns or budget)."
   # In major/investigate mode, a non-zero exit is not fatal — post steps handle missing verdict
@@ -176,6 +175,16 @@ if [ "$BLENDER_MODE" = "investigate" ]; then
     git diff --name-only
     git checkout -- .
     exit 1
+  fi
+
+  # Extract verdict JSON from Claude's text output.  Claude runs in a
+  # sandbox that prevents file writes, so the prompt tells Claude to
+  # output a ```VERDICT_JSON fenced block in its final response.
+  # We extract that block and write the file here, outside the sandbox.
+  echo "Extracting verdict from Claude output..."
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if python3 "${SCRIPT_DIR}/extract_alert_verdict.py" "$CLAUDE_LOG"; then
+    echo "Verdict file written from Claude output."
   fi
 
   # Alert verdict file must exist and be valid JSON

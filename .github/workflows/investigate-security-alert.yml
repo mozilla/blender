@@ -69,10 +69,9 @@ jobs:
           private-key: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
           owner: ${{ steps.parse.outputs.owner }}
           repositories: ${{ steps.parse.outputs.name }}
-          permission-contents: write
-          permission-pull-requests: write
-          permission-vulnerability-alerts: write
-          permission-security-events: write
+          # Token inherits all installed permissions (contents, pull-requests,
+          # vulnerability-alerts, repository-advisories). We don't restrict
+          # because the token action has no input for repository-advisories.
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
@@ -171,6 +170,7 @@ jobs:
         with:
           name: alert-${{ inputs.alert_number }}-summary
           path: target/.blender-alert-summary.html
+          include-hidden-files: true
 
   remediate:
     needs: investigate

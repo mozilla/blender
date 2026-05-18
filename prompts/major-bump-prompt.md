@@ -61,10 +61,11 @@ Are all CI checks passing on this PR? If not, what failed and is it related to t
 
 ### Step 7: Write your verdict
 
-Write your verdict to `.blender-verdict.json` using the Bash tool:
+Create the file `.blender-verdict.json` using the **Write** tool (not
+Bash — Bash runs in a sandbox and its file writes do not persist).
+The file must contain valid JSON with this structure:
 
-```bash
-cat > .blender-verdict.json << 'VERDICT_EOF'
+```json
 {
   "safe": true,
   "confidence": "high",
@@ -73,7 +74,6 @@ cat > .blender-verdict.json << 'VERDICT_EOF'
   "affected_code": ["List files/functions affected by breaking changes"],
   "test_coverage": "Summary of test coverage for the dependency's usage"
 }
-VERDICT_EOF
 ```
 
 **Confidence levels:**
@@ -94,5 +94,5 @@ VERDICT_EOF
 
 - Do NOT edit any tracked files. Read and analyze only.
 - Do NOT run `git` commands.
-- Write ONLY `.blender-verdict.json` via Bash.
+- Create ONLY `.blender-verdict.json` via the Write tool.
 - Be conservative. When in doubt, mark as not safe.
