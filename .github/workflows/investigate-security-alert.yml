@@ -89,6 +89,7 @@ jobs:
           name: alert-verdict
           path: target/.blender-alert-verdict.json
           if-no-files-found: ignore
+          include-hidden-files: true
           retention-days: 1
 
   remediate:
