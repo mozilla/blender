@@ -1,11 +1,11 @@
-"""Tests for scripts.sweep.process_repo."""
+"""Tests for scripts.sweep.process_repo and check_alerts."""
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, PropertyMock, patch
 
-from scripts.sweep import process_repo
+from scripts.sweep import check_alerts, process_repo
 
 # --- Shared timestamps ---
 
@@ -267,3 +267,78 @@ class TestEdgeCases:
             "scripts.sweep.check_pr_status", side_effect=RuntimeError("API error")
         ):
             assert process_repo(repo) == []
+
+
+# --- Alert discovery ---
+
+
+def _make_alert(number: int, package: str, severity: str = "high"):
+    """Build a mock Dependabot alert dict (API response shape)."""
+    return {
+        "number": number,
+        "security_vulnerability": {
+            "package": {"name": package, "ecosystem": "npm"},
+            "first_patched_version": {"identifier": "2.0.0"},
+        },
+        "security_advisory": {"severity": severity},
+    }
+
+
+def _make_branch(name: str):
+    """Build a mock branch object."""
+    b = MagicMock()
+    b.name = name
+    return b
+
+
+class TestAlertDiscovery:
+    def test_alert_discovery_emits_investigate_action(self):
+        """Open alert with no existing branch -> investigate action."""
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        repo._requester.requestJsonAndCheck.return_value = (
+            {},
+            [_make_alert(42, "lodash")],
+        )
+        repo.get_branches.return_value = []
+
+        actions = check_alerts(repo)
+        assert len(actions) == 1
+        assert actions[0].action == "investigate"
+        assert actions[0].alert_number == 42
+        assert actions[0].alert_package == "lodash"
+
+    def test_alert_with_existing_branch_skipped(self):
+        """Alert with blender/security/{number}-* branch -> skip."""
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        repo._requester.requestJsonAndCheck.return_value = (
+            {},
+            [_make_alert(42, "lodash")],
+        )
+        repo.get_branches.return_value = [
+            _make_branch("blender/security/42-lodash"),
+        ]
+
+        actions = check_alerts(repo)
+        assert actions == []
+
+    def test_fixed_alert_skipped(self):
+        """No open alerts -> empty list."""
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        repo._requester.requestJsonAndCheck.return_value = ({}, [])
+        repo.get_branches.return_value = []
+
+        actions = check_alerts(repo)
+        assert actions == []
+
+    def test_alert_api_failure_returns_empty(self):
+        """API error fetching alerts -> empty list, no crash."""
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        repo._requester.requestJsonAndCheck.side_effect = RuntimeError("403")
+        repo.get_branches.return_value = []
+
+        actions = check_alerts(repo)
+        assert actions == []

@@ -45,18 +45,9 @@ if [ ! -f "$PROMPT_TEMPLATE" ]; then
 fi
 
 # --- Sanitize untrusted input before inserting into prompts ---
-sanitize_for_prompt() {
-  local input="$1"
-  # Strip HTML/XML tags (regex requires sed, not ${//})
-  # shellcheck disable=SC2001
-  input=$(echo "$input" | sed 's/<[^>]*>//g')
-  # Strip markdown image/link injection
-  # shellcheck disable=SC2001
-  input=$(echo "$input" | sed 's/!\[[^]]*\]([^)]*)//g')
-  # Strip prompt injection attempts
-  input=$(echo "$input" | grep -viE '(ignore .* instructions|ignore .* prompt|system prompt|you are now|new instructions|disregard|forget .* above)' || true)
-  echo "$input"
-}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/sanitize.sh
+source "${SCRIPT_DIR}/sanitize.sh"
 
 echo "BLEnder gather-context: PR #${PR_NUMBER} repo=${REPO}"
 
