@@ -24,8 +24,8 @@ REF="${REF:-$(git rev-parse --abbrev-ref HEAD)}"
 WORKFLOW="investigate-security-alert.yml"
 
 echo "Fetching open Dependabot alerts for ${REPO}..."
-alerts=$(gh api "repos/${REPO}/dependabot/alerts" \
-  --jq '.[] | select(.state=="open") | {
+alerts=$(gh api "repos/${REPO}/dependabot/alerts?state=open&per_page=100" \
+  --jq '.[] | {
     number: .number,
     package: .security_vulnerability.package.name,
     ecosystem: .security_vulnerability.package.ecosystem,
