@@ -56,7 +56,7 @@ jobs:
           private-key: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
           owner: ${{ steps.parse.outputs.owner }}
           repositories: ${{ steps.parse.outputs.name }}
-          permission-contents: read
+          permission-contents: write
           permission-pull-requests: write
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
@@ -178,6 +178,14 @@ jobs:
           OLD_VERSION: ${{ steps.pr-meta.outputs.old_version }}
           NEW_VERSION: ${{ steps.pr-meta.outputs.new_version }}
           ECOSYSTEM: ${{ steps.pr-meta.outputs.ecosystem }}
+
+      - name: Upload gathered context
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: blender-context
+          path: target/.blender-context/
+          retention-days: 14
 
       - name: Run Claude review
         working-directory: target

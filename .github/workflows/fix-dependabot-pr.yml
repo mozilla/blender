@@ -65,6 +65,7 @@ jobs:
 
       # --- BLEnder fix ---
       - name: Gather PR context
+        id: gather
         working-directory: target
         run: ${{ github.workspace }}/scripts/gather-context.sh
         env:
@@ -74,6 +75,32 @@ jobs:
           PROMPT_TEMPLATE: .blender/fix-dependabot-prompt.md
           INSTALL_FAILED: ${{ steps.setup.outputs.install_failed }}
           INSTALL_LOG_FILE: /tmp/install-output.log
+
+      - name: Upload gathered context
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: blender-context
+          path: target/.blender-context/
+          retention-days: 14
+
+      - name: Warn about CircleCI
+        if: steps.gather.outputs.HAS_CIRCLECI_FAILURE == 'true'
+        working-directory: target
+        run: |
+          BODY=$(cat <<'COMMENT'
+          > **Note:** This PR has failing CircleCI checks.
+          > BLEnder cannot access CircleCI log output, so it
+          > may not be able to diagnose or fix the failure.
+          > Consider migrating CI to GitHub Actions so BLEnder
+          > can read failure logs directly.
+          COMMENT
+          )
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body "$BODY"
+        env:
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          REPO: ${{ inputs.target_repo }}
 
       - name: Comment on PR
         working-directory: target

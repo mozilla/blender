@@ -23,6 +23,12 @@ inputs:
   permission-pull-requests:
     description: 'Token permission for pull-requests (omit to inherit all)'
     default: ''
+  permission-vulnerability-alerts:
+    description: 'Token permission for vulnerability-alerts (omit to inherit all)'
+    default: ''
+  permission-security-events:
+    description: 'Token permission for security-events (omit to inherit all)'
+    default: ''
   checkout-path:
     description: 'Path to checkout target repo'
     default: 'target'
@@ -92,6 +98,8 @@ runs:
         repositories: ${{ steps.parse.outputs.name }}
         permission-contents: ${{ inputs.permission-contents || '' }}
         permission-pull-requests: ${{ inputs.permission-pull-requests || '' }}
+        permission-vulnerability-alerts: ${{ inputs.permission-vulnerability-alerts || '' }}
+        permission-security-events: ${{ inputs.permission-security-events || '' }}
 
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
       with:

@@ -66,9 +66,20 @@ else
 fi
 
 echo "Running Claude Code (mode=${BLENDER_MODE}, tools=${ALLOWED_TOOLS}, turns=${MAX_TURNS}, budget=\$${MAX_BUDGET})..."
+
+# In verbose mode, use --output-format json to capture the full session
+# (tool calls, tool results, reasoning).  Normal mode uses -p for just
+# the final text response.
+if [ "${CLAUDE_VERBOSE:-false}" = "true" ]; then
+  OUTPUT_FLAGS="-p --output-format json"
+else
+  OUTPUT_FLAGS="-p"
+fi
+
 claude_exit=0
+# shellcheck disable=SC2086  # intentional word-splitting of OUTPUT_FLAGS
 claude \
-  -p \
+  $OUTPUT_FLAGS \
   --verbose \
   --max-turns "$MAX_TURNS" \
   --max-budget-usd "$MAX_BUDGET" \
@@ -84,7 +95,12 @@ claude \
 line_count=$(wc -l < "$CLAUDE_LOG")
 echo "Claude finished (exit=${claude_exit}, ${line_count} lines of output)."
 if [ "${CLAUDE_VERBOSE:-false}" = "true" ]; then
-  cat "$CLAUDE_LOG"
+  # Pretty-print the JSON session log for readability in CI
+  if command -v jq &>/dev/null; then
+    jq . "$CLAUDE_LOG" 2>/dev/null || cat "$CLAUDE_LOG"
+  else
+    cat "$CLAUDE_LOG"
+  fi
 else
   echo "Set CLAUDE_VERBOSE=true to see full output."
 fi

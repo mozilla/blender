@@ -58,6 +58,10 @@ jobs:
           app-id: ${{ secrets.BLENDER_APP_ID }}
           private-key: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
           blender-workspace: ${{ github.workspace }}
+          # Omit explicit permissions — token inherits all installed
+          # permissions (contents, pull-requests, vulnerability-alerts,
+          # repository-advisories). We can't restrict because the token
+          # action has no input for repository-advisories.
           install-sandbox: 'true'
           install-claude: 'true'
 

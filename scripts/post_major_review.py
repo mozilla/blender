@@ -5,7 +5,7 @@ This script has GH_TOKEN but does NOT have ANTHROPIC_API_KEY.
 It reads .blender-verdict.json written by Claude.
 
 Actions:
-  safe + high/medium confidence -> approve PR, enable auto-merge, post comment
+  safe + high/medium confidence -> approve PR (review body has details), enable auto-merge
   not safe or low confidence    -> post detailed skip comment
   no verdict file               -> post fallback comment
 
@@ -43,15 +43,14 @@ def post_comment(pr: PullRequest, body: str, dry_run: bool) -> None:
     pr.create_issue_comment(body)
 
 
-def approve_and_merge(pr: PullRequest, confidence: str, dry_run: bool) -> str | None:
+def approve_and_merge(pr: PullRequest, review_body: str, dry_run: bool) -> str | None:
     """Approve the PR and enable auto-merge.
 
     Returns None on success, or an error message if auto-merge failed.
     The approval is posted regardless.
     """
-    review_body = Verdict.APPROVED.comment(f"({confidence} confidence).")
     if dry_run:
-        print("DRY_RUN: would approve and enable auto-merge")
+        print(f"DRY_RUN: would approve with body:\n{review_body}")
         return None
     pr.create_review(event="APPROVE", body=review_body)
     return enable_auto_merge(pr)
@@ -106,12 +105,18 @@ def main() -> None:
     print(f"Reason: {reason}")
 
     if safe and confidence != "low":
-        merge_err = approve_and_merge(pr, confidence, dry_run)
-        auto_merge_note = ""
+        review_body = (
+            f"{Verdict.APPROVED.comment(f'({confidence} confidence).')}\n\n"
+            f"**Reason:** {reason}\n\n"
+            f"**Breaking changes:** "
+            f"{breaking_changes or 'None that affect this codebase'}\n"
+            f"**Test coverage:** {test_coverage}"
+        )
+        merge_err = approve_and_merge(pr, review_body, dry_run)
         if merge_err:
             print(f"Warning: auto-merge failed: {merge_err}")
             auto_merge_note = (
-                "\n\n> **Note:** auto-merge could not be enabled"
+                f"\n\n> **Note:** auto-merge could not be enabled"
                 f" ({merge_err}).\n"
                 "> A maintainer can merge this PR manually, or"
                 " [enable auto-merge](https://docs.github.com/en/"
@@ -121,16 +126,7 @@ def main() -> None:
                 "repository) on the repo so BLEnder can merge"
                 " safe updates in the future."
             )
-        comment = (
-            f"{Verdict.SAFE.comment('to merge.')}\n\n"
-            f"**Confidence:** {confidence}\n"
-            f"**Reason:** {reason}\n\n"
-            f"**Breaking changes:** "
-            f"{breaking_changes or 'None that affect this codebase'}\n"
-            f"**Test coverage:** {test_coverage}"
-            f"{auto_merge_note}"
-        )
-        post_comment(pr, comment, dry_run)
+            post_comment(pr, auto_merge_note, dry_run)
         if not dry_run:
             if merge_err:
                 print("Done. PR approved. Auto-merge not available.")
