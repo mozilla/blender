@@ -40,6 +40,7 @@ from github import Auth, Github  # noqa: E402
 
 from scripts.alert_report import write_step_summary  # noqa: E402
 
+BLENDER_NAME = "BLEnder"
 DISMISS_BLOCKED_SEVERITIES = {"critical", "high"}
 VERDICT_FILE = ".blender-alert-verdict.json"
 REQUIRED_KEYS = {
@@ -73,6 +74,7 @@ def create_advisory_and_fork(
     alert_number: int,
     package_name: str,
     dry_run: bool,
+    severity: str = "low",
 ) -> tuple[str, str]:
     """Create a security advisory with a private fork.
 
@@ -93,7 +95,7 @@ def create_advisory_and_fork(
     payload = {
         "summary": summary,
         "description": description,
-        "severity": "low",
+        "severity": severity or "low",
         "start_private_fork": True,
     }
     try:
@@ -157,6 +159,16 @@ def find_existing_bump_pr(
     return None
 
 
+def _run_url() -> str:
+    """Build a link to the current GitHub Actions run, or empty string."""
+    server = os.environ.get("GITHUB_SERVER_URL", "")
+    repository = os.environ.get("GITHUB_REPOSITORY", "")
+    run_id = os.environ.get("GITHUB_RUN_ID", "")
+    if server and repository and run_id:
+        return f"{server}/{repository}/actions/runs/{run_id}"
+    return ""
+
+
 def comment_on_pr(
     repo,
     pr_number: int,
@@ -164,9 +176,11 @@ def comment_on_pr(
     dry_run: bool,
 ) -> None:
     """Comment on a PR with BLEnder's investigation results."""
+    run_link = _run_url()
+    investigated = f"[investigated]({run_link})" if run_link else "investigated"
     body = (
-        "**BLEnder investigation:** This dependency has an open security alert, "
-        f"but the repo is **not affected**.\n\n> {reason}\n\n"
+        f"**{BLENDER_NAME} {investigated}:** This dependency has an open "
+        f"security alert, but the repo is **not affected**.\n\n> {reason}\n\n"
         "This PR can be reviewed and merged as a normal dependency update."
     )
     if dry_run:
@@ -278,16 +292,18 @@ def create_bump_pr(
 
     branch_name = f"blender/security-bump-{package_name.lower()}"
     pr_title = f"Bump {package_name} to {patched_version} (security)"
+    run_link = _run_url()
+    investigated = f"[investigated]({run_link})" if run_link else "investigated"
     pr_body = (
         f"## Summary\n\n"
         f"Bumps **{package_name}** to `{patched_version}` to resolve "
         f"[open security alerts]"
         f"(https://github.com/{repo.full_name}/security/dependabot"
         f"?q=is%3Aopen+{package_name}).\n\n"
-        f"BLEnder investigated and determined the repo is **not affected**, "
-        f"but bumping the dependency is good hygiene.\n\n"
+        f"{BLENDER_NAME} {investigated} and determined the repo is "
+        f"**not affected**, but bumping the dependency is good hygiene.\n\n"
         f"---\n"
-        f"*Created by [BLEnder](https://github.com/mozilla/blender)*"
+        f"*Created by [{BLENDER_NAME}](https://github.com/mozilla/blender)*"
     )
 
     if dry_run:
@@ -344,7 +360,7 @@ def dismiss_alert(
     reason: str,
     dry_run: bool,
 ) -> None:
-    """Dismiss a Dependabot alert as inaccurate (unaffected)."""
+    """Dismiss a Dependabot alert as not used (unaffected)."""
     if dry_run:
         print(f"  DRY_RUN: would dismiss alert #{alert_number}")
         return
@@ -352,8 +368,8 @@ def dismiss_alert(
     url = f"/repos/{repo.full_name}/dependabot/alerts/{alert_number}"
     payload = {
         "state": "dismissed",
-        "dismissed_reason": "inaccurate",
-        "dismissed_comment": f"BLEnder: {reason}",
+        "dismissed_reason": "not_used",
+        "dismissed_comment": f"{BLENDER_NAME}: {reason}",
     }
     repo._requester.requestJsonAndCheck("PATCH", url, input=payload)
     print(f"  Dismissed alert #{alert_number}")
@@ -438,6 +454,7 @@ def main() -> None:
             alert_number,
             package_name,
             dry_run,
+            severity=severity.lower() if severity else "low",
         )
         action = "private_fork"
         write_output("action", action)

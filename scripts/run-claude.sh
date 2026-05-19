@@ -185,26 +185,8 @@ if [ "$BLENDER_MODE" = "investigate" ]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   if python3 "${SCRIPT_DIR}/extract_alert_verdict.py" "$CLAUDE_LOG"; then
     echo "Verdict file written from Claude output."
-  fi
-
-  # Alert verdict file must exist and be valid JSON
-  if [ -f .blender-alert-verdict.json ]; then
-    if ! jq empty .blender-alert-verdict.json 2>/dev/null; then
-      echo "ABORT: .blender-alert-verdict.json is not valid JSON."
-      rm -f .blender-alert-verdict.json
-      exit 1
-    fi
-    # Check required keys
-    for key in affected confidence reason vulnerable_paths recommended_action; do
-      if ! jq -e "has(\"$key\")" .blender-alert-verdict.json > /dev/null 2>&1; then
-        echo "ABORT: .blender-alert-verdict.json missing required key: $key"
-        rm -f .blender-alert-verdict.json
-        exit 1
-      fi
-    done
-    echo "Alert verdict file validated."
   else
-    echo "No alert verdict file produced. Post-action will handle this."
+    echo "No alert verdict extracted. Post-action will handle this."
   fi
 
   exit 0

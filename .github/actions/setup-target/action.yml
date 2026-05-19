@@ -1,0 +1,158 @@
+---
+name: Setup target repo
+description: >-
+  Parse target repo, create app token, checkout, read config, and install
+  Python. Shared by investigate, fix, and setup workflows.
+
+inputs:
+  target-repo:
+    description: 'Target repo (e.g. mozilla/fx-private-relay)'
+    required: true
+  app-id:
+    description: 'GitHub App ID for token creation'
+    required: true
+  private-key:
+    description: 'GitHub App private key'
+    required: true
+  blender-workspace:
+    description: 'Path to blender checkout (github.workspace)'
+    required: true
+  permission-contents:
+    description: 'Token permission for contents (omit to inherit all)'
+    default: ''
+  permission-pull-requests:
+    description: 'Token permission for pull-requests (omit to inherit all)'
+    default: ''
+  checkout-path:
+    description: 'Path to checkout target repo'
+    default: 'target'
+  checkout-submodules:
+    description: 'Submodules mode (false, true, or recursive)'
+    default: 'false'
+  checkout-persist-credentials:
+    description: 'Persist credentials after checkout'
+    default: 'false'
+  install-sandbox:
+    description: 'Install bubblewrap + socat'
+    default: 'false'
+  install-claude:
+    description: 'Install Claude Code CLI'
+    default: 'false'
+  install-blender-deps:
+    description: 'Install BLEnder Python dependencies'
+    default: 'false'
+
+outputs:
+  token:
+    description: 'GitHub App token for target repo'
+    value: ${{ steps.app-token.outputs.token }}
+  owner:
+    description: 'Target repo owner'
+    value: ${{ steps.parse.outputs.owner }}
+  name:
+    description: 'Target repo name'
+    value: ${{ steps.parse.outputs.name }}
+  node_version:
+    description: 'Node version from blender.yml'
+    value: ${{ steps.config.outputs.node_version }}
+  python_version:
+    description: 'Python version from blender.yml'
+    value: ${{ steps.config.outputs.python_version }}
+  install_command:
+    description: 'Install command from blender.yml'
+    value: ${{ steps.config.outputs.install_command }}
+  repo_name:
+    description: 'Display name from blender.yml'
+    value: ${{ steps.config.outputs.repo_name }}
+  dismiss_unaffected:
+    description: 'Whether to dismiss unaffected alerts'
+    value: ${{ steps.config.outputs.dismiss_unaffected }}
+  install_failed:
+    description: 'Whether the target dependency install failed'
+    value: ${{ steps.install-deps.outcome == 'failure' && 'true' || 'false' }}
+
+runs:
+  using: composite
+  steps:
+    - name: Parse target repo
+      id: parse
+      shell: bash
+      run: |
+        echo "owner=${TARGET_REPO%%/*}" >> "$GITHUB_OUTPUT"
+        echo "name=${TARGET_REPO##*/}" >> "$GITHUB_OUTPUT"
+      env:
+        TARGET_REPO: ${{ inputs.target-repo }}
+
+    - id: app-token
+      uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349  # v2
+      with:
+        app-id: ${{ inputs.app-id }}
+        private-key: ${{ inputs.private-key }}
+        owner: ${{ steps.parse.outputs.owner }}
+        repositories: ${{ steps.parse.outputs.name }}
+        permission-contents: ${{ inputs.permission-contents || '' }}
+        permission-pull-requests: ${{ inputs.permission-pull-requests || '' }}
+
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+      with:
+        repository: ${{ inputs.target-repo }}
+        token: ${{ steps.app-token.outputs.token }}
+        path: ${{ inputs.checkout-path }}
+        submodules: ${{ inputs.checkout-submodules }}
+        persist-credentials: ${{ inputs.checkout-persist-credentials }}
+
+    - name: Read repo config
+      id: config
+      shell: bash
+      run: |
+        CONFIG_FILE="${CHECKOUT_PATH}/.blender/blender.yml"
+        if [ ! -f "$CONFIG_FILE" ]; then
+          echo "Error: No config found at $CONFIG_FILE"
+          exit 1
+        fi
+        {
+          echo "node_version=$(yq '.node_version // ""' "$CONFIG_FILE")"
+          echo "python_version=$(yq '.python_version // ""' "$CONFIG_FILE")"
+          echo "install_command=$(yq '.install_command // ""' "$CONFIG_FILE")"
+          echo "repo_name=$(yq '.repo_name // ""' "$CONFIG_FILE")"
+          echo "dismiss_unaffected=$(yq '.investigate.dismiss_unaffected // "false"' "$CONFIG_FILE")"
+        } >> "$GITHUB_OUTPUT"
+      env:
+        CHECKOUT_PATH: ${{ inputs.checkout-path }}
+
+    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+      with:
+        python-version: ${{ steps.config.outputs.python_version || '3.11' }}
+        cache: pip
+
+    - name: Install BLEnder Python dependencies
+      if: inputs.install-blender-deps == 'true'
+      shell: bash
+      run: pip install -r scripts/requirements.txt
+      working-directory: ${{ inputs.blender-workspace }}
+
+    - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f  # v6
+      if: steps.config.outputs.node_version != ''
+      with:
+        node-version: ${{ steps.config.outputs.node_version }}
+
+    - name: Install target dependencies
+      id: install-deps
+      if: steps.config.outputs.install_command != ''
+      continue-on-error: true
+      shell: bash
+      working-directory: ${{ inputs.checkout-path }}
+      run: |
+        eval "$INSTALL_COMMAND" 2>&1 | tee /tmp/install-output.log
+      env:
+        INSTALL_COMMAND: ${{ steps.config.outputs.install_command }}
+
+    - name: Install sandbox dependencies
+      if: inputs.install-sandbox == 'true'
+      shell: bash
+      run: sudo apt-get install -y bubblewrap socat
+
+    - name: Install Claude Code
+      if: inputs.install-claude == 'true'
+      shell: bash
+      run: npm install -g @anthropic-ai/claude-code@stable

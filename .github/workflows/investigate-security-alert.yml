@@ -45,93 +45,27 @@ jobs:
     permissions:
       contents: read
       actions: write
-    outputs:
-      action: ${{ steps.post-action.outputs.action }}
-      fork_repo: ${{ steps.post-action.outputs.fork_repo }}
-      advisory_ghsa_id: ${{ steps.post-action.outputs.advisory_ghsa_id }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
           persist-credentials: false
 
-      - name: Parse target repo
-        id: parse
-        run: |
-          echo "owner=${TARGET_REPO%%/*}" >> "$GITHUB_OUTPUT"
-          echo "name=${TARGET_REPO##*/}" >> "$GITHUB_OUTPUT"
-        env:
-          TARGET_REPO: ${{ inputs.target_repo }}
-
-      - id: app-token
-        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349  # v2
+      - name: Setup target repo
+        id: setup
+        uses: ./.github/actions/setup-target
         with:
+          target-repo: ${{ inputs.target_repo }}
           app-id: ${{ secrets.BLENDER_APP_ID }}
           private-key: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
-          owner: ${{ steps.parse.outputs.owner }}
-          repositories: ${{ steps.parse.outputs.name }}
-          # Token inherits all installed permissions (contents, pull-requests,
-          # vulnerability-alerts, repository-advisories). We don't restrict
-          # because the token action has no input for repository-advisories.
-
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
-        with:
-          repository: ${{ inputs.target_repo }}
-          token: ${{ steps.app-token.outputs.token }}
-          path: target
-          persist-credentials: false
-
-      - name: Read repo config
-        id: config
-        run: |
-          CONFIG_FILE="target/.blender/blender.yml"
-          if [ ! -f "$CONFIG_FILE" ]; then
-            echo "Error: No config found at $CONFIG_FILE"
-            exit 1
-          fi
-          {
-            echo "node_version=$(yq '.node_version // ""' "$CONFIG_FILE")"
-            echo "python_version=$(yq '.python_version // ""' "$CONFIG_FILE")"
-            echo "install_command=$(yq '.install_command // ""' "$CONFIG_FILE")"
-            echo "repo_name=$(yq '.repo_name // ""' "$CONFIG_FILE")"
-            echo "dismiss_unaffected=$(yq '.investigate.dismiss_unaffected // "false"' "$CONFIG_FILE")"
-          } >> "$GITHUB_OUTPUT"
-
-      # --- Conditional setup ---
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
-        with:
-          python-version: ${{ steps.config.outputs.python_version || '3.11' }}
-          cache: pip
-
-      - name: Install BLEnder Python dependencies
-        run: pip install -r scripts/requirements.txt
-        working-directory: ${{ github.workspace }}
-
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f  # v6
-        if: steps.config.outputs.node_version != ''
-        with:
-          node-version: ${{ steps.config.outputs.node_version }}
-
-      - name: Install dependencies
-        if: steps.config.outputs.install_command != ''
-        continue-on-error: true
-        working-directory: target
-        run: |
-          eval "$INSTALL_COMMAND" 2>&1 | tee /tmp/install-output.log
-        env:
-          INSTALL_COMMAND: ${{ steps.config.outputs.install_command }}
-
-      # --- BLEnder investigate ---
-      - name: Install sandbox dependencies
-        run: sudo apt-get install -y bubblewrap socat
-
-      - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code@stable
+          blender-workspace: ${{ github.workspace }}
+          install-sandbox: 'true'
+          install-claude: 'true'
 
       - name: Gather alert context
         working-directory: target
         run: ${{ github.workspace }}/scripts/gather-alert-context.sh
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
           ALERT_NUMBER: ${{ inputs.alert_number }}
           REPO: ${{ inputs.target_repo }}
           PROMPT_TEMPLATE: ${{ github.workspace }}/prompts/investigate-alert-prompt.md
@@ -144,17 +78,54 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           REPO: ${{ inputs.target_repo }}
-          REPO_NAME: ${{ steps.config.outputs.repo_name }}
+          REPO_NAME: ${{ steps.setup.outputs.repo_name }}
           BLENDER_DIR: ${{ github.workspace }}
           BLENDER_MODE: investigate
           CLAUDE_VERBOSE: ${{ inputs.verbose }}
+
+      - name: Upload verdict
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: alert-verdict
+          path: target/.blender-alert-verdict.json
+          if-no-files-found: ignore
+          retention-days: 1
+
+  remediate:
+    needs: investigate
+    runs-on: ubuntu-latest
+    outputs:
+      action: ${{ steps.post-action.outputs.action }}
+      fork_repo: ${{ steps.post-action.outputs.fork_repo }}
+      advisory_ghsa_id: ${{ steps.post-action.outputs.advisory_ghsa_id }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          persist-credentials: false
+
+      - name: Setup target repo
+        id: setup
+        uses: ./.github/actions/setup-target
+        with:
+          target-repo: ${{ inputs.target_repo }}
+          app-id: ${{ secrets.BLENDER_APP_ID }}
+          private-key: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
+          blender-workspace: ${{ github.workspace }}
+          install-blender-deps: 'true'
+
+      - name: Download verdict
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
+        with:
+          name: alert-verdict
+          path: target
+        continue-on-error: true
 
       - name: Post-investigation action
         id: post-action
         working-directory: target
         run: python ${{ github.workspace }}/scripts/post_alert_action.py
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
           REPO: ${{ inputs.target_repo }}
           ALERT_NUMBER: ${{ inputs.alert_number }}
           ALERT_PACKAGE: ${{ inputs.alert_package }}
@@ -162,86 +133,42 @@ jobs:
           ALERT_SEVERITY: ${{ inputs.alert_severity }}
           ALERT_PATCHED_VERSION: ${{ inputs.alert_patched_version }}
           DRY_RUN: ${{ inputs.dry_run }}
-          DISMISS_UNAFFECTED: ${{ steps.config.outputs.dismiss_unaffected }}
+          DISMISS_UNAFFECTED: ${{ steps.setup.outputs.dismiss_unaffected }}
 
-  remediate:
-    needs: investigate
-    if: needs.investigate.outputs.action == 'private_fork'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
-        with:
-          persist-credentials: false
-
-      - name: Parse target repo
-        id: parse
-        run: |
-          echo "owner=${TARGET_REPO%%/*}" >> "$GITHUB_OUTPUT"
-          echo "name=${TARGET_REPO##*/}" >> "$GITHUB_OUTPUT"
-        env:
-          TARGET_REPO: ${{ inputs.target_repo }}
-
-      - id: app-token
-        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349  # v2
-        with:
-          app-id: ${{ secrets.BLENDER_APP_ID }}
-          private-key: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
-          owner: ${{ steps.parse.outputs.owner }}
-          repositories: ${{ steps.parse.outputs.name }}
-          permission-contents: write
-          permission-pull-requests: write
-
+      # --- Private fork remediation (only for affected alerts) ---
       - name: Clone private fork
+        if: steps.post-action.outputs.action == 'private_fork'
         run: |
-          git clone "https://x-access-token:${GH_TOKEN}@github.com/${FORK_REPO}.git" target
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${FORK_REPO}.git" fork
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          FORK_REPO: ${{ needs.investigate.outputs.fork_repo }}
-
-      - name: Read repo config
-        id: config
-        run: |
-          CONFIG_FILE="target/.blender/blender.yml"
-          if [ ! -f "$CONFIG_FILE" ]; then
-            echo "Error: No config found at $CONFIG_FILE"
-            exit 1
-          fi
-          {
-            echo "node_version=$(yq '.node_version // ""' "$CONFIG_FILE")"
-            echo "python_version=$(yq '.python_version // ""' "$CONFIG_FILE")"
-            echo "install_command=$(yq '.install_command // ""' "$CONFIG_FILE")"
-            echo "repo_name=$(yq '.repo_name // ""' "$CONFIG_FILE")"
-          } >> "$GITHUB_OUTPUT"
-
-      # --- Conditional setup ---
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
-        with:
-          python-version: ${{ steps.config.outputs.python_version || '3.11' }}
-          cache: pip
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+          FORK_REPO: ${{ steps.post-action.outputs.fork_repo }}
 
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f  # v6
-        if: steps.config.outputs.node_version != ''
+        if: steps.post-action.outputs.action == 'private_fork' && steps.setup.outputs.node_version != ''
         with:
-          node-version: ${{ steps.config.outputs.node_version }}
+          node-version: ${{ steps.setup.outputs.node_version }}
 
-      - name: Install dependencies
-        if: steps.config.outputs.install_command != ''
+      - name: Install fork dependencies
+        if: steps.post-action.outputs.action == 'private_fork' && steps.setup.outputs.install_command != ''
         continue-on-error: true
-        working-directory: target
+        working-directory: fork
         run: |
           eval "$INSTALL_COMMAND" 2>&1 | tee /tmp/install-output.log
         env:
-          INSTALL_COMMAND: ${{ steps.config.outputs.install_command }}
+          INSTALL_COMMAND: ${{ steps.setup.outputs.install_command }}
 
-      # --- BLEnder fix on private fork ---
       - name: Install sandbox dependencies
+        if: steps.post-action.outputs.action == 'private_fork'
         run: sudo apt-get install -y bubblewrap socat
 
       - name: Install Claude Code
+        if: steps.post-action.outputs.action == 'private_fork'
         run: npm install -g @anthropic-ai/claude-code@stable
 
       - name: Build fix prompt
-        working-directory: target
+        if: steps.post-action.outputs.action == 'private_fork'
+        working-directory: fork
         run: |
           cat > .blender-prompt << PROMPT_EOF
           Fix the security vulnerability in ${ALERT_PACKAGE}.
@@ -255,21 +182,22 @@ jobs:
           ALERT_PATCHED_VERSION: ${{ inputs.alert_patched_version }}
 
       - name: Run Claude fix
-        working-directory: target
+        if: steps.post-action.outputs.action == 'private_fork'
+        working-directory: fork
         run: ${{ github.workspace }}/scripts/run-claude.sh
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          REPO: ${{ needs.investigate.outputs.fork_repo }}
-          REPO_NAME: ${{ steps.config.outputs.repo_name }}
+          REPO: ${{ steps.post-action.outputs.fork_repo }}
+          REPO_NAME: ${{ steps.setup.outputs.repo_name }}
           BLENDER_DIR: ${{ github.workspace }}
           BLENDER_MODE: fix
           CLAUDE_VERBOSE: ${{ inputs.verbose }}
 
       - name: Commit and push fix
         id: commit
-        if: inputs.dry_run != 'true'
-        working-directory: target
+        if: steps.post-action.outputs.action == 'private_fork' && inputs.dry_run != 'true'
+        working-directory: fork
         run: ${{ github.workspace }}/scripts/commit.sh
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          REPO: ${{ needs.investigate.outputs.fork_repo }}
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+          REPO: ${{ steps.post-action.outputs.fork_repo }}

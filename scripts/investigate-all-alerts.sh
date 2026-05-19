@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Local dev utility — not used in CI.
+#
 # Trigger investigate-security-alert.yml for every open Dependabot alert
 # in a target repo.
 #
