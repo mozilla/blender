@@ -166,6 +166,10 @@ jobs:
         if: steps.post-action.outputs.action == 'private_fork'
         run: npm install -g @anthropic-ai/claude-code@stable
 
+      - name: Copy verdict to fork
+        if: steps.post-action.outputs.action == 'private_fork'
+        run: cp target/.blender-alert-verdict.json fork/.blender-alert-verdict.json 2>/dev/null || true
+
       - name: Build fix prompt
         if: steps.post-action.outputs.action == 'private_fork'
         working-directory: fork
@@ -177,6 +181,12 @@ jobs:
           code that uses the vulnerable API. Run the test suite to
           verify your changes.
           PROMPT_EOF
+
+          # Append investigation verdict if available
+          if [ -f .blender-alert-verdict.json ]; then
+            printf '\n## Investigation verdict\n\nThe BLEnder investigation produced the following verdict. Use the vulnerable_paths and reason to focus your fix:\n\n' >> .blender-prompt
+            cat .blender-alert-verdict.json >> .blender-prompt
+          fi
         env:
           ALERT_PACKAGE: ${{ inputs.alert_package }}
           ALERT_PATCHED_VERSION: ${{ inputs.alert_patched_version }}
