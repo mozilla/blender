@@ -425,8 +425,12 @@ def main() -> None:
         elif recommended == "bump_pr":
             print("  No existing PR. Creating bump PR.")
             pr_num = create_bump_pr(
-                repo, package_name, ecosystem, patched_version,
-                alert_number, dry_run,
+                repo,
+                package_name,
+                ecosystem,
+                patched_version,
+                alert_number,
+                dry_run,
             )
             if pr_num is not None:
                 action = "bump_pr_created"
@@ -461,9 +465,7 @@ def main() -> None:
         write_output("advisory_ghsa_id", ghsa_id)
         write_output("fork_repo", fork_repo)
 
-    write_step_summary(
-        repo_name, alert_number, package_name, severity, action, verdict
-    )
+    write_step_summary(repo_name, alert_number, package_name, severity, action, verdict)
 
 
 def write_output(key: str, value: str) -> None:
