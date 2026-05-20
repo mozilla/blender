@@ -3,7 +3,7 @@
 # and open a PR.
 #
 # Runs after `npm update <package>` in the target repo checkout.
-# Uses blob -> tree -> commit -> ref pattern from commit.sh.
+# Delegates blob -> tree -> commit to git-commit-api.sh.
 #
 # Environment variables:
 #   GH_TOKEN          -- GitHub token (required, also used as GH_TOKEN for gh cli)
@@ -13,6 +13,8 @@
 #   REPO              -- target repo, e.g. mozilla/blurts-server (required)
 
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ -z "${GH_TOKEN:-}" ] || [ -z "${REPO:-}" ]; then
   echo "Error: GH_TOKEN and REPO are required."
@@ -31,6 +33,14 @@ if git diff --quiet package-lock.json 2>/dev/null; then
 fi
 
 BRANCH_NAME="blender/security-bump-${PACKAGE}"
+
+# Check for existing open PR on this branch — exit before any API calls
+EXISTING_PR=$(gh pr list --repo "$REPO" --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')
+if [ -n "$EXISTING_PR" ]; then
+  echo "PR #${EXISTING_PR} already open for ${BRANCH_NAME}. Skipping."
+  exit 0
+fi
+
 COMMIT_MSG="chore(deps): bump ${PACKAGE} to ${PATCHED_VERSION:-latest}
 
 Resolves Dependabot alert #${ALERT_NUMBER}.
@@ -38,43 +48,16 @@ Created by BLEnder (https://github.com/mozilla/blender)"
 
 DEFAULT_BRANCH=$(gh api "repos/${REPO}" --jq '.default_branch')
 PARENT=$(gh api "repos/${REPO}/git/ref/heads/${DEFAULT_BRANCH}" --jq '.object.sha')
-BASE_TREE=$(gh api "repos/${REPO}/git/commits/${PARENT}" --jq '.tree.sha')
 
-# Upload changed files as blobs (package-lock.json, possibly package.json)
-TREE_ITEMS="[]"
+# Collect changed files
+CHANGED_FILES=()
 for file in package-lock.json package.json; do
   if ! git diff --quiet "$file" 2>/dev/null; then
-    echo "Uploading ${file} ..."
-    BLOB_SHA=$(base64 -w 0 "$file" | \
-      jq -Rs '{"encoding": "base64", "content": .}' | \
-      gh api "repos/${REPO}/git/blobs" \
-      --method POST \
-      --input - \
-      --jq '.sha')
-    TREE_ITEMS=$(echo "$TREE_ITEMS" | jq \
-      --arg path "$file" \
-      --arg sha "$BLOB_SHA" \
-      '. + [{"path": $path, "mode": "100644", "type": "blob", "sha": $sha}]')
+    CHANGED_FILES+=("$file")
   fi
 done
 
-# Create tree
-TREE_SHA=$(jq -n \
-  --arg base "$BASE_TREE" \
-  --argjson tree "$TREE_ITEMS" \
-  '{"base_tree": $base, "tree": $tree}' | \
-  gh api "repos/${REPO}/git/trees" \
-    --method POST \
-    --input - \
-    --jq '.sha')
-
-# Create verified commit
-COMMIT_SHA=$(gh api "repos/${REPO}/git/commits" \
-  --method POST \
-  --field "message=${COMMIT_MSG}" \
-  --field "tree=${TREE_SHA}" \
-  --field "parents[]=${PARENT}" \
-  --jq '.sha')
+COMMIT_SHA=$("${SCRIPT_DIR}/git-commit-api.sh" "$COMMIT_MSG" "$PARENT" "${CHANGED_FILES[@]}")
 
 # Create branch ref
 gh api "repos/${REPO}/git/refs" \
@@ -109,13 +92,6 @@ This is a transitive dependency update. Only \`package-lock.json\` (and possibly
 *Created by ${RUN_LINK} via [BLEnder](https://github.com/mozilla/blender)*"
 
 PR_TITLE="chore(deps): bump ${PACKAGE} to ${PATCHED_VERSION:-latest}"
-
-# Check for existing open PR on this branch
-EXISTING_PR=$(gh pr list --repo "$REPO" --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')
-if [ -n "$EXISTING_PR" ]; then
-  echo "PR #${EXISTING_PR} already open for ${BRANCH_NAME}. Skipping."
-  exit 0
-fi
 
 gh pr create \
   --repo "$REPO" \

@@ -332,7 +332,11 @@ class TestMainFlow:
     def test_npm_bump_outputs_action(
         self, verdict_file, tmp_path, monkeypatch
     ):
-        """npm ecosystem with bump_pr verdict emits action=npm_bump."""
+        """npm ecosystem with bump_pr verdict emits action=npm_bump.
+
+        The npm path never calls create_bump_pr — main() handles it
+        directly by writing outputs for the workflow's npm_bump step.
+        """
         verdict_file(SAMPLE_VERDICT)
         mock_repo = MagicMock()
         mock_repo.full_name = "owner/repo"
@@ -351,3 +355,28 @@ class TestMainFlow:
         assert "action=npm_bump" in outputs
         assert "npm_package=lodash" in outputs
         assert "npm_version=1.0.1" in outputs
+
+        # npm path should not touch repo contents or create PRs
+        mock_repo.get_contents.assert_not_called()
+        mock_repo.create_pull.assert_not_called()
+
+    def test_npm_bump_no_patched_version(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """npm ecosystem without patched version results in noop."""
+        verdict_file(SAMPLE_VERDICT)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        output_file = str(tmp_path / "github_output")
+        open(output_file, "w").close()
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            ALERT_ECOSYSTEM="npm", ALERT_PATCHED_VERSION="",
+            GITHUB_OUTPUT=output_file,
+        )
+
+        outputs = open(output_file).read()
+        assert "action=noop" in outputs
