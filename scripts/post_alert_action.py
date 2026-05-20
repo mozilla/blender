@@ -252,16 +252,23 @@ def create_bump_pr(
     patched_version: str,
     alert_number: int,
     dry_run: bool,
-) -> int | None:
+) -> int | str | None:
     """Create a PR that bumps a dependency to the patched version.
 
-    Returns the PR number on success, None on failure.
+    Returns the PR number on success, ``"npm_bump"`` for npm transitive
+    deps (handled by the workflow), or None on failure.
     """
     import re
 
     if not patched_version:
         print("  No patched version available. Cannot create bump PR.")
         return None
+
+    # npm transitive deps live in package-lock.json. Signal the
+    # workflow to run `npm update` and commit the lock file.
+    if ecosystem == "npm":
+        print("  npm ecosystem — deferring to npm_bump workflow step.")
+        return "npm_bump"
 
     pin_info = find_dependency_pin(repo, package_name, ecosystem)
     if pin_info is None:
@@ -281,11 +288,6 @@ def create_bump_pr(
         if new_text == old_text:
             print(f"  Could not update version pin in {file_path}.")
             return None
-    elif ecosystem == "npm":
-        # For npm, updating package.json alone isn't enough (lock file
-        # needs regenerating). Log and skip for now.
-        print("  npm bump PRs require lock file regeneration. Not yet supported.")
-        return None
     else:
         print(f"  Unsupported ecosystem: {ecosystem}")
         return None
@@ -432,7 +434,12 @@ def main() -> None:
                 alert_number,
                 dry_run,
             )
-            if pr_num is not None:
+            if pr_num == "npm_bump":
+                action = "npm_bump"
+                write_output("npm_package", package_name)
+                write_output("npm_version", patched_version)
+                write_output("alert_number", str(alert_number))
+            elif pr_num is not None:
                 action = "bump_pr_created"
                 if pr_num > 0:
                     write_output("bump_pr_number", str(pr_num))

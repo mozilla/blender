@@ -180,7 +180,8 @@ class TestMainFlow:
         defaults.update(env_overrides)
         for k, v in defaults.items():
             monkeypatch.setenv(k, v)
-        monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+        if "GITHUB_OUTPUT" not in env_overrides:
+            monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
 
         with patch("scripts.post_alert_action.Github") as mock_gh:
             mock_gh.return_value.get_repo.return_value = mock_repo
@@ -327,3 +328,26 @@ class TestMainFlow:
         )
 
         mock_repo._requester.requestJsonAndCheck.assert_not_called()
+
+    def test_npm_bump_outputs_action(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """npm ecosystem with bump_pr verdict emits action=npm_bump."""
+        verdict_file(SAMPLE_VERDICT)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []  # no existing PR
+
+        output_file = str(tmp_path / "github_output")
+        open(output_file, "w").close()
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            ALERT_ECOSYSTEM="npm", ALERT_PATCHED_VERSION="1.0.1",
+            GITHUB_OUTPUT=output_file,
+        )
+
+        outputs = open(output_file).read()
+        assert "action=npm_bump" in outputs
+        assert "npm_package=lodash" in outputs
+        assert "npm_version=1.0.1" in outputs

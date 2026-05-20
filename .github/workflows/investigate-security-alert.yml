@@ -65,7 +65,27 @@ jobs:
           install-sandbox: 'true'
           install-claude: 'true'
 
+      - name: Check for existing BLEnder PR
+        id: existing-pr
+        run: |
+          PR=$(gh pr list --repo "$REPO" \
+            --search "$PACKAGE in:title" \
+            --json number,title,headRefName \
+            --jq '.[] | select(.headRefName | startswith("blender/")) | .number' \
+            | head -1)
+          if [ -n "$PR" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice ::Skipping investigation — existing BLEnder PR #${PR} for ${PACKAGE}"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+          REPO: ${{ inputs.target_repo }}
+          PACKAGE: ${{ inputs.alert_package }}
+
       - name: Gather alert context
+        if: steps.existing-pr.outputs.skip != 'true'
         working-directory: target
         run: ${{ github.workspace }}/scripts/gather-alert-context.sh
         env:
@@ -77,6 +97,7 @@ jobs:
           ALERT_ECOSYSTEM: ${{ inputs.alert_ecosystem }}
 
       - name: Run Claude investigation
+        if: steps.existing-pr.outputs.skip != 'true'
         working-directory: target
         run: ${{ github.workspace }}/scripts/run-claude.sh
         env:
@@ -88,6 +109,7 @@ jobs:
           CLAUDE_VERBOSE: ${{ inputs.verbose }}
 
       - name: Upload verdict
+        if: steps.existing-pr.outputs.skip != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: alert-verdict
@@ -139,6 +161,25 @@ jobs:
           ALERT_PATCHED_VERSION: ${{ inputs.alert_patched_version }}
           DRY_RUN: ${{ inputs.dry_run }}
           DISMISS_UNAFFECTED: ${{ steps.setup.outputs.dismiss_unaffected }}
+
+      # --- npm transitive dependency bump (lock file only) ---
+      - name: Run npm update
+        if: steps.post-action.outputs.action == 'npm_bump'
+        working-directory: target
+        run: npm update "$NPM_PACKAGE"
+        env:
+          NPM_PACKAGE: ${{ steps.post-action.outputs.npm_package }}
+
+      - name: Create npm bump PR
+        if: steps.post-action.outputs.action == 'npm_bump' && inputs.dry_run != 'true'
+        working-directory: target
+        run: bash ${{ github.workspace }}/scripts/npm-bump.sh
+        env:
+          PACKAGE: ${{ steps.post-action.outputs.npm_package }}
+          PATCHED_VERSION: ${{ inputs.alert_patched_version }}
+          ALERT_NUMBER: ${{ inputs.alert_number }}
+          REPO: ${{ inputs.target_repo }}
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
 
       # --- Private fork remediation (only for affected alerts) ---
       - name: Clone private fork
