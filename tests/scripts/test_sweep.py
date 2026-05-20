@@ -49,6 +49,7 @@ def _make_pr(
     pr.number = number
     pr.title = "Bump foo from 1.0.0 to 2.0.0"
     pr.user.login = "dependabot[bot]" if is_dependabot else "octocat"
+    pr.head.ref = "dependabot/npm_and_yarn/foo-2.0.0"
     type(pr.head).sha = PropertyMock(return_value="abc123")
 
     commit_list = list(commits or [])
@@ -228,6 +229,55 @@ class TestAutomergeDispatch:
         actions = _run_sweep([(pr, status)])
         assert len(actions) == 1
         assert actions[0].action == "automerge"
+
+
+# --- BLEnder bump PRs ---
+
+
+def _make_blender_bump_pr(number: int, ci_status: str, package: str = "foo"):
+    """Build a mock BLEnder bump PR."""
+    pr = MagicMock()
+    pr.number = number
+    pr.title = f"chore(deps): bump {package} to 2.0.0"
+    pr.user.login = "mozilla-blender[bot]"
+    pr.head.ref = f"blender/security-bump-{package}"
+    type(pr.head).sha = PropertyMock(return_value="abc123")
+    pr.get_commits.return_value = [_make_commit(f"chore(deps): bump {package}")]
+    pr.get_issue_comments.return_value = []
+    return pr, ci_status
+
+
+class TestBlenderBumpPR:
+    def test_passing_blender_bump_dispatches_automerge(self):
+        """Passing BLEnder bump PR -> automerge."""
+        actions = _run_sweep([_make_blender_bump_pr(20, "passing")])
+        assert len(actions) == 1
+        assert actions[0].action == "automerge"
+
+    def test_failing_blender_bump_dispatches_fix(self):
+        """Failing BLEnder bump PR -> dispatch fix."""
+        actions = _run_sweep([_make_blender_bump_pr(21, "failing")])
+        assert len(actions) == 1
+        assert actions[0].action == "fix"
+
+    def test_pending_blender_bump_skips(self):
+        """Pending BLEnder bump PR -> skip."""
+        actions = _run_sweep([_make_blender_bump_pr(22, "pending")])
+        assert actions == []
+
+    def test_wrong_author_not_picked_up(self):
+        """PR on blender/security-bump- branch but wrong author -> ignored."""
+        pr, status = _make_blender_bump_pr(23, "passing")
+        pr.user.login = "evil-user"
+        actions = _run_sweep([(pr, status)])
+        assert actions == []
+
+    def test_wrong_branch_not_picked_up(self):
+        """PR from BLEnder bot but wrong branch prefix -> ignored."""
+        pr, status = _make_blender_bump_pr(24, "passing")
+        pr.head.ref = "sneaky/security-bump-foo"
+        actions = _run_sweep([(pr, status)])
+        assert actions == []
 
 
 # --- CI-pending PRs ---

@@ -123,16 +123,27 @@ def process_repo(repo: Repository) -> list[Action]:
         return actions
 
     print("    Config found. Checking Dependabot PRs...")
-    open_prs = repo.get_pulls(state="open")
+    open_prs = list(repo.get_pulls(state="open"))
     dependabot_prs = [pr for pr in open_prs if pr.user.login == "dependabot[bot]"]
 
-    if not dependabot_prs:
-        print("    No open Dependabot PRs")
-        return actions
+    # BLEnder bump PRs: must be from the BLEnder bot AND on the right branch.
+    # Both conditions prevent an attacker from sneaking a PR into automerge.
+    BLENDER_BOT_LOGIN = "mozilla-blender[bot]"
+    blender_bump_prs = [
+        pr
+        for pr in open_prs
+        if pr.user.login == BLENDER_BOT_LOGIN
+        and pr.head.ref.startswith("blender/security-bump-")
+    ]
 
-    print(f"    Found {len(dependabot_prs)} Dependabot PR(s)")
+    actionable_prs = dependabot_prs + blender_bump_prs
 
-    for pr in dependabot_prs:
+    if dependabot_prs:
+        print(f"    Found {len(dependabot_prs)} Dependabot PR(s)")
+    if blender_bump_prs:
+        print(f"    Found {len(blender_bump_prs)} BLEnder bump PR(s)")
+
+    for pr in actionable_prs:
         try:
             result = check_pr_status(repo, pr)
         except Exception as e:
