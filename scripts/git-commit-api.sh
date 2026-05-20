@@ -5,9 +5,9 @@
 # signed by github-actions[bot]. Prints the new commit SHA to stdout.
 #
 # Usage:
-#   scripts/git-commit-api.sh <commit_msg> <parent_sha> [file1 file2 ...]
+#   scripts/git-commit-api.sh <commit_msg> <parent_sha> <file1> [file2 ...]
 #
-# If no files are passed, reads changed files from `git diff --name-only`.
+# At least one file is required.
 #
 # Environment variables:
 #   GH_TOKEN  -- GitHub token with contents:write (required)
@@ -24,17 +24,9 @@ COMMIT_MSG="${1:?commit message required}"
 PARENT="${2:?parent SHA required}"
 shift 2
 
-# Collect files: positional args or git diff
 FILES=("$@")
 if [ ${#FILES[@]} -eq 0 ]; then
-  while IFS= read -r f; do
-    [ -z "$f" ] && continue
-    FILES+=("$f")
-  done < <(git diff --name-only)
-fi
-
-if [ ${#FILES[@]} -eq 0 ]; then
-  echo "No changed files." >&2
+  echo "Error: at least one file argument is required." >&2
   exit 1
 fi
 

@@ -34,7 +34,14 @@ fi
 
 PARENT=$(git rev-parse HEAD)
 
-COMMIT=$("${SCRIPT_DIR}/git-commit-api.sh" "$COMMIT_MSG" "$PARENT")
+# Collect changed files explicitly so we control what gets committed
+CHANGED_FILES=()
+while IFS= read -r file; do
+  [ -z "$file" ] && continue
+  CHANGED_FILES+=("$file")
+done < <(git diff --name-only)
+
+COMMIT=$("${SCRIPT_DIR}/git-commit-api.sh" "$COMMIT_MSG" "$PARENT" "${CHANGED_FILES[@]}")
 
 # Update branch ref
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
