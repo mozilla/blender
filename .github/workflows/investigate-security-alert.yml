@@ -163,15 +163,38 @@ jobs:
           DISMISS_UNAFFECTED: ${{ steps.setup.outputs.dismiss_unaffected }}
 
       # --- npm transitive dependency bump (lock file only) ---
-      - name: Run npm update
+      - name: Run npm audit fix
+        id: npm-fix
         if: steps.post-action.outputs.action == 'npm_bump'
         working-directory: target
-        run: npm update "$NPM_PACKAGE"
+        run: |
+          echo "Before fix — vulnerable instances:"
+          npm ls "$NPM_PACKAGE" --all 2>/dev/null || true
+          echo "---"
+          npm audit fix --package-lock-only 2>&1 || true
+          echo "After fix — checking for remaining vulnerabilities:"
+          # Check if this specific package still has a vulnerability
+          REMAINING=$(npm audit --json 2>/dev/null \
+            | jq --arg pkg "$NPM_PACKAGE" \
+              '[.vulnerabilities[$pkg] // empty | select(.severity != null)] | length')
+          if [ "${REMAINING:-0}" -gt 0 ]; then
+            echo "::warning ::npm audit fix did not resolve all $NPM_PACKAGE vulnerabilities"
+            echo "Remaining vulnerable paths:"
+            npm audit --json 2>/dev/null \
+              | jq --arg pkg "$NPM_PACKAGE" '.vulnerabilities[$pkg]'
+            echo "fixed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "All $NPM_PACKAGE vulnerabilities resolved."
+            echo "fixed=true" >> "$GITHUB_OUTPUT"
+          fi
         env:
           NPM_PACKAGE: ${{ steps.post-action.outputs.npm_package }}
 
       - name: Create npm bump PR
-        if: steps.post-action.outputs.action == 'npm_bump' && inputs.dry_run != 'true'
+        if: >-
+          steps.post-action.outputs.action == 'npm_bump'
+          && steps.npm-fix.outputs.fixed == 'true'
+          && inputs.dry_run != 'true'
         working-directory: target
         run: bash ${{ github.workspace }}/scripts/npm-bump.sh
         env:
