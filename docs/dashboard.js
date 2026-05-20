@@ -15,22 +15,28 @@ const IDLE_DESK = 2; // center desk — idle robot sits here
 const MERGE_SEARCH_API = 'https://api.github.com/search/issues';
 const MERGE_SEARCH_QUERY = 'is:pr is:merged "BLEnder auto-merge" in:comments';
 
+// Sec alerts counter: count actual PRs created by security investigations.
+// npm-bump.sh includes "BLEnder investigation" in the PR body.
+const SECALERT_SEARCH_QUERY = 'is:pr "BLEnder investigation" in:body org:mozilla';
+
+// Fixes counter: count actual PRs where BLEnder picked up a failing PR.
+const FIX_SEARCH_QUERY = 'is:pr "BLEnder picked up this PR" in:comments org:mozilla';
+
+// Needs Review counter: open PRs the bot has touched that need human attention.
+const NEEDSREVIEW_SEARCH_QUERY = 'is:pr is:open involves:mozilla-blender[bot] org:mozilla';
+
 // Workflow file → type mapping
-// "mergecheck" = automerge workflow runs (distinct from "merge" = actual merged PRs)
 const WORKFLOW_MAP = {
-  'scheduled-sweep.yml': 'sweep',
-  'chore-automerge-dependabot-prs.yml': 'mergecheck',
   'chore-review-major-dependabot-update.yml': 'review',
-  'fix-dependabot-pr.yml': 'fix',
 };
 
 // Counter targets for beam animation (% positions in scene)
 const COUNTER_TARGETS = {
-  sweep:      { left: 19.5, top: 36 },
-  review:     { left: 43, top: 43 },
-  mergecheck: { left: 66.5, top: 37 },
-  merge:      { left: 66.5, top: 51 },
-  fix:        { left: 82.5, top: 43 },
+  secalert:    { left: 19.5, top: 36 },
+  needsreview: { left: 43, top: 43 },
+  review:      { left: 66.5, top: 51 },
+  merge:       { left: 66.5, top: 37 },
+  fix:         { left: 82.5, top: 43 },
 };
 
 // Desk positions (% of scene)
@@ -44,8 +50,8 @@ const DESK_POSITIONS = [
 
 // SVG icons (GitHub octicons, fill="currentColor" for CSS color inheritance)
 const ICONS = {
-  sweep: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm5.024-3.672 4.232 3.206a.575.575 0 0 1 0 .932l-4.232 3.206A.575.575 0 0 1 5.6 11.206V4.794a.575.575 0 0 1 .924-.466Z"/></svg>',
-  mergecheck: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 3.25a2.25 2.25 0 1 1 3 2.122v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.25 2.25 0 0 1 1.5 3.25Zm5.677-.177L9.573.677A.25.25 0 0 1 10 .854V2.5h1A2.5 2.5 0 0 1 13.5 5v5.628a2.251 2.251 0 1 1-1.5 0V5a1 1 0 0 0-1-1h-1v1.646a.25.25 0 0 1-.427.177L7.177 3.427a.25.25 0 0 1 0-.354ZM3.75 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm0 9.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm8.25.75a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Z"/></svg>',
+  secalert: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M7.467.133a1.748 1.748 0 0 1 1.066 0l5.25 1.68A1.75 1.75 0 0 1 15 3.48V7c0 1.566-.32 3.182-1.303 4.682-.983 1.498-2.585 2.813-5.032 3.855a1.697 1.697 0 0 1-1.33 0c-2.447-1.042-4.049-2.357-5.032-3.855C1.32 10.182 1 8.566 1 7V3.48a1.75 1.75 0 0 1 1.217-1.667Zm.61 1.429a.25.25 0 0 0-.153 0l-5.25 1.68a.25.25 0 0 0-.174.238V7c0 1.358.275 2.666 1.057 3.86.784 1.194 2.121 2.34 4.366 3.297a.196.196 0 0 0 .154 0c2.245-.956 3.582-2.104 4.366-3.298C13.225 9.666 13.5 8.36 13.5 7V3.48a.251.251 0 0 0-.174-.237l-5.25-1.68ZM8.75 4.75v3a.75.75 0 0 1-1.5 0v-3a.75.75 0 0 1 1.5 0ZM9 10.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg>',
+  needsreview: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14c-1.981 0-3.671-.992-4.933-2.078C1.797 10.83.88 9.576.43 8.898a1.62 1.62 0 0 1 0-1.798c.45-.677 1.367-1.931 2.637-3.022C4.33 2.992 6.019 2 8 2ZM1.679 7.932a.12.12 0 0 0 0 .136c.411.622 1.241 1.75 2.366 2.717C5.176 11.758 6.527 12.5 8 12.5c1.473 0 2.825-.742 3.955-1.715 1.124-.967 1.954-2.096 2.366-2.717a.12.12 0 0 0 0-.136c-.412-.621-1.242-1.75-2.366-2.717C10.824 4.242 9.473 3.5 8 3.5c-1.473 0-2.825.742-3.955 1.715-1.124.967-1.954 2.096-2.366 2.717ZM8 10a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 10Z"/></svg>',
   review: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M1.75 1h8.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 10.25 10H7.061l-2.574 2.573A1.458 1.458 0 0 1 2 11.543V10h-.25A1.75 1.75 0 0 1 0 8.25v-5.5C0 1.784.784 1 1.75 1ZM1.5 2.75v5.5c0 .138.112.25.25.25h1a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h3.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25Zm13 2a.25.25 0 0 0-.25-.25h-.5a.75.75 0 0 1 0-1.5h.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 14.25 12H14v1.543a1.458 1.458 0 0 1-2.487 1.03L9.22 12.28a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l2.22 2.22v-2.19a.75.75 0 0 1 .75-.75h1a.25.25 0 0 0 .25-.25Z"/></svg>',
   fix: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8.75 1.75V5H12a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75H8.75v3.25H12a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75H8.75v2a.75.75 0 0 1-1.5 0v-2H4a.75.75 0 0 1-.75-.75v-.5A.75.75 0 0 1 4 10.25h3.25V7H4a.75.75 0 0 1-.75-.75v-.5A.75.75 0 0 1 4 5h3.25V1.75a.75.75 0 0 1 1.5 0Z"/></svg>',
   merge: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M5.45 5.154A4.25 4.25 0 0 0 9.25 7.5h1.378a2.251 2.251 0 1 1 0 1.5H9.25A5.734 5.734 0 0 1 5 7.123v3.505a2.25 2.25 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.95-.218ZM4.25 13.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm8-8a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM4.25 4a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"/></svg>',
@@ -61,12 +67,15 @@ function createIconEl(type, className) {
 
 // State
 const seenRunIds = new Set();
-const counters = { sweep: 0, mergecheck: 0, merge: 0, review: 0, fix: 0, fail: 0 };
+const counters = { secalert: 0, needsreview: 0, merge: 0, review: 0, fix: 0, fail: 0 };
 let totalRuns = 0;
 const desks = [null, null, null, null, null];
 const runQueue = [];
 let pollEtag = null;
 let mergeTarget = 0; // Search API count we're animating toward (prevents duplicate celebrations)
+let secalertTarget = 0; // Search API count for sec alert PRs
+let fixTarget = 0; // Search API count for fix PRs
+let needsreviewTarget = 0; // Search API count for open PRs needing human review
 
 // DOM refs
 const beamLayer = document.getElementById('beam-layer');
@@ -305,9 +314,9 @@ function fireBeam(deskIdx, iconType, counterType) {
 
   beam.addEventListener('transitionend', () => {
     counters[counterType]++;
-    // Merge celebrations come from the Search API, not workflow runs —
+    // Search-API-driven counters (merge, secalert) aren't workflow runs —
     // don't count them toward totalRuns (avoids inflating the fail rate)
-    if (counterType !== 'merge') totalRuns++;
+    if (counterType !== 'merge' && counterType !== 'secalert' && counterType !== 'fix' && counterType !== 'needsreview') totalRuns++;
     updateCounter(counterType, counters[counterType]);
     renderFailRate();
     beam.style.opacity = '0';
@@ -328,7 +337,7 @@ function assignRun(run, type, duration, beamTarget) {
 
 // ── Merge celebrations ──
 // When the Search API reports new merges, queue robots that fire beams to the
-// MERGES counter. Each robot uses the mergecheck sprite but targets "merge".
+// MERGES counter. Each robot uses the merge icon and targets "merge".
 
 function celebrateMerges(delta) {
   const cap = Math.min(delta, 5);
@@ -394,25 +403,25 @@ async function fetchRunsConditional(perPage = 30) {
   return data.workflow_runs || [];
 }
 
-// ── Merge count (Search API) ──
+// ── Search API counts (merges + sec alerts) ──
 
-async function fetchMergeCount() {
+async function fetchSearchCount(query) {
   try {
     const res = await apiFetch(
-      `${MERGE_SEARCH_API}?q=${encodeURIComponent(MERGE_SEARCH_QUERY)}`
+      `${MERGE_SEARCH_API}?q=${encodeURIComponent(query)}`
     );
     if (!res) return null;
     const data = await res.json();
     return data.total_count ?? null;
   } catch {
-    return null; // Search API failures shouldn't crash the dashboard
+    return null;
   }
 }
 
 // ── Initial load ──
 
 function processHistory(allRuns) {
-  const completedByType = { sweep: [], mergecheck: [], review: [], fix: [] };
+  const completedByType = { review: [] };
 
   for (const run of allRuns) {
     seenRunIds.add(run.id);
@@ -486,11 +495,60 @@ async function initialLoad() {
       }
     }
 
-    // Fetch actual merge count from Search API (set directly on initial load)
-    const mergeCount = await fetchMergeCount();
+    // Fetch actual counts from Search API (set directly on initial load)
+    const [mergeCount, secalertCount, fixCount, needsreviewCount] = await Promise.all([
+      fetchSearchCount(MERGE_SEARCH_QUERY),
+      fetchSearchCount(SECALERT_SEARCH_QUERY),
+      fetchSearchCount(FIX_SEARCH_QUERY),
+      fetchSearchCount(NEEDSREVIEW_SEARCH_QUERY),
+    ]);
     if (mergeCount !== null) {
       counters.merge = mergeCount;
       mergeTarget = mergeCount;
+    }
+    if (needsreviewCount !== null) {
+      counters.needsreview = needsreviewCount;
+      needsreviewTarget = needsreviewCount;
+    }
+    if (secalertCount !== null) {
+      counters.secalert = secalertCount;
+      secalertTarget = secalertCount;
+
+      // Inject a synthetic replay so a sec-alert robot appears on load
+      if (secalertCount > 0) {
+        counters.secalert--;
+        replayRuns.unshift({
+          run: {
+            id: `secalert-replay-${Date.now()}`,
+            html_url: `https://github.com/search?q=${encodeURIComponent(SECALERT_SEARCH_QUERY)}&type=pullrequests&s=created&o=desc`,
+            display_title: 'Security investigation',
+            conclusion: 'success',
+            created_at: new Date(Date.now() - 20_000).toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          type: 'secalert',
+        });
+      }
+    }
+    if (fixCount !== null) {
+      counters.fix = fixCount;
+      fixTarget = fixCount;
+
+      // Inject a synthetic replay so a fix robot appears on load
+      if (fixCount > 0) {
+        counters.fix--;
+        replayRuns.push({
+          run: {
+            id: `fix-replay-${Date.now()}`,
+            html_url: `https://github.com/search?q=${encodeURIComponent(FIX_SEARCH_QUERY)}&type=pullrequests&s=created&o=desc`,
+            display_title: 'CI fix',
+            conclusion: 'success',
+            created_at: new Date(Date.now() - 25_000).toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          type: 'fix',
+        });
+      }
     }
 
     renderCounters();
@@ -564,8 +622,13 @@ async function poll() {
       }
     }
 
-    // Refresh actual merge count — animate new merges with desk robots
-    const mergeCount = await fetchMergeCount();
+    // Refresh actual counts from Search API
+    const [mergeCount, secalertCount, fixCount, needsreviewCount] = await Promise.all([
+      fetchSearchCount(MERGE_SEARCH_QUERY),
+      fetchSearchCount(SECALERT_SEARCH_QUERY),
+      fetchSearchCount(FIX_SEARCH_QUERY),
+      fetchSearchCount(NEEDSREVIEW_SEARCH_QUERY),
+    ]);
     if (mergeCount !== null && mergeCount > mergeTarget) {
       celebrateMerges(mergeCount - mergeTarget);
       mergeTarget = mergeCount;
@@ -574,6 +637,21 @@ async function poll() {
       counters.merge = mergeCount;
       mergeTarget = mergeCount;
       updateCounter('merge', counters.merge);
+    }
+    if (needsreviewCount !== null && needsreviewCount !== needsreviewTarget) {
+      counters.needsreview = needsreviewCount;
+      needsreviewTarget = needsreviewCount;
+      updateCounter('needsreview', counters.needsreview);
+    }
+    if (secalertCount !== null && secalertCount !== secalertTarget) {
+      counters.secalert = secalertCount;
+      secalertTarget = secalertCount;
+      updateCounter('secalert', counters.secalert);
+    }
+    if (fixCount !== null && fixCount !== fixTarget) {
+      counters.fix = fixCount;
+      fixTarget = fixCount;
+      updateCounter('fix', counters.fix);
     }
 
     setStatus('Live', false);
