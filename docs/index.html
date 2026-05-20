@@ -11,32 +11,38 @@
     <img id="bg" src="assets/mission-control-bg.png" alt="Mission Control">
 
     <!-- Upper screen overlays -->
-    <a id="counter-sweeps" class="counter-panel counter-small" href="https://github.com/mozilla/blender/actions/workflows/scheduled-sweep.yml?query=is%3Asuccess" target="_blank" rel="noopener">
-      <div class="counter-label">SWEEPS</div>
-      <div class="counter-value" data-type="sweep">↻</div>
+    <a id="counter-sec-alerts" class="counter-panel counter-small" href="https://github.com/search?q=is%3Apr+%22BLEnder+investigation%22+in%3Abody+org%3Amozilla&type=pullrequests&s=created&o=desc" target="_blank" rel="noopener">
+      <div class="counter-icon"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M7.467.133a1.748 1.748 0 0 1 1.066 0l5.25 1.68A1.75 1.75 0 0 1 15 3.48V7c0 1.566-.32 3.182-1.303 4.682-.983 1.498-2.585 2.813-5.032 3.855a1.697 1.697 0 0 1-1.33 0c-2.447-1.042-4.049-2.357-5.032-3.855C1.32 10.182 1 8.566 1 7V3.48a1.75 1.75 0 0 1 1.217-1.667Zm.61 1.429a.25.25 0 0 0-.153 0l-5.25 1.68a.25.25 0 0 0-.174.238V7c0 1.358.275 2.666 1.057 3.86.784 1.194 2.121 2.34 4.366 3.297a.196.196 0 0 0 .154 0c2.245-.956 3.582-2.104 4.366-3.298C13.225 9.666 13.5 8.36 13.5 7V3.48a.251.251 0 0 0-.174-.237l-5.25-1.68ZM8.75 4.75v3a.75.75 0 0 1-1.5 0v-3a.75.75 0 0 1 1.5 0ZM9 10.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg></div>
+      <div class="counter-label">SEC ALERTS</div>
+      <div class="counter-value" data-type="secalert">↻</div>
     </a>
 
     <a id="counter-fail-rate" class="counter-panel counter-small counter-bottom" href="https://github.com/mozilla/blender/actions?query=is%3Afailure" target="_blank" rel="noopener">
+      <div class="counter-icon"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2.343 13.657A8 8 0 1 1 13.658 2.343 8 8 0 0 1 2.343 13.657ZM6.03 4.97a.751.751 0 0 0-1.042.018.751.751 0 0 0-.018 1.042L6.94 8 4.97 9.97a.749.749 0 0 0 .326 1.275.749.749 0 0 0 .734-.215L8 9.06l1.97 1.97a.749.749 0 0 0 1.275-.326.749.749 0 0 0-.215-.734L9.06 8l1.97-1.97a.749.749 0 0 0-.326-1.275.749.749 0 0 0-.734.215L8 6.94Z"/></svg></div>
       <div class="counter-label">FAIL%</div>
       <div class="counter-value counter-fail" data-type="failrate">↻</div>
     </a>
 
-    <a id="counter-reviews" class="counter-panel counter-large" href="https://github.com/search?q=is%3Apr+%22Reviewing+this+major+version+bump%22+in%3Acomments+org%3Amozilla&type=pullrequests" target="_blank" rel="noopener">
-      <div class="counter-label">REVIEWS</div>
-      <div class="counter-value" data-type="review">↻</div>
+    <a id="counter-needs-review" class="counter-panel counter-large" href="https://github.com/search?q=is%3Apr+is%3Aopen+involves%3Amozilla-blender%5Bbot%5D+org%3Amozilla&type=pullrequests&s=created&o=desc" target="_blank" rel="noopener">
+      <div class="counter-icon"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14c-1.981 0-3.671-.992-4.933-2.078C1.797 10.83.88 9.576.43 8.898a1.62 1.62 0 0 1 0-1.798c.45-.677 1.367-1.931 2.637-3.022C4.33 2.992 6.019 2 8 2ZM1.679 7.932a.12.12 0 0 0 0 .136c.411.622 1.241 1.75 2.366 2.717C5.176 11.758 6.527 12.5 8 12.5c1.473 0 2.825-.742 3.955-1.715 1.124-.967 1.954-2.096 2.366-2.717a.12.12 0 0 0 0-.136c-.412-.621-1.242-1.75-2.366-2.717C10.824 4.242 9.473 3.5 8 3.5c-1.473 0-2.825.742-3.955 1.715-1.124.967-1.954 2.096-2.366 2.717ZM8 10a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 10Z"/></svg></div>
+      <div class="counter-label">NEEDS REVIEW</div>
+      <div class="counter-value" data-type="needsreview">↻</div>
     </a>
 
-    <a id="counter-merge-checks" class="counter-panel counter-small" href="https://github.com/mozilla/blender/actions/workflows/chore-automerge-dependabot-prs.yml?query=is%3Asuccess" target="_blank" rel="noopener">
-      <div class="counter-label">MERGE CHECKS</div>
-      <div class="counter-value" data-type="mergecheck">↻</div>
-    </a>
-
-    <a id="counter-merges" class="counter-panel counter-small counter-bottom" href="https://github.com/search?q=is%3Apr+is%3Amerged+%22BLEnder+auto-merge%22+in%3Acomments&type=pullrequests" target="_blank" rel="noopener">
+    <a id="counter-merges" class="counter-panel counter-small" href="https://github.com/search?q=is%3Apr+is%3Amerged+%22BLEnder+auto-merge%22+in%3Acomments&type=pullrequests&s=created&o=desc" target="_blank" rel="noopener">
+      <div class="counter-icon"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M5.45 5.154A4.25 4.25 0 0 0 9.25 7.5h1.378a2.251 2.251 0 1 1 0 1.5H9.25A5.734 5.734 0 0 1 5 7.123v3.505a2.25 2.25 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.95-.218ZM4.25 13.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm8-8a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM4.25 4a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"/></svg></div>
       <div class="counter-label">MERGES</div>
       <div class="counter-value" data-type="merge">↻</div>
     </a>
 
-    <a id="counter-fixes" class="counter-panel counter-medium" href="https://github.com/search?q=is%3Apr+%22BLEnder+picked+up+this+PR%22+in%3Acomments+org%3Amozilla&type=pullrequests" target="_blank" rel="noopener">
+    <a id="counter-reviews" class="counter-panel counter-small counter-bottom" href="https://github.com/search?q=is%3Apr+%22Reviewing+this+major+version+bump%22+in%3Acomments+org%3Amozilla&type=pullrequests&s=created&o=desc" target="_blank" rel="noopener">
+      <div class="counter-icon"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1.75 1h8.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 10.25 10H7.061l-2.574 2.573A1.458 1.458 0 0 1 2 11.543V10h-.25A1.75 1.75 0 0 1 0 8.25v-5.5C0 1.784.784 1 1.75 1ZM1.5 2.75v5.5c0 .138.112.25.25.25h1a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h3.5a.25.25 0 0 0 .25-.25v-5.5a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25Zm13 2a.25.25 0 0 0-.25-.25h-.5a.75.75 0 0 1 0-1.5h.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 14.25 12H14v1.543a1.458 1.458 0 0 1-2.487 1.03L9.22 12.28a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l2.22 2.22v-2.19a.75.75 0 0 1 .75-.75h1a.25.25 0 0 0 .25-.25Z"/></svg></div>
+      <div class="counter-label">REVIEWS</div>
+      <div class="counter-value" data-type="review">↻</div>
+    </a>
+
+    <a id="counter-fixes" class="counter-panel counter-medium" href="https://github.com/search?q=is%3Apr+%22BLEnder+picked+up+this+PR%22+in%3Acomments+org%3Amozilla&type=pullrequests&s=created&o=desc" target="_blank" rel="noopener">
+      <div class="counter-icon"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8.75 1.75V5H12a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75H8.75v3.25H12a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75H8.75v2a.75.75 0 0 1-1.5 0v-2H4a.75.75 0 0 1-.75-.75v-.5A.75.75 0 0 1 4 10.25h3.25V7H4a.75.75 0 0 1-.75-.75v-.5A.75.75 0 0 1 4 5h3.25V1.75a.75.75 0 0 1 1.5 0Z"/></svg></div>
       <div class="counter-label">FIXES</div>
       <div class="counter-value" data-type="fix">↻</div>
     </a>
