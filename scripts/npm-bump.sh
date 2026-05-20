@@ -2,7 +2,7 @@
 # BLEnder npm bump: commit package-lock.json changes via verified commit
 # and open a PR.
 #
-# Runs after `npm update <package>` in the target repo checkout.
+# Runs after `npm audit fix` in the target repo checkout.
 # Delegates blob -> tree -> commit to git-commit-api.sh.
 #
 # Environment variables:
@@ -28,7 +28,7 @@ fi
 
 # Check that package-lock.json changed
 if git diff --quiet package-lock.json 2>/dev/null; then
-  echo "package-lock.json unchanged after npm update. Nothing to do."
+  echo "package-lock.json unchanged after npm audit fix. Nothing to do."
   exit 0
 fi
 
