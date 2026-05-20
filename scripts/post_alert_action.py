@@ -255,7 +255,7 @@ def create_bump_pr(
 ) -> int | None:
     """Create a PR that bumps a dependency to the patched version.
 
-    Returns the PR number on success, None on failure.
+    Returns the PR number on success, or None on failure.
     """
     import re
 
@@ -281,11 +281,6 @@ def create_bump_pr(
         if new_text == old_text:
             print(f"  Could not update version pin in {file_path}.")
             return None
-    elif ecosystem == "npm":
-        # For npm, updating package.json alone isn't enough (lock file
-        # needs regenerating). Log and skip for now.
-        print("  npm bump PRs require lock file regeneration. Not yet supported.")
-        return None
     else:
         print(f"  Unsupported ecosystem: {ecosystem}")
         return None
@@ -423,21 +418,31 @@ def main() -> None:
             comment_on_pr(repo, existing_pr, reason, dry_run)
             action = "existing_pr"
         elif recommended == "bump_pr":
-            print("  No existing PR. Creating bump PR.")
-            pr_num = create_bump_pr(
-                repo,
-                package_name,
-                ecosystem,
-                patched_version,
-                alert_number,
-                dry_run,
-            )
-            if pr_num is not None:
-                action = "bump_pr_created"
-                if pr_num > 0:
-                    write_output("bump_pr_number", str(pr_num))
-            else:
+            if ecosystem == "npm" and patched_version:
+                print("  npm ecosystem — deferring to npm_bump workflow step.")
+                action = "npm_bump"
+                write_output("npm_package", package_name)
+                write_output("npm_version", patched_version)
+                write_output("alert_number", str(alert_number))
+            elif ecosystem == "npm":
+                print("  npm ecosystem but no patched version. Cannot bump.")
                 action = "noop"
+            else:
+                print("  No existing PR. Creating bump PR.")
+                pr_num = create_bump_pr(
+                    repo,
+                    package_name,
+                    ecosystem,
+                    patched_version,
+                    alert_number,
+                    dry_run,
+                )
+                if pr_num is not None:
+                    action = "bump_pr_created"
+                    if pr_num > 0:
+                        write_output("bump_pr_number", str(pr_num))
+                else:
+                    action = "noop"
         elif dismiss_enabled and severity.lower() not in DISMISS_BLOCKED_SEVERITIES:
             print("  Unaffected + dismiss enabled. Dismissing alert.")
             dismiss_alert(repo, alert_number, reason, dry_run)

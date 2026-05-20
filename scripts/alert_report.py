@@ -34,6 +34,7 @@ def render_markdown(
         "private_fork": "Advisory created with private fork",
         "existing_pr": "Existing Dependabot PR found",
         "bump_pr_created": "Bump PR created",
+        "npm_bump": "npm bump PR created",
     }
     action_text = action_labels.get(action, action)
 
@@ -78,6 +79,7 @@ def annotation_line(
         "dismissed": "alert dismissed",
         "noop": "no action taken",
         "private_fork": "advisory created with private fork",
+        "npm_bump": "npm bump PR created",
     }
     action_text = action_labels.get(action, action)
 
