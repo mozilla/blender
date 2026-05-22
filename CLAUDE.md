@@ -28,3 +28,7 @@ ruff check scripts/
 ruff format --check scripts/
 uv run --extra test pytest tests/
 ```
+
+## BLEnder
+
+See [.blender/agents.md](.blender/agents.md) for CI commands and dependency management context.
