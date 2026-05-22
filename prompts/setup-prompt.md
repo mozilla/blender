@@ -9,85 +9,27 @@ Read these files to understand the project:
 - CI config: `.github/workflows/`, `.circleci/`, etc. — read the actual job steps and extract the exact commands each CI check runs
 - Pre-commit / lint-staged hooks: `.pre-commit-config.yaml`, `.husky/`, `.lintstagedrc.*`, `lint-staged` config in `package.json` — these often enforce formatting that CI checks
 - Runtime versions: `.python-version`, `.node-version`, `.nvmrc`, `.tool-versions`, etc.
-- `CLAUDE.md`, `README.md` (for project context)
+- `README.md` (for project context)
 - `pyproject.toml`, `tsconfig.json` (for linters/formatters in use)
 - Code generation scripts: look for Glean, protobuf, GraphQL, OpenAPI generators — if a dependency update breaks generated code, the fix is to re-run the generator
 
-## Step 2: Generate the prompt template
+Also read these existing agent instruction files (if any):
+{{EXISTING_AGENT_FILES}}
 
-Create `{{OUTPUT_DIR}}/fix-dependabot-prompt.md` with this structure:
+Note what knowledge they already contain — CI commands, linters, install steps, etc. You will avoid duplicating this in Step 2.
 
-```
-# BLEnder: Fix CI failures on Dependabot PRs
+## Step 2: Generate `.blender/agents.md`
 
-You are fixing CI failures on a Dependabot pull request in the <project name> repository.
+Create `{{OUTPUT_DIR}}/agents.md` with repo knowledge BLEnder needs.
 
-## Context
+**If the repo has no existing agent instruction files**: generate comprehensive content:
+- Project name, languages, runtime versions
+- How to install dependencies
+- Exact CI check commands (extracted from workflow YAML)
+- Pre-commit hook info and stage/unstage workaround
+- Code generation commands (Glean, protobuf, etc.)
 
-{{PR_TITLE}}
-
-Failing checks:
-{{FAILING_CHECKS}}
-
-## CI logs
-
-{{CI_LOGS}}
-
-## Your task
-
-Fix the CI failures caused by this dependency update. Make the minimum change needed. Do not refactor unrelated code.
-
-## Common fix patterns for this repo
-
-<List the linters, formatters, type checkers, and test commands specific to this repo.
-Include the exact commands to run each one. Extract these from the CI config — use
-the same commands CI runs, not approximations.
-
-If the repo uses pre-commit hooks or lint-staged, document the stage/unstage workaround:
-the caller expects unstaged changes, so the fix agent must stage files, run the hooks,
-then unstage. Include the exact commands.
-
-If the repo has code generation (Glean, protobuf, GraphQL, OpenAPI, etc.), include the
-regeneration command as a fix pattern.>
-
-## Strategy
-
-1. If you know which check failed, run that check first to reproduce the error.
-2. If unclear, run the relevant checks: <list repo-specific check commands>.
-3. Read the error output. Identify the root cause.
-4. Make the fix. Run the check again to confirm.
-5. If you cannot fix it, say so. Do not guess.
-6. You have a limited number of turns. Be direct. Do not explore the codebase beyond what is needed to fix the specific error.
-
-## Rules
-
-- Only change files related to the dependency update failure.
-- Do not add new dependencies.
-- Do not modify CI configuration files.
-- Do not run `git commit` or `git push`. The caller handles that.
-- Keep changes minimal and targeted.
-- Do not make whitespace, formatting, or style changes unless they fix the CI error.
-- Suppressing deprecation warnings is acceptable. The goal is to make CI pass, not to migrate away from deprecated features.
-
-## Commit message
-
-After fixing the issue, write a commit message to `.blender-commit-msg` using this format:
-
-BLEnder fix(<dependency-name>): <1-line summary of what you fixed>
-
-<Short explanation of the root cause and what you changed. A few sentences max.>
-
-Write the file with the Edit tool. Do not include backticks or markdown formatting in the file.
-
-Example:
-
-BLEnder fix(typescript): add scrollMargin to IntersectionObserver mock
-
-TypeScript 6.0 added scrollMargin to the IntersectionObserver interface.
-The test mock was missing this property, causing a type error.
-```
-
-Tailor the "Common fix patterns" section based on what you find in the repo.
+**If the repo has existing agent files** (CLAUDE.md, AGENTS.md, etc.): generate only the **delta** — knowledge BLEnder needs that isn't already documented. Skip anything the existing files cover.
 
 ## Step 3: Generate the config file
 
@@ -128,6 +70,7 @@ These overrides are merged on top of BLEnder's `config/defaults.yml` at runtime.
 
 ## Important
 
-- Use the Write tool to create both files.
+- Use the Write tool to create all files.
 - Do not modify any existing files in the repo.
 - Only create files inside `{{OUTPUT_DIR}}/`.
+- Setup generates 2 files: `agents.md` and `blender.yml`.

@@ -72,7 +72,7 @@ jobs:
           GH_TOKEN: ${{ steps.setup.outputs.token }}
           PR_NUMBER: ${{ inputs.pr_number }}
           REPO: ${{ inputs.target_repo }}
-          PROMPT_TEMPLATE: .blender/fix-dependabot-prompt.md
+          PROMPT_TEMPLATE: ${{ github.workspace }}/prompts/fix-ci-prompt.md
           INSTALL_FAILED: ${{ steps.setup.outputs.install_failed }}
           INSTALL_LOG_FILE: /tmp/install-output.log
 
