@@ -56,6 +56,24 @@ def has_blender_verdict(pr: PullRequest) -> bool:
     return False
 
 
+def has_codeowner_approval(pr: PullRequest) -> bool:
+    """True if a non-bot user approved this PR.
+
+    Used to detect when a code owner overrides a BLEnder NEEDS_REVIEW
+    verdict, signaling that the major bump should proceed.
+
+    CODEOWNERS enforcement is handled by GitHub branch protection,
+    not here.  If the repo's branch protection requires code-owner
+    review (per the AI-in-dev policy), GitHub only counts approvals
+    from designated code owners.  A non-bot APPROVED review on a
+    protected branch therefore implies the reviewer is a code owner.
+    """
+    for review in pr.get_reviews():
+        if review.state == "APPROVED" and not review.user.login.endswith("[bot]"):
+            return True
+    return False
+
+
 def enable_auto_merge(pr: PullRequest) -> str | None:
     """Enable auto-merge on a PR via the GraphQL API.
 
