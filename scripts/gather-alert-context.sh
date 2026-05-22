@@ -43,6 +43,8 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/sanitize.sh
 source "${SCRIPT_DIR}/sanitize.sh"
+# shellcheck source=scripts/load-agent-instructions.sh
+source "${SCRIPT_DIR}/load-agent-instructions.sh"
 
 echo "BLEnder gather-alert-context: alert #${ALERT_NUMBER} repo=${REPO}"
 
@@ -106,6 +108,12 @@ prompt="${prompt//\{\{ALERT_VULNERABLE_RANGE\}\}/$alert_vulnerable_range}"
 prompt="${prompt//\{\{ALERT_PATCHED_VERSION\}\}/$alert_patched_version}"
 prompt="${prompt//\{\{ALERT_CWES\}\}/$alert_cwes}"
 prompt="${prompt//\{\{AUDIT_OUTPUT\}\}/$safe_audit}"
+
+# Prepend agent instructions
+agent_ctx=$(load_agent_instructions)
+if [ -n "$agent_ctx" ]; then
+  prompt="${agent_ctx}${prompt}"
+fi
 
 # Write prompt to file for run-claude.sh
 echo "$prompt" > .blender-prompt

@@ -48,6 +48,8 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/sanitize.sh
 source "${SCRIPT_DIR}/sanitize.sh"
+# shellcheck source=scripts/load-agent-instructions.sh
+source "${SCRIPT_DIR}/load-agent-instructions.sh"
 
 echo "BLEnder gather-context: PR #${PR_NUMBER} repo=${REPO}"
 
@@ -211,6 +213,12 @@ if [ "${INSTALL_FAILED:-}" = "true" ] && [ -n "${INSTALL_LOG_FILE:-}" ] && [ -f 
   install_error=$(sanitize_for_prompt "$raw_log")
 fi
 prompt="${prompt//\{\{INSTALL_ERROR\}\}/$install_error}"
+
+# Prepend agent instructions
+agent_ctx=$(load_agent_instructions)
+if [ -n "$agent_ctx" ]; then
+  prompt="${agent_ctx}${prompt}"
+fi
 
 # Write prompt to file for run-claude.sh
 echo "$prompt" > .blender-prompt
