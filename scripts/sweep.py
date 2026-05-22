@@ -166,7 +166,9 @@ def process_repo(repo: Repository) -> list[Action]:
             # This lets a code owner say "go ahead" and BLEnder retries.
             codeowner_approved = has_codeowner_approval(pr)
             if codeowner_approved:
-                print(f"    PR #{pr.number}: code owner approved — resetting fix guards")
+                print(
+                    f"    PR #{pr.number}: code owner approved — resetting fix guards"
+                )
 
             # Check for BLEnder commits on the PR.
             # Only bot commits with the "BLEnder fix(" prefix count.

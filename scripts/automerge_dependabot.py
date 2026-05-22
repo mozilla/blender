@@ -33,9 +33,19 @@ import nodesemver
 # GitHub Actions step), only the scripts/ directory is on sys.path,
 # so the bare "github_utils" import is needed as a fallback.
 try:
-    from scripts.github_utils import BOT_LOGIN, enable_auto_merge, has_blender_verdict, has_codeowner_approval
+    from scripts.github_utils import (
+        BOT_LOGIN,
+        enable_auto_merge,
+        has_blender_verdict,
+        has_codeowner_approval,
+    )
 except ModuleNotFoundError:
-    from github_utils import BOT_LOGIN, enable_auto_merge, has_blender_verdict, has_codeowner_approval
+    from github_utils import (
+        BOT_LOGIN,
+        enable_auto_merge,
+        has_blender_verdict,
+        has_codeowner_approval,
+    )
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
