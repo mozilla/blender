@@ -20,7 +20,7 @@ Make the minimum change needed. Do not refactor unrelated code.
 
 ## Strategy
 
-1. Read `.blender/agents.md` and `.blender/instructions.md` for repo context and operational rules.
+1. Read `.blender/agents.md` and the BLEnder instructions file for repo context and operational rules.
 2. Run the failing check to reproduce the error.
 3. Read the error output. Identify the root cause.
 4. Make the fix. Run the check again to confirm.

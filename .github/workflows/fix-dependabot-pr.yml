@@ -63,9 +63,6 @@ jobs:
       - name: Restore BLEnder config
         run: cp -r /tmp/blender-config/. target/.blender/
 
-      - name: Copy BLEnder instructions
-        run: cp "${{ github.workspace }}/prompts/instructions.md" target/.blender/instructions.md
-
       # --- BLEnder fix ---
       - name: Gather PR context
         id: gather

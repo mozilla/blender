@@ -52,17 +52,17 @@ if [ "$BLENDER_MODE" = "investigate" ]; then
   ALLOWED_TOOLS="Read,Bash"
   MAX_TURNS=25
   MAX_BUDGET="1.50"
-  SYSTEM_PROMPT="You are BLEnder, a security analysis agent for ${REPO_DISPLAY_NAME}. Before starting, read these files if they exist: .blender/agents.md, .blender/instructions.md, CLAUDE.md, AGENTS.md. They contain repo context and operational rules. Investigate the Dependabot security alert described in the prompt. Read the codebase to determine if the vulnerability affects this repo. Output your verdict as a VERDICT_JSON block in your final response. Do not create or edit any files. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
+  SYSTEM_PROMPT="You are BLEnder, a security analysis agent for ${REPO_DISPLAY_NAME}. Before starting, read these files if they exist: .blender/agents.md, ${BLENDER_DIR}/prompts/instructions.md, CLAUDE.md, AGENTS.md. They contain repo context and operational rules. Investigate the Dependabot security alert described in the prompt. Read the codebase to determine if the vulnerability affects this repo. Output your verdict as a VERDICT_JSON block in your final response. Do not create or edit any files. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
 elif [ "$BLENDER_MODE" = "major" ]; then
   ALLOWED_TOOLS="Read,Write,Bash"
   MAX_TURNS=15
   MAX_BUDGET="1.00"
-  SYSTEM_PROMPT="You are BLEnder, a dependency analysis agent for ${REPO_DISPLAY_NAME}. Before starting, read these files if they exist: .blender/agents.md, .blender/instructions.md, CLAUDE.md, AGENTS.md. They contain repo context and operational rules. Evaluate the major version bump described in the prompt. Read the codebase and the dependency source code. Write your verdict to .blender-verdict.json. Do not edit any tracked files. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
+  SYSTEM_PROMPT="You are BLEnder, a dependency analysis agent for ${REPO_DISPLAY_NAME}. Before starting, read these files if they exist: .blender/agents.md, ${BLENDER_DIR}/prompts/instructions.md, CLAUDE.md, AGENTS.md. They contain repo context and operational rules. Evaluate the major version bump described in the prompt. Read the codebase and the dependency source code. Write your verdict to .blender-verdict.json. Do not edit any tracked files. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
 else
   ALLOWED_TOOLS="Read,Edit,Bash"
   MAX_TURNS=30
   MAX_BUDGET="2.00"
-  SYSTEM_PROMPT="You are BLEnder, a CI-fixing agent for ${REPO_DISPLAY_NAME}. Before starting, read these files if they exist: .blender/agents.md, .blender/instructions.md, CLAUDE.md, AGENTS.md. They contain repo context and operational rules. Fix the CI failure described in the prompt. Be minimal and precise. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
+  SYSTEM_PROMPT="You are BLEnder, a CI-fixing agent for ${REPO_DISPLAY_NAME}. Before starting, read these files if they exist: .blender/agents.md, ${BLENDER_DIR}/prompts/instructions.md, CLAUDE.md, AGENTS.md. They contain repo context and operational rules. Fix the CI failure described in the prompt. Be minimal and precise. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
 fi
 
 echo "Running Claude Code (mode=${BLENDER_MODE}, tools=${ALLOWED_TOOLS}, turns=${MAX_TURNS}, budget=\$${MAX_BUDGET})..."
