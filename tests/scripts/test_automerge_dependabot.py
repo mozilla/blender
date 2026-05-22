@@ -402,7 +402,7 @@ def test_has_blender_verdict_false_when_no_verdict():
 def test_has_blender_verdict_ignores_human_comments():
     pr = MagicMock()
     pr.get_issue_comments.return_value = [
-        _gh_comment(body=Verdict.SAFE.comment("to merge."), login="groovecoder")
+        _gh_comment(body=Verdict.SAFE.comment("to merge."), login="some-codeowner")
     ]
     pr.get_reviews.return_value = []
     assert has_blender_verdict(pr) is False
@@ -448,16 +448,16 @@ def test_has_codeowner_approval_true():
     pr = MagicMock()
     review = MagicMock()
     review.state = "APPROVED"
-    review.user.login = "joeherm"
+    review.user.login = "some-codeowner"
     pr.get_reviews.return_value = [review]
     assert has_codeowner_approval(pr) is True
 
 
-def test_has_codeowner_approval_false_bot_only():
+def test_has_codeowner_approval_returns_false_for_bots():
     pr = MagicMock()
     review = MagicMock()
     review.state = "APPROVED"
-    review.user.login = "mozilla-blender[bot]"
+    review.user.login = "some-app[bot]"
     pr.get_reviews.return_value = [review]
     assert has_codeowner_approval(pr) is False
 
@@ -472,35 +472,44 @@ def test_has_codeowner_approval_ignores_non_approval():
     pr = MagicMock()
     review = MagicMock()
     review.state = "COMMENTED"
-    review.user.login = "joeherm"
+    review.user.login = "some-codeowner"
     pr.get_reviews.return_value = [review]
     assert has_codeowner_approval(pr) is False
 
 
 # --- Code-owner approval overrides major bump in process_pr ---
+#
+# When BLEnder reviews a major-version Dependabot PR and leaves a
+# NEEDS_REVIEW verdict, the PR gets stuck: the automerge workflow
+# sees the verdict and skips it on every subsequent run.
+#
+# A code-owner approval should break this deadlock.  process_pr
+# checks for both a verdict and a code-owner approval; when both
+# exist, it sets allow_major=True so the version gate passes and
+# the PR proceeds through the remaining safety checks (CI,
+# compatibility, advisories).
 
 
 def test_process_pr_codeowner_approval_bypasses_major_gate():
     """Code-owner approval + BLEnder verdict = allow_major, no MajorBumpPR raised."""
     from scripts.automerge_dependabot import Config, process_pr
 
-    pr = MagicMock()
-    pr.number = 42
-    pr.title = "Bump eslint from 9.0.0 to 10.0.0"
-    pr.user.login = "dependabot[bot]"
+    codeowner_review = MagicMock()
+    codeowner_review.state = "APPROVED"
+    codeowner_review.user.login = "some-codeowner"
+
+    verdict_comment = _gh_comment(
+        body=Verdict.NEEDS_REVIEW.comment("Review needed.")
+    )
+
+    pr = _make_dependabot_pr(
+        number=42,
+        ref="dependabot/npm_and_yarn/eslint-10.0.0",
+        comments=[verdict_comment],
+        reviews=[codeowner_review],
+    )
     pr.body = ""
     pr.head.sha = "abc123"
-
-    # Verdict exists + human approved
-    verdict_comment = MagicMock()
-    verdict_comment.user.login = "mozilla-blender[bot]"
-    verdict_comment.body = Verdict.NEEDS_REVIEW.comment("Human review needed.")
-    pr.get_issue_comments.return_value = [verdict_comment]
-
-    human_review = MagicMock()
-    human_review.state = "APPROVED"
-    human_review.user.login = "joeherm"
-    pr.get_reviews.return_value = [human_review]
 
     config = Config(
         repo_name="owner/repo",

@@ -15,12 +15,12 @@ class Verdict(Enum):
 
     The enum *name* (e.g. ``SAFE``) is the stable tag written at the
     start of every comment.  Dedup checks match on ``"SAFE:"``, so
-    changing a name is a breaking change.  The *value* is the human-
+    changing a name is a breaking change.  The *value* is the
     readable message that follows the tag.
     """
 
     SAFE = "major version bump is safe"
-    NEEDS_REVIEW = "this major version bump needs human review"
+    NEEDS_REVIEW = "this major version bump needs code-owner review"
     NO_VERDICT = "could not evaluate this major version bump"
     MALFORMED = "verdict file was malformed"
     APPROVED = "auto-merge: major bump evaluated as safe"
@@ -57,7 +57,7 @@ def has_blender_verdict(pr: PullRequest) -> bool:
 
 
 def has_codeowner_approval(pr: PullRequest) -> bool:
-    """True if a non-bot user approved this PR.
+    """True if a code owner approved this PR.
 
     Used to detect when a code owner overrides a BLEnder NEEDS_REVIEW
     verdict, signaling that the major bump should proceed.
@@ -67,6 +67,10 @@ def has_codeowner_approval(pr: PullRequest) -> bool:
     review (per the AI-in-dev policy), GitHub only counts approvals
     from designated code owners.  A non-bot APPROVED review on a
     protected branch therefore implies the reviewer is a code owner.
+
+    We filter out bot accounts (logins ending with ``[bot]``) because
+    GitHub App and bot accounts always follow the ``name[bot]``
+    convention — this is enforced by the platform, not a heuristic.
     """
     for review in pr.get_reviews():
         if review.state == "APPROVED" and not review.user.login.endswith("[bot]"):

@@ -28,6 +28,10 @@ from github.PullRequest import PullRequest
 from github.Repository import Repository
 import nodesemver
 
+# When run by pytest, the package root is on sys.path so
+# "scripts.github_utils" works.  When run directly (e.g. inside a
+# GitHub Actions step), only the scripts/ directory is on sys.path,
+# so the bare "github_utils" import is needed as a fallback.
 try:
     from scripts.github_utils import BOT_LOGIN, enable_auto_merge, has_blender_verdict, has_codeowner_approval
 except ModuleNotFoundError:

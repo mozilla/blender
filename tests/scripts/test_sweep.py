@@ -414,7 +414,7 @@ class TestCodeownerApprovalResetsFix:
             30,
             "failing",
             blender_commit=True,
-            reviews=[_make_review("joeherm")],
+            reviews=[_make_review("some-codeowner")],
         )
         actions = _run_sweep([(pr, status)])
         assert len(actions) == 1
@@ -433,7 +433,7 @@ class TestCodeownerApprovalResetsFix:
                     T_LATE,
                 )
             ],
-            reviews=[_make_review("joeherm")],
+            reviews=[_make_review("some-codeowner")],
         )
         actions = _run_sweep([(pr, status)])
         assert len(actions) == 1
@@ -445,7 +445,7 @@ class TestCodeownerApprovalResetsFix:
             32,
             "failing",
             blender_commit=True,
-            reviews=[_make_review("mozilla-blender[bot]")],
+            reviews=[_make_review("some-app[bot]")],
         )
         actions = _run_sweep([(pr, status)])
         assert actions == []

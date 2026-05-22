@@ -143,7 +143,7 @@ def main() -> None:
         )
         post_comment(pr, comment, dry_run)
         if not dry_run:
-            print("Posted analysis comment for human review.")
+            print("Posted analysis comment for code-owner review.")
 
 
 if __name__ == "__main__":
