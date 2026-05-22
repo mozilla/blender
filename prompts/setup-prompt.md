@@ -31,45 +31,7 @@ Create `{{OUTPUT_DIR}}/agents.md` with repo knowledge BLEnder needs.
 
 **If the repo has existing agent files** (CLAUDE.md, AGENTS.md, etc.): generate only the **delta** — knowledge BLEnder needs that isn't already documented. Skip anything the existing files cover.
 
-Use these markers for re-run safety:
-
-```
-<!-- blender:start — auto-generated, do not hand-edit -->
-<your generated content here>
-<!-- blender:end -->
-```
-
-If the file already exists with these markers, replace only the content between them.
-
-## Step 3: Generate `.blender/instructions.md`
-
-Create `{{OUTPUT_DIR}}/instructions.md` with this exact content:
-
-```
-# BLEnder Operational Rules
-
-- Only change files related to the dependency update failure.
-- Do not add new dependencies.
-- Do not modify CI configuration files.
-- Do not run `git commit` or `git push`. The caller handles that.
-- Keep changes minimal and targeted.
-- Suppressing deprecation warnings is acceptable. The goal is to make CI pass, not to migrate away from deprecated features.
-- Do not make whitespace, formatting, or style changes unless they fix the CI error.
-
-## Commit message
-
-After fixing the issue, write a commit message to `.blender-commit-msg` using this format:
-
-BLEnder fix(<dependency-name>): <1-line summary of what you fixed>
-
-<Short explanation of the root cause and what you changed. A few sentences max.>
-
-Write the file with the Edit tool. Do not include backticks or markdown formatting in the file.
-```
-
-Write this verbatim. Do not modify or summarize it.
-
-## Step 4: Generate the config file
+## Step 3: Generate the config file
 
 Create `{{OUTPUT_DIR}}/blender.yml` with repo-specific settings. Determine:
 - `repo_name`: a human-readable project name
@@ -111,3 +73,4 @@ These overrides are merged on top of BLEnder's `config/defaults.yml` at runtime.
 - Use the Write tool to create all files.
 - Do not modify any existing files in the repo.
 - Only create files inside `{{OUTPUT_DIR}}/`.
+- Setup generates 2 files: `agents.md` and `blender.yml`.

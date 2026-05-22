@@ -84,6 +84,10 @@ jobs:
           REPO: ${{ inputs.target_repo }}
           PACKAGE: ${{ inputs.alert_package }}
 
+      - name: Copy BLEnder instructions
+        if: steps.existing-pr.outputs.skip != 'true'
+        run: cp "${{ github.workspace }}/prompts/instructions.md" target/.blender/instructions.md
+
       - name: Gather alert context
         if: steps.existing-pr.outputs.skip != 'true'
         working-directory: target
@@ -238,6 +242,12 @@ jobs:
       - name: Copy verdict to fork
         if: steps.post-action.outputs.action == 'private_fork'
         run: cp target/.blender-alert-verdict.json fork/.blender-alert-verdict.json 2>/dev/null || true
+
+      - name: Copy BLEnder instructions to fork
+        if: steps.post-action.outputs.action == 'private_fork'
+        run: |
+          mkdir -p fork/.blender
+          cp "${{ github.workspace }}/prompts/instructions.md" fork/.blender/instructions.md
 
       - name: Build fix prompt
         if: steps.post-action.outputs.action == 'private_fork'

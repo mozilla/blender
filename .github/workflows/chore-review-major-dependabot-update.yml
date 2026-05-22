@@ -96,6 +96,9 @@ jobs:
       - name: Restore BLEnder config
         run: cp -r /tmp/blender-config/. target/.blender/
 
+      - name: Copy BLEnder instructions
+        run: cp "${{ github.workspace }}/prompts/instructions.md" target/.blender/instructions.md
+
       - name: Comment on PR
         run: |
           # Skip the "reviewing" comment if blender[bot] already commented.

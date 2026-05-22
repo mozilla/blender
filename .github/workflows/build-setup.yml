@@ -69,7 +69,12 @@ jobs:
           BRANCH="blender-setup"
 
           # Handle re-runs: check for existing branch
+          BRANCH_EXISTS=false
           if git ls-remote --exit-code origin "$BRANCH" >/dev/null 2>&1; then
+            BRANCH_EXISTS=true
+          fi
+
+          if [ "$BRANCH_EXISTS" = "true" ]; then
             echo "Branch $BRANCH already exists on remote. Force-pushing update."
             git checkout -B "$BRANCH"
           else
@@ -99,8 +104,12 @@ jobs:
           git commit -m "feat: add BLEnder config"
           git push --force-with-lease origin "$BRANCH"
 
-          # Check for existing PR
-          existing_pr=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number // empty' 2>/dev/null || true)
+          # Check for existing PR (reuse branch-exists result)
+          if [ "$BRANCH_EXISTS" = "true" ]; then
+            existing_pr=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number // empty' 2>/dev/null || true)
+          else
+            existing_pr=""
+          fi
           if [ -n "$existing_pr" ]; then
             echo "PR #${existing_pr} already exists. Updated branch."
           else
@@ -115,13 +124,12 @@ jobs:
 
           - `.blender/blender.yml` — repo-specific settings
           - `.blender/agents.md` — agent instructions (CI commands, repo knowledge)
-          - `.blender/instructions.md` — BLEnder operational rules
 
           ## Symlinks created (where no existing file found)
 
-          - `CLAUDE.md` → `.blender/agents.md`
-          - `AGENTS.md` → `.blender/agents.md`
-          - `.github/copilot-instructions.md` → `.blender/agents.md`
+          $([ -L CLAUDE.md ] && echo "- \`CLAUDE.md\` → \`.blender/agents.md\`")
+          $([ -L AGENTS.md ] && echo "- \`AGENTS.md\` → \`.blender/agents.md\`")
+          $([ -L .github/copilot-instructions.md ] && echo "- \`.github/copilot-instructions.md\` → \`.blender/agents.md\`")
           EOF
           )"
           fi

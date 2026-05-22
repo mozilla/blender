@@ -3,8 +3,7 @@
 #
 # Runs Claude Code to analyze the repo and generate:
 #   1. .blender/agents.md
-#   2. .blender/instructions.md
-#   3. .blender/blender.yml
+#   2. .blender/blender.yml
 #
 # After Claude runs, creates symlinks for missing agent instruction files
 # and appends references to existing ones.
@@ -60,6 +59,12 @@ prompt="${prompt/\{\{EXISTING_AGENT_FILES\}\}/$existing}"
 
 mkdir -p "$OUTPUT_DIR"
 
+# On re-run: preserve user content outside markers
+preserved_user_content=""
+if [ -f "$OUTPUT_DIR/agents.md" ] && grep -q '<!-- blender:start' "$OUTPUT_DIR/agents.md"; then
+  preserved_user_content=$(sed '/<!-- blender:start/,/<!-- blender:end -->/d' "$OUTPUT_DIR/agents.md")
+fi
+
 echo "Running Claude Code to generate BLEnder config for ${REPO}..."
 echo "$prompt" | claude \
   --verbose \
@@ -79,12 +84,25 @@ fi
 
 # Validate expected files exist
 for f in "$OUTPUT_DIR/agents.md" \
-         "$OUTPUT_DIR/instructions.md" \
          "$OUTPUT_DIR/blender.yml"; do
   if [ ! -f "$f" ]; then
     echo "Warning: Expected file not generated: $f"
   fi
 done
+
+# Wrap agents.md with markers for re-run safety
+if [ -f "$OUTPUT_DIR/agents.md" ]; then
+  tmp=$(mktemp)
+  {
+    if [ -n "$preserved_user_content" ]; then
+      printf '%s\n' "$preserved_user_content"
+    fi
+    echo '<!-- blender:start — auto-generated, do not hand-edit -->'
+    cat "$OUTPUT_DIR/agents.md"
+    echo '<!-- blender:end -->'
+  } > "$tmp"
+  mv "$tmp" "$OUTPUT_DIR/agents.md"
+fi
 
 # --- Create symlinks for missing agent instruction files ---
 if [ -f "$OUTPUT_DIR/agents.md" ]; then
