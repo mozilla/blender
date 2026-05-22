@@ -1,0 +1,3 @@
+repo_name: "BLEnder"
+python_version: "3.11"
+install_command: "uv sync --extra test"
