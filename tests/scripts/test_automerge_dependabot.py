@@ -21,7 +21,7 @@ from scripts.automerge_dependabot import (
     main,
     version_in_range,
 )
-from scripts.github_utils import Verdict, has_blender_verdict
+from scripts.github_utils import Verdict, has_blender_verdict, has_codeowner_approval
 
 
 # --- _normalize_pep440_range ---
@@ -402,7 +402,7 @@ def test_has_blender_verdict_false_when_no_verdict():
 def test_has_blender_verdict_ignores_human_comments():
     pr = MagicMock()
     pr.get_issue_comments.return_value = [
-        _gh_comment(body=Verdict.SAFE.comment("to merge."), login="groovecoder")
+        _gh_comment(body=Verdict.SAFE.comment("to merge."), login="some-codeowner")
     ]
     pr.get_reviews.return_value = []
     assert has_blender_verdict(pr) is False
@@ -439,3 +439,122 @@ def test_main_no_comment_on_ci_failure(monkeypatch):
     pr = _make_dependabot_pr(number=99)
     _run_main(monkeypatch, pr, CIFailurePR("CI has 1 failure(s)"))
     pr.create_issue_comment.assert_not_called()
+
+
+# --- has_codeowner_approval ---
+
+
+def test_has_codeowner_approval_true():
+    pr = MagicMock()
+    review = MagicMock()
+    review.state = "APPROVED"
+    review.user.login = "some-codeowner"
+    pr.get_reviews.return_value = [review]
+    assert has_codeowner_approval(pr) is True
+
+
+def test_has_codeowner_approval_returns_false_for_bots():
+    pr = MagicMock()
+    review = MagicMock()
+    review.state = "APPROVED"
+    review.user.login = "some-app[bot]"
+    pr.get_reviews.return_value = [review]
+    assert has_codeowner_approval(pr) is False
+
+
+def test_has_codeowner_approval_false_no_reviews():
+    pr = MagicMock()
+    pr.get_reviews.return_value = []
+    assert has_codeowner_approval(pr) is False
+
+
+def test_has_codeowner_approval_ignores_non_approval():
+    pr = MagicMock()
+    review = MagicMock()
+    review.state = "COMMENTED"
+    review.user.login = "some-codeowner"
+    pr.get_reviews.return_value = [review]
+    assert has_codeowner_approval(pr) is False
+
+
+# --- Code-owner approval overrides major bump in process_pr ---
+#
+# When BLEnder reviews a major-version Dependabot PR and leaves a
+# NEEDS_REVIEW verdict, the PR gets stuck: the automerge workflow
+# sees the verdict and skips it on every subsequent run.
+#
+# A code-owner approval should break this deadlock.  process_pr
+# checks for both a verdict and a code-owner approval; when both
+# exist, it sets allow_major=True so the version gate passes and
+# the PR proceeds through the remaining safety checks (CI,
+# compatibility, advisories).
+
+
+def test_process_pr_codeowner_approval_bypasses_major_gate():
+    """Code-owner approval + BLEnder verdict = allow_major, no MajorBumpPR raised."""
+    from scripts.automerge_dependabot import Config, process_pr
+
+    codeowner_review = MagicMock()
+    codeowner_review.state = "APPROVED"
+    codeowner_review.user.login = "some-codeowner"
+
+    verdict_comment = _gh_comment(
+        body=Verdict.NEEDS_REVIEW.comment("Review needed.")
+    )
+
+    pr = _make_dependabot_pr(
+        number=42,
+        ref="dependabot/npm_and_yarn/eslint-10.0.0",
+        comments=[verdict_comment],
+        reviews=[codeowner_review],
+    )
+    pr.body = ""
+    pr.head.sha = "abc123"
+
+    config = Config(
+        repo_name="owner/repo",
+        token="fake",
+        dry_run=True,
+        min_compatibility_score=70,
+        allow_major=False,
+    )
+    gh = MagicMock()
+    repo = MagicMock()
+
+    # Mock CI passing
+    commit_mock = MagicMock()
+    commit_mock.get_check_runs.return_value = []
+    combined = MagicMock()
+    combined.statuses = []
+    commit_mock.get_combined_status.return_value = combined
+    repo.get_commit.return_value = commit_mock
+
+    # Mock advisories clean
+    gh.get_global_advisories.return_value = []
+
+    # Without the code-owner approval fix, this would raise MajorBumpPR.
+    # With it, the major bump gate is skipped and process_pr succeeds.
+    with patch(
+        "scripts.automerge_dependabot.extract_metadata"
+    ) as mock_meta, patch(
+        "scripts.automerge_dependabot.gate_compatibility", return_value=None
+    ):
+        mock_meta.return_value = PRMetadata(
+            dependencies=[
+                DependencyUpdate(
+                    name="eslint",
+                    version="10.0.0",
+                    dependency_type="direct:development",
+                    update_type="version-update:semver-major",
+                    old_version="9.0.0",
+                )
+            ],
+            has_major=True,
+            old_version="9.0.0",
+            new_version="10.0.0",
+            ecosystem="npm",
+            raw_ecosystem="npm_and_yarn",
+        )
+        result = process_pr(config, gh, repo, pr)
+
+    assert result is True

@@ -28,10 +28,24 @@ from github.PullRequest import PullRequest
 from github.Repository import Repository
 import nodesemver
 
+# When run by pytest, the package root is on sys.path so
+# "scripts.github_utils" works.  When run directly (e.g. inside a
+# GitHub Actions step), only the scripts/ directory is on sys.path,
+# so the bare "github_utils" import is needed as a fallback.
 try:
-    from scripts.github_utils import BOT_LOGIN, enable_auto_merge, has_blender_verdict
+    from scripts.github_utils import (
+        BOT_LOGIN,
+        enable_auto_merge,
+        has_blender_verdict,
+        has_codeowner_approval,
+    )
 except ModuleNotFoundError:
-    from github_utils import BOT_LOGIN, enable_auto_merge, has_blender_verdict
+    from github_utils import (
+        BOT_LOGIN,
+        enable_auto_merge,
+        has_blender_verdict,
+        has_codeowner_approval,
+    )
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 
@@ -638,7 +652,14 @@ def process_pr(
 
     meta = extract_metadata(pr)
 
-    gate_versions(meta, allow_major=config.allow_major)
+    # A code-owner approval after a BLEnder NEEDS_REVIEW verdict overrides
+    # the major-bump block.  The code owner said "go ahead", so we obey.
+    allow_major = config.allow_major
+    if not allow_major and has_blender_verdict(pr) and has_codeowner_approval(pr):
+        print("  Code owner approved after BLEnder review — allowing major bump.")
+        allow_major = True
+
+    gate_versions(meta, allow_major=allow_major)
     compat_score = gate_compatibility(pr, meta, config.min_compatibility_score)
     gate_ci(repo, pr.head.sha)
     gate_advisories(gh, meta)

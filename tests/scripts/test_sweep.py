@@ -33,6 +33,14 @@ def _make_comment(login: str, body: str, created_at: datetime = T_EARLY):
     return c
 
 
+def _make_review(login: str, state: str = "APPROVED"):
+    """Build a mock PR review."""
+    r = MagicMock()
+    r.user.login = login
+    r.state = state
+    return r
+
+
 def _make_pr(
     number: int,
     ci_status: str,
@@ -40,6 +48,7 @@ def _make_pr(
     commits: list | None = None,
     blender_commit: bool = False,
     is_dependabot: bool = True,
+    reviews: list | None = None,
 ):
     """Build a mock PR with configurable CI, comments, and commits.
 
@@ -59,6 +68,7 @@ def _make_pr(
         commit_list.append(_make_commit("Bump foo from 1.0.0 to 2.0.0"))
     pr.get_commits.return_value = commit_list
     pr.get_issue_comments.return_value = list(comments or [])
+    pr.get_reviews.return_value = list(reviews or [])
 
     return pr, ci_status
 
@@ -391,4 +401,51 @@ class TestAlertDiscovery:
         repo.get_branches.return_value = []
 
         actions = check_alerts(repo)
+        assert actions == []
+
+
+# --- Code-owner approval resets fix guards ---
+
+
+class TestCodeownerApprovalResetsFix:
+    def test_codeowner_approval_overrides_blender_commit(self):
+        """Code owner approved + BLEnder commit -> dispatch fix anyway."""
+        pr, status = _make_pr(
+            30,
+            "failing",
+            blender_commit=True,
+            reviews=[_make_review("some-codeowner")],
+        )
+        actions = _run_sweep([(pr, status)])
+        assert len(actions) == 1
+        assert actions[0].action == "fix"
+
+    def test_codeowner_approval_overrides_fresh_fix_comment(self):
+        """Code owner approved + fresh 'could not fix' comment -> dispatch fix."""
+        pr, status = _make_pr(
+            31,
+            "failing",
+            commits=[_make_commit("Bump foo", T_EARLY)],
+            comments=[
+                _make_comment(
+                    "blender[bot]",
+                    "BLEnder could not fix this PR automatically.",
+                    T_LATE,
+                )
+            ],
+            reviews=[_make_review("some-codeowner")],
+        )
+        actions = _run_sweep([(pr, status)])
+        assert len(actions) == 1
+        assert actions[0].action == "fix"
+
+    def test_bot_approval_does_not_override(self):
+        """Bot approval + BLEnder commit -> still skip."""
+        pr, status = _make_pr(
+            32,
+            "failing",
+            blender_commit=True,
+            reviews=[_make_review("some-app[bot]")],
+        )
+        actions = _run_sweep([(pr, status)])
         assert actions == []
