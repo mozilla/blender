@@ -19,3 +19,12 @@ passing PRs.
 - `scripts/sweep.py` — finds open Dependabot PRs across repos
 - `scripts/post_major_review.py` — reviews major version bumps
 - `scripts/github_utils.py` — shared GitHub API helpers
+
+## Pre-push checks
+Always run these before pushing to GitHub — they mirror the CI workflow
+in `.github/workflows/ci.yml`:
+```sh
+ruff check scripts/
+ruff format --check scripts/
+uv run --extra test pytest tests/
+```
