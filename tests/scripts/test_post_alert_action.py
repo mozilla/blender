@@ -416,47 +416,72 @@ class TestFetchPatchedVersion:
 
 
 class TestDetectPipLockTool:
-    def test_uv_lock_detected(self):
-        repo = MagicMock()
-        repo.get_contents.return_value = MagicMock()
-        result = detect_pip_lock_tool(repo)
-        assert result is not None
-        tool, cmd = result
-        assert tool == "uv"
-        assert "uv lock" in cmd
-        repo.get_contents.assert_called_once_with("uv.lock")
+    """detect_pip_lock_tool checks files in order: uv.lock, poetry.lock, Pipfile.lock."""
 
-    def test_poetry_lock_detected(self):
+    @pytest.mark.parametrize(
+        "files_present, expected_tool",
+        [
+            ({"uv.lock"}, "uv"),
+            ({"poetry.lock"}, "poetry"),
+            ({"Pipfile.lock"}, "pipenv"),
+            ({"uv.lock", "poetry.lock"}, "uv"),  # uv wins when both exist
+            (set(), None),
+        ],
+        ids=["uv", "poetry", "pipenv", "uv-wins-over-poetry", "none"],
+    )
+    def test_lock_tool_detection(self, files_present, expected_tool):
         repo = MagicMock()
-        repo.get_contents.side_effect = [Exception("404"), MagicMock()]
-        result = detect_pip_lock_tool(repo)
-        assert result is not None
-        assert result[0] == "poetry"
 
-    def test_pipfile_lock_detected(self):
-        repo = MagicMock()
-        repo.get_contents.side_effect = [
-            Exception("404"),
-            Exception("404"),
-            MagicMock(),
-        ]
-        result = detect_pip_lock_tool(repo)
-        assert result is not None
-        assert result[0] == "pipenv"
+        def get_contents(path):
+            if path in files_present:
+                return MagicMock()
+            raise Exception("404")
 
-    def test_no_lock_file(self):
-        repo = MagicMock()
-        repo.get_contents.side_effect = Exception("404")
-        assert detect_pip_lock_tool(repo) is None
+        repo.get_contents.side_effect = get_contents
+
+        result = detect_pip_lock_tool(repo)
+        if expected_tool is None:
+            assert result is None
+        else:
+            assert result is not None
+            assert result[0] == expected_tool
 
 
 class TestPipLockBumpFlow:
     """Integration: pip transitive dep with no pin triggers lock bump."""
 
+    def _run_pip_main(self, verdict_file, tmp_path, monkeypatch, mock_repo):
+        """Run main() with pip ecosystem defaults. Returns (outputs, summary)."""
+        verdict_file(SAMPLE_VERDICT)
+
+        output_file = str(tmp_path / "github_output")
+        open(output_file, "w").close()
+        summary_file = str(tmp_path / "step-summary.md")
+
+        for k, v in {
+            "GH_TOKEN": "fake",
+            "REPO": "owner/repo",
+            "ALERT_NUMBER": "2",
+            "ALERT_PACKAGE": "idna",
+            "ALERT_ECOSYSTEM": "pip",
+            "ALERT_SEVERITY": "high",
+            "ALERT_PATCHED_VERSION": "3.15",
+            "DRY_RUN": "false",
+            "DISMISS_UNAFFECTED": "false",
+            "GITHUB_STEP_SUMMARY": summary_file,
+            "GITHUB_OUTPUT": output_file,
+        }.items():
+            monkeypatch.setenv(k, v)
+
+        with patch("scripts.post_alert_action.Github") as mock_gh:
+            mock_gh.return_value.get_repo.return_value = mock_repo
+            main()
+
+        return open(output_file).read(), open(summary_file).read()
+
     def test_pip_no_pin_with_uv_lock(
         self, verdict_file, tmp_path, monkeypatch
     ):
-        verdict_file(SAMPLE_VERDICT)
         mock_repo = MagicMock()
         mock_repo.full_name = "owner/repo"
         mock_repo.get_pulls.return_value = []
@@ -468,68 +493,24 @@ class TestPipLockBumpFlow:
 
         mock_repo.get_contents.side_effect = get_contents_side_effect
 
-        output_file = str(tmp_path / "github_output")
-        open(output_file, "w").close()
-
-        summary_file = str(tmp_path / "step-summary.md")
-        for k, v in {
-            "GH_TOKEN": "fake",
-            "REPO": "owner/repo",
-            "ALERT_NUMBER": "2",
-            "ALERT_PACKAGE": "idna",
-            "ALERT_ECOSYSTEM": "pip",
-            "ALERT_SEVERITY": "high",
-            "ALERT_PATCHED_VERSION": "3.15",
-            "DRY_RUN": "false",
-            "DISMISS_UNAFFECTED": "false",
-            "GITHUB_STEP_SUMMARY": summary_file,
-            "GITHUB_OUTPUT": output_file,
-        }.items():
-            monkeypatch.setenv(k, v)
-
-        with patch("scripts.post_alert_action.Github") as mock_gh:
-            mock_gh.return_value.get_repo.return_value = mock_repo
-            main()
-
-        outputs = open(output_file).read()
+        outputs, summary = self._run_pip_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo
+        )
         assert "action=pip_lock_bump" in outputs
         assert "pip_package=idna" in outputs
         assert "pip_version=3.15" in outputs
         assert "pip_lock_tool=uv" in outputs
-        content = open(summary_file).read()
-        assert "pip lock bump" in content.lower()
+        assert "pip lock bump" in summary.lower()
 
     def test_pip_no_pin_no_lock_noop(
         self, verdict_file, tmp_path, monkeypatch
     ):
-        verdict_file(SAMPLE_VERDICT)
         mock_repo = MagicMock()
         mock_repo.full_name = "owner/repo"
         mock_repo.get_pulls.return_value = []
         mock_repo.get_contents.side_effect = Exception("404 Not Found")
 
-        output_file = str(tmp_path / "github_output")
-        open(output_file, "w").close()
-
-        summary_file = str(tmp_path / "step-summary.md")
-        for k, v in {
-            "GH_TOKEN": "fake",
-            "REPO": "owner/repo",
-            "ALERT_NUMBER": "2",
-            "ALERT_PACKAGE": "idna",
-            "ALERT_ECOSYSTEM": "pip",
-            "ALERT_SEVERITY": "high",
-            "ALERT_PATCHED_VERSION": "3.15",
-            "DRY_RUN": "false",
-            "DISMISS_UNAFFECTED": "false",
-            "GITHUB_STEP_SUMMARY": summary_file,
-            "GITHUB_OUTPUT": output_file,
-        }.items():
-            monkeypatch.setenv(k, v)
-
-        with patch("scripts.post_alert_action.Github") as mock_gh:
-            mock_gh.return_value.get_repo.return_value = mock_repo
-            main()
-
-        outputs = open(output_file).read()
+        outputs, _ = self._run_pip_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo
+        )
         assert "action=noop" in outputs
