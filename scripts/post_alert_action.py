@@ -232,6 +232,16 @@ def find_dependency_pin(
             except Exception:
                 continue
 
+        # Also check pyproject.toml [project.dependencies] and optional-deps
+        try:
+            file_content = repo.get_contents("pyproject.toml")
+            text = file_content.decoded_content.decode("utf-8")
+            if pin_pattern.search(text):
+                print(f"  Found {package_name} pin in pyproject.toml")
+                return ("pyproject.toml", text, file_content.sha)
+        except Exception:
+            pass
+
     elif ecosystem == "npm":
         try:
             file_content = repo.get_contents("package.json")
@@ -349,6 +359,42 @@ def create_bump_pr(
         return None
 
 
+def request_dependabot_update(
+    repo,
+    alert_number: int,
+    package_name: str,
+    dry_run: bool,
+) -> str | None:
+    """Ask GitHub to create a Dependabot security update for this alert.
+
+    Ensures automated security fixes are enabled on the repo, then
+    returns 'dependabot_requested' on success or None on failure.
+    """
+    fixes_url = f"/repos/{repo.full_name}/automated-security-fixes"
+
+    if dry_run:
+        print("  DRY_RUN: would enable automated security fixes")
+        return "dependabot_requested"
+
+    try:
+        repo._requester.requestJsonAndCheck("PUT", fixes_url)
+        print(f"  Enabled automated security fixes for {repo.full_name}")
+    except Exception as e:
+        error_str = str(e)
+        # 409 means already enabled — that's fine
+        if "409" in error_str or "already enabled" in error_str.lower():
+            print("  Automated security fixes already enabled.")
+        else:
+            print(f"  Could not enable automated security fixes: {e}")
+            return None
+
+    print(
+        f"  Dependabot will create a security update for {package_name}"
+        f" (alert #{alert_number}) if it can resolve the dependency."
+    )
+    return "dependabot_requested"
+
+
 def dismiss_alert(
     repo,
     alert_number: int,
@@ -442,7 +488,12 @@ def main() -> None:
                     if pr_num > 0:
                         write_output("bump_pr_number", str(pr_num))
                 else:
-                    action = "noop"
+                    # No direct pin found — ask Dependabot to handle it
+                    print("  Falling back to Dependabot security update.")
+                    result = request_dependabot_update(
+                        repo, alert_number, package_name, dry_run
+                    )
+                    action = result or "noop"
         elif dismiss_enabled and severity.lower() not in DISMISS_BLOCKED_SEVERITIES:
             print("  Unaffected + dismiss enabled. Dismissing alert.")
             dismiss_alert(repo, alert_number, reason, dry_run)

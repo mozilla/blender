@@ -21,6 +21,7 @@ from scripts.post_alert_action import (
     find_existing_bump_pr,
     load_verdict,
     main,
+    request_dependabot_update,
 )
 
 
@@ -380,3 +381,76 @@ class TestMainFlow:
 
         outputs = open(output_file).read()
         assert "action=noop" in outputs
+
+
+class TestRequestDependabotUpdate:
+    def test_dry_run_skips(self):
+        repo = MagicMock()
+        result = request_dependabot_update(repo, 42, "idna", dry_run=True)
+        assert result == "dependabot_requested"
+        repo._requester.requestJsonAndCheck.assert_not_called()
+
+    def test_enables_automated_fixes(self):
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        result = request_dependabot_update(repo, 42, "idna", dry_run=False)
+        assert result == "dependabot_requested"
+        repo._requester.requestJsonAndCheck.assert_called_once_with(
+            "PUT", "/repos/owner/repo/automated-security-fixes"
+        )
+
+    def test_already_enabled_succeeds(self):
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        repo._requester.requestJsonAndCheck.side_effect = Exception("409 Conflict")
+        result = request_dependabot_update(repo, 42, "idna", dry_run=False)
+        assert result == "dependabot_requested"
+
+    def test_api_failure_returns_none(self):
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        repo._requester.requestJsonAndCheck.side_effect = Exception("500 Server Error")
+        result = request_dependabot_update(repo, 42, "idna", dry_run=False)
+        assert result is None
+
+
+class TestFallbackToDependabot:
+    """Integration: pip transitive dep with no pin falls back to Dependabot."""
+
+    def test_pip_no_pin_requests_dependabot(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        verdict_file(SAMPLE_VERDICT)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+        # get_contents raises for every file — no pin found
+        mock_repo.get_contents.side_effect = Exception("404 Not Found")
+
+        output_file = str(tmp_path / "github_output")
+        open(output_file, "w").close()
+
+        summary_file = str(tmp_path / "step-summary.md")
+        for k, v in {
+            "GH_TOKEN": "fake",
+            "REPO": "owner/repo",
+            "ALERT_NUMBER": "2",
+            "ALERT_PACKAGE": "idna",
+            "ALERT_ECOSYSTEM": "pip",
+            "ALERT_SEVERITY": "high",
+            "ALERT_PATCHED_VERSION": "3.15",
+            "DRY_RUN": "false",
+            "DISMISS_UNAFFECTED": "false",
+            "GITHUB_STEP_SUMMARY": summary_file,
+            "GITHUB_OUTPUT": output_file,
+        }.items():
+            monkeypatch.setenv(k, v)
+
+        with patch("scripts.post_alert_action.Github") as mock_gh:
+            mock_gh.return_value.get_repo.return_value = mock_repo
+            main()
+
+        outputs = open(output_file).read()
+        assert "action=dependabot_requested" in outputs
+        content = open(summary_file).read()
+        assert "Dependabot security update requested" in content
