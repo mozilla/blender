@@ -7,16 +7,21 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from tests.scripts import make_comment, make_review
+
 from scripts.automerge_dependabot import (
     AdvisorySkipPR,
     CIFailurePR,
     DependencyUpdate,
     MajorBumpPR,
     PRMetadata,
+    RetryPR,
     SkipPR,
     _normalize_pep440_range,
     _post_dependabot_recreate,
+    extract_metadata,
     gate_advisories,
+    gate_compatibility,
     gate_versions,
     main,
     version_in_range,
@@ -362,13 +367,6 @@ def test_main_no_comment_when_review_major(monkeypatch):
 # --- has_blender_verdict ---
 
 
-def _gh_comment(body: str, login: str = "mozilla-blender[bot]"):
-    """Build a mock GitHub comment/review object with .body and .user.login."""
-    m = MagicMock()
-    m.body = body
-    m.user.login = login
-    return m
-
 
 @pytest.mark.parametrize(
     "verdict",
@@ -376,7 +374,7 @@ def _gh_comment(body: str, login: str = "mozilla-blender[bot]"):
 )
 def test_has_blender_verdict_from_comment(verdict):
     pr = MagicMock()
-    pr.get_issue_comments.return_value = [_gh_comment(body=verdict.comment("extra."))]
+    pr.get_issue_comments.return_value = [make_comment(body=verdict.comment("extra."))]
     pr.get_reviews.return_value = []
     assert has_blender_verdict(pr) is True
 
@@ -385,7 +383,7 @@ def test_has_blender_verdict_from_review():
     pr = MagicMock()
     pr.get_issue_comments.return_value = []
     pr.get_reviews.return_value = [
-        _gh_comment(body=Verdict.APPROVED.comment("(high confidence)."))
+        make_comment(body=Verdict.APPROVED.comment("(high confidence)."))
     ]
     assert has_blender_verdict(pr) is True
 
@@ -393,7 +391,7 @@ def test_has_blender_verdict_from_review():
 def test_has_blender_verdict_false_when_no_verdict():
     pr = MagicMock()
     pr.get_issue_comments.return_value = [
-        _gh_comment(body="Reviewing this major version bump.")
+        make_comment(body="Reviewing this major version bump.")
     ]
     pr.get_reviews.return_value = []
     assert has_blender_verdict(pr) is False
@@ -402,7 +400,7 @@ def test_has_blender_verdict_false_when_no_verdict():
 def test_has_blender_verdict_ignores_human_comments():
     pr = MagicMock()
     pr.get_issue_comments.return_value = [
-        _gh_comment(body=Verdict.SAFE.comment("to merge."), login="some-codeowner")
+        make_comment(body=Verdict.SAFE.comment("to merge."), login="some-codeowner")
     ]
     pr.get_reviews.return_value = []
     assert has_blender_verdict(pr) is False
@@ -417,7 +415,7 @@ def test_main_skips_dispatch_when_already_reviewed(monkeypatch, tmp_path):
         number=42,
         ref="dependabot/pip/ipware-7.0.0",
         comments=[
-            _gh_comment(body=Verdict.NO_VERDICT.comment("Manual review needed."))
+            make_comment(body=Verdict.NO_VERDICT.comment("Manual review needed."))
         ],
     )
     _run_main(
@@ -446,19 +444,13 @@ def test_main_no_comment_on_ci_failure(monkeypatch):
 
 def test_has_codeowner_approval_true():
     pr = MagicMock()
-    review = MagicMock()
-    review.state = "APPROVED"
-    review.user.login = "some-codeowner"
-    pr.get_reviews.return_value = [review]
+    pr.get_reviews.return_value = [make_review("some-codeowner")]
     assert has_codeowner_approval(pr) is True
 
 
 def test_has_codeowner_approval_returns_false_for_bots():
     pr = MagicMock()
-    review = MagicMock()
-    review.state = "APPROVED"
-    review.user.login = "some-app[bot]"
-    pr.get_reviews.return_value = [review]
+    pr.get_reviews.return_value = [make_review("some-app[bot]")]
     assert has_codeowner_approval(pr) is False
 
 
@@ -470,10 +462,7 @@ def test_has_codeowner_approval_false_no_reviews():
 
 def test_has_codeowner_approval_ignores_non_approval():
     pr = MagicMock()
-    review = MagicMock()
-    review.state = "COMMENTED"
-    review.user.login = "some-codeowner"
-    pr.get_reviews.return_value = [review]
+    pr.get_reviews.return_value = [make_review("some-codeowner", state="COMMENTED")]
     assert has_codeowner_approval(pr) is False
 
 
@@ -494,11 +483,9 @@ def test_process_pr_codeowner_approval_bypasses_major_gate():
     """Code-owner approval + BLEnder verdict = allow_major, no MajorBumpPR raised."""
     from scripts.automerge_dependabot import Config, process_pr
 
-    codeowner_review = MagicMock()
-    codeowner_review.state = "APPROVED"
-    codeowner_review.user.login = "some-codeowner"
+    codeowner_review = make_review("some-codeowner")
 
-    verdict_comment = _gh_comment(
+    verdict_comment = make_comment(
         body=Verdict.NEEDS_REVIEW.comment("Review needed.")
     )
 
@@ -558,3 +545,88 @@ def test_process_pr_codeowner_approval_bypasses_major_gate():
         result = process_pr(config, gh, repo, pr)
 
     assert result is True
+
+
+# --- extract_metadata propagates old_version to deps ---
+
+
+def test_extract_metadata_propagates_old_version_to_single_dep():
+    """Single-dep PRs get old_version from commit title, not GROUP_VERSION_RE.
+
+    Regression: after a Dependabot force-push stripped the badge URL from
+    the PR body, gate_compatibility fell back to building badge URLs from
+    dep metadata. But dep.old_version was empty for single-dep PRs because
+    only GROUP_VERSION_RE populated it. meta.old_version (from the commit
+    title) was never copied to dep.old_version.
+    """
+    pr = MagicMock()
+    pr.head.ref = "dependabot/pip/ruff-0.15.13"
+
+    commit = MagicMock()
+    commit.commit.message = (
+        "Bump ruff from 0.15.12 to 0.15.13\n\n"
+        "---\n"
+        "updated-dependencies:\n"
+        "- dependency-name: ruff\n"
+        "  dependency-type: direct:development\n"
+        "  update-type: version-update:semver-patch\n"
+        "  dependency-version: 0.15.13\n"
+        "...\n"
+    )
+    commits = MagicMock()
+    commits.totalCount = 1
+    commits.__getitem__ = lambda self, i: commit
+    pr.get_commits.return_value = commits
+
+    meta = extract_metadata(pr)
+
+    assert meta.old_version == "0.15.12"
+    assert len(meta.dependencies) == 1
+    assert meta.dependencies[0].old_version == "0.15.12"
+
+
+# --- gate_compatibility fallback after force-push ---
+
+
+def _ruff_bump_meta(old_version="0.15.12"):
+    """Build DependencyUpdate + PRMetadata for a ruff patch bump."""
+    dep = DependencyUpdate(
+        name="ruff",
+        version="0.15.13",
+        dependency_type="direct:development",
+        update_type="version-update:semver-patch",
+        old_version=old_version,
+    )
+    meta = PRMetadata(
+        dependencies=[dep],
+        ecosystem="pip",
+        raw_ecosystem="pip",
+        old_version=old_version,
+        new_version="0.15.13",
+    )
+    return dep, meta
+
+
+def test_gate_compatibility_builds_badge_url_when_body_has_no_badge():
+    """After a force-push strips the badge URL, the fallback path works."""
+    _, meta = _ruff_bump_meta()
+    pr = MagicMock()
+    pr.body = "Some PR body with no badge URL"
+
+    badge_svg = '<svg><text aria-label="compatibility: 89%">89%</text></svg>'
+    with patch(
+        "scripts.automerge_dependabot.fetch_badge_svg", return_value=badge_svg
+    ):
+        score = gate_compatibility(pr, meta, min_compat_score=70)
+
+    assert score == 89
+
+
+def test_gate_compatibility_raises_when_dep_has_no_old_version():
+    """Without old_version on deps and no badge in body, gate raises RetryPR."""
+    _, meta = _ruff_bump_meta(old_version="")
+    pr = MagicMock()
+    pr.body = "No badge here"
+
+    with pytest.raises(RetryPR, match="no compatibility badge"):
+        gate_compatibility(pr, meta)

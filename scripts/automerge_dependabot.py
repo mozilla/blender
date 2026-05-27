@@ -230,11 +230,12 @@ def extract_metadata(pr: PullRequest) -> PRMetadata:
                 if not dep_by_name[name].version:
                     dep_by_name[name].version = new_ver
 
-    # Fill in missing update_type from version comparison
+    # Fill in missing old_version / update_type from commit title
     for dep in meta.dependencies:
-        old = dep.old_version or meta.old_version
-        if not dep.update_type and dep.version and old:
-            dep.update_type = compute_update_type(old, dep.version)
+        if not dep.old_version and meta.old_version:
+            dep.old_version = meta.old_version
+        if not dep.update_type and dep.version and dep.old_version:
+            dep.update_type = compute_update_type(dep.old_version, dep.version)
 
     # Derive new version and major-bump flag
     for dep in meta.dependencies:
