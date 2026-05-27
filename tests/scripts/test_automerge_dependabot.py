@@ -7,6 +7,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from tests.scripts import make_comment, make_review
+
 from scripts.automerge_dependabot import (
     AdvisorySkipPR,
     CIFailurePR,
@@ -365,13 +367,6 @@ def test_main_no_comment_when_review_major(monkeypatch):
 # --- has_blender_verdict ---
 
 
-def _gh_comment(body: str, login: str = "mozilla-blender[bot]"):
-    """Build a mock GitHub comment/review object with .body and .user.login."""
-    m = MagicMock()
-    m.body = body
-    m.user.login = login
-    return m
-
 
 @pytest.mark.parametrize(
     "verdict",
@@ -379,7 +374,7 @@ def _gh_comment(body: str, login: str = "mozilla-blender[bot]"):
 )
 def test_has_blender_verdict_from_comment(verdict):
     pr = MagicMock()
-    pr.get_issue_comments.return_value = [_gh_comment(body=verdict.comment("extra."))]
+    pr.get_issue_comments.return_value = [make_comment(body=verdict.comment("extra."))]
     pr.get_reviews.return_value = []
     assert has_blender_verdict(pr) is True
 
@@ -388,7 +383,7 @@ def test_has_blender_verdict_from_review():
     pr = MagicMock()
     pr.get_issue_comments.return_value = []
     pr.get_reviews.return_value = [
-        _gh_comment(body=Verdict.APPROVED.comment("(high confidence)."))
+        make_comment(body=Verdict.APPROVED.comment("(high confidence)."))
     ]
     assert has_blender_verdict(pr) is True
 
@@ -396,7 +391,7 @@ def test_has_blender_verdict_from_review():
 def test_has_blender_verdict_false_when_no_verdict():
     pr = MagicMock()
     pr.get_issue_comments.return_value = [
-        _gh_comment(body="Reviewing this major version bump.")
+        make_comment(body="Reviewing this major version bump.")
     ]
     pr.get_reviews.return_value = []
     assert has_blender_verdict(pr) is False
@@ -405,7 +400,7 @@ def test_has_blender_verdict_false_when_no_verdict():
 def test_has_blender_verdict_ignores_human_comments():
     pr = MagicMock()
     pr.get_issue_comments.return_value = [
-        _gh_comment(body=Verdict.SAFE.comment("to merge."), login="some-codeowner")
+        make_comment(body=Verdict.SAFE.comment("to merge."), login="some-codeowner")
     ]
     pr.get_reviews.return_value = []
     assert has_blender_verdict(pr) is False
@@ -420,7 +415,7 @@ def test_main_skips_dispatch_when_already_reviewed(monkeypatch, tmp_path):
         number=42,
         ref="dependabot/pip/ipware-7.0.0",
         comments=[
-            _gh_comment(body=Verdict.NO_VERDICT.comment("Manual review needed."))
+            make_comment(body=Verdict.NO_VERDICT.comment("Manual review needed."))
         ],
     )
     _run_main(
@@ -449,19 +444,13 @@ def test_main_no_comment_on_ci_failure(monkeypatch):
 
 def test_has_codeowner_approval_true():
     pr = MagicMock()
-    review = MagicMock()
-    review.state = "APPROVED"
-    review.user.login = "some-codeowner"
-    pr.get_reviews.return_value = [review]
+    pr.get_reviews.return_value = [make_review("some-codeowner")]
     assert has_codeowner_approval(pr) is True
 
 
 def test_has_codeowner_approval_returns_false_for_bots():
     pr = MagicMock()
-    review = MagicMock()
-    review.state = "APPROVED"
-    review.user.login = "some-app[bot]"
-    pr.get_reviews.return_value = [review]
+    pr.get_reviews.return_value = [make_review("some-app[bot]")]
     assert has_codeowner_approval(pr) is False
 
 
@@ -473,10 +462,7 @@ def test_has_codeowner_approval_false_no_reviews():
 
 def test_has_codeowner_approval_ignores_non_approval():
     pr = MagicMock()
-    review = MagicMock()
-    review.state = "COMMENTED"
-    review.user.login = "some-codeowner"
-    pr.get_reviews.return_value = [review]
+    pr.get_reviews.return_value = [make_review("some-codeowner", state="COMMENTED")]
     assert has_codeowner_approval(pr) is False
 
 
@@ -497,11 +483,9 @@ def test_process_pr_codeowner_approval_bypasses_major_gate():
     """Code-owner approval + BLEnder verdict = allow_major, no MajorBumpPR raised."""
     from scripts.automerge_dependabot import Config, process_pr
 
-    codeowner_review = MagicMock()
-    codeowner_review.state = "APPROVED"
-    codeowner_review.user.login = "some-codeowner"
+    codeowner_review = make_review("some-codeowner")
 
-    verdict_comment = _gh_comment(
+    verdict_comment = make_comment(
         body=Verdict.NEEDS_REVIEW.comment("Review needed.")
     )
 

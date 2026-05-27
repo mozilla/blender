@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, PropertyMock, patch
 
+from tests.scripts import make_comment, make_commit, make_review
+
 from scripts.sweep import check_alerts, process_repo
 
 # --- Shared timestamps ---
@@ -12,33 +14,6 @@ from scripts.sweep import check_alerts, process_repo
 T_EARLY = datetime(2025, 1, 1, tzinfo=timezone.utc)
 T_LATE = datetime(2025, 1, 2, tzinfo=timezone.utc)
 
-
-# --- Mock builders ---
-
-
-def _make_commit(message: str, date: datetime = T_EARLY):
-    """Build a mock commit object."""
-    c = MagicMock()
-    c.commit.message = message
-    c.commit.committer.date = date
-    return c
-
-
-def _make_comment(login: str, body: str, created_at: datetime = T_EARLY):
-    """Build a mock issue comment."""
-    c = MagicMock()
-    c.user.login = login
-    c.body = body
-    c.created_at = created_at
-    return c
-
-
-def _make_review(login: str, state: str = "APPROVED"):
-    """Build a mock PR review."""
-    r = MagicMock()
-    r.user.login = login
-    r.state = state
-    return r
 
 
 def _make_pr(
@@ -63,9 +38,9 @@ def _make_pr(
 
     commit_list = list(commits or [])
     if blender_commit:
-        commit_list.append(_make_commit("BLEnder fix(foo): update lockfile", T_LATE))
+        commit_list.append(make_commit("BLEnder fix(foo): update lockfile", T_LATE))
     if not commit_list:
-        commit_list.append(_make_commit("Bump foo from 1.0.0 to 2.0.0"))
+        commit_list.append(make_commit("Bump foo from 1.0.0 to 2.0.0"))
     pr.get_commits.return_value = commit_list
     pr.get_issue_comments.return_value = list(comments or [])
     pr.get_reviews.return_value = list(reviews or [])
@@ -114,9 +89,9 @@ class TestFixDispatch:
         pr, status = _make_pr(
             3,
             "failing",
-            commits=[_make_commit("Bump foo", T_EARLY)],
+            commits=[make_commit("Bump foo", T_EARLY)],
             comments=[
-                _make_comment("blender[bot]", "BLEnder picked up this PR.", T_LATE)
+                make_comment("BLEnder picked up this PR.", "blender[bot]", T_LATE)
             ],
         )
         assert _run_sweep([(pr, status)]) == []
@@ -126,9 +101,9 @@ class TestFixDispatch:
         pr, status = _make_pr(
             4,
             "failing",
-            commits=[_make_commit("Bump foo", T_LATE)],
+            commits=[make_commit("Bump foo", T_LATE)],
             comments=[
-                _make_comment("blender[bot]", "BLEnder picked up this PR.", T_EARLY)
+                make_comment("BLEnder picked up this PR.", "blender[bot]", T_EARLY)
             ],
         )
         actions = _run_sweep([(pr, status)])
@@ -140,11 +115,11 @@ class TestFixDispatch:
         pr, status = _make_pr(
             5,
             "failing",
-            commits=[_make_commit("Bump foo", T_EARLY)],
+            commits=[make_commit("Bump foo", T_EARLY)],
             comments=[
-                _make_comment(
-                    "blender[bot]",
+                make_comment(
                     "BLEnder could not fix this PR automatically.",
+                    "blender[bot]",
                     T_LATE,
                 )
             ],
@@ -156,11 +131,11 @@ class TestFixDispatch:
         pr, status = _make_pr(
             6,
             "failing",
-            commits=[_make_commit("Bump foo", T_LATE)],
+            commits=[make_commit("Bump foo", T_LATE)],
             comments=[
-                _make_comment(
-                    "blender[bot]",
+                make_comment(
                     "BLEnder could not fix this PR automatically.",
+                    "blender[bot]",
                     T_EARLY,
                 )
             ],
@@ -175,9 +150,9 @@ class TestFixDispatch:
             7,
             "failing",
             comments=[
-                _make_comment(
-                    "blender[bot]",
+                make_comment(
                     "BLEnder: will not auto-merge (CI has 1 failure(s)).",
+                    "blender[bot]",
                     T_LATE,
                 )
             ],
@@ -192,9 +167,9 @@ class TestFixDispatch:
             8,
             "failing",
             comments=[
-                _make_comment(
-                    "blender[bot]",
+                make_comment(
                     "BLEnder: skipped (score unknown). Will retry on next scheduled run.",
+                    "blender[bot]",
                     T_LATE,
                 )
             ],
@@ -209,9 +184,9 @@ class TestFixDispatch:
             9,
             "failing",
             blender_commit=True,
-            commits=[_make_commit("Bump foo", T_LATE)],
+            commits=[make_commit("Bump foo", T_LATE)],
             comments=[
-                _make_comment("blender[bot]", "BLEnder picked up this PR.", T_EARLY)
+                make_comment("BLEnder picked up this PR.", "blender[bot]", T_EARLY)
             ],
         )
         assert _run_sweep([(pr, status)]) == []
@@ -233,7 +208,7 @@ class TestAutomergeDispatch:
             11,
             "passing",
             comments=[
-                _make_comment("blender[bot]", "BLEnder picked up this PR.", T_LATE)
+                make_comment("BLEnder picked up this PR.", "blender[bot]", T_LATE)
             ],
         )
         actions = _run_sweep([(pr, status)])
@@ -252,7 +227,7 @@ def _make_blender_bump_pr(number: int, ci_status: str, package: str = "foo"):
     pr.user.login = "mozilla-blender[bot]"
     pr.head.ref = f"blender/security-bump-{package}"
     type(pr.head).sha = PropertyMock(return_value="abc123")
-    pr.get_commits.return_value = [_make_commit(f"chore(deps): bump {package}")]
+    pr.get_commits.return_value = [make_commit(f"chore(deps): bump {package}")]
     pr.get_issue_comments.return_value = []
     return pr, ci_status
 
@@ -414,7 +389,7 @@ class TestCodeownerApprovalResetsFix:
             30,
             "failing",
             blender_commit=True,
-            reviews=[_make_review("some-codeowner")],
+            reviews=[make_review("some-codeowner")],
         )
         actions = _run_sweep([(pr, status)])
         assert len(actions) == 1
@@ -425,15 +400,15 @@ class TestCodeownerApprovalResetsFix:
         pr, status = _make_pr(
             31,
             "failing",
-            commits=[_make_commit("Bump foo", T_EARLY)],
+            commits=[make_commit("Bump foo", T_EARLY)],
             comments=[
-                _make_comment(
-                    "blender[bot]",
+                make_comment(
                     "BLEnder could not fix this PR automatically.",
+                    "blender[bot]",
                     T_LATE,
                 )
             ],
-            reviews=[_make_review("some-codeowner")],
+            reviews=[make_review("some-codeowner")],
         )
         actions = _run_sweep([(pr, status)])
         assert len(actions) == 1
@@ -445,7 +420,7 @@ class TestCodeownerApprovalResetsFix:
             32,
             "failing",
             blender_commit=True,
-            reviews=[_make_review("some-app[bot]")],
+            reviews=[make_review("some-app[bot]")],
         )
         actions = _run_sweep([(pr, status)])
         assert actions == []
