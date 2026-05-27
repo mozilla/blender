@@ -13,10 +13,13 @@ from scripts.automerge_dependabot import (
     DependencyUpdate,
     MajorBumpPR,
     PRMetadata,
+    RetryPR,
     SkipPR,
     _normalize_pep440_range,
     _post_dependabot_recreate,
+    extract_metadata,
     gate_advisories,
+    gate_compatibility,
     gate_versions,
     main,
     version_in_range,
@@ -558,3 +561,101 @@ def test_process_pr_codeowner_approval_bypasses_major_gate():
         result = process_pr(config, gh, repo, pr)
 
     assert result is True
+
+
+# --- extract_metadata propagates old_version to deps ---
+
+
+def test_extract_metadata_propagates_old_version_to_single_dep():
+    """Single-dep PRs get old_version from commit title, not GROUP_VERSION_RE.
+
+    Regression: after a Dependabot force-push stripped the badge URL from
+    the PR body, gate_compatibility fell back to building badge URLs from
+    dep metadata. But dep.old_version was empty for single-dep PRs because
+    only GROUP_VERSION_RE populated it. meta.old_version (from the commit
+    title) was never copied to dep.old_version.
+    """
+    pr = MagicMock()
+    pr.head.ref = "dependabot/pip/ruff-0.15.13"
+
+    commit = MagicMock()
+    commit.commit.message = (
+        "Bump ruff from 0.15.12 to 0.15.13\n\n"
+        "---\n"
+        "updated-dependencies:\n"
+        "- dependency-name: ruff\n"
+        "  dependency-type: direct:development\n"
+        "  update-type: version-update:semver-patch\n"
+        "  dependency-version: 0.15.13\n"
+        "...\n"
+    )
+    commits = MagicMock()
+    commits.totalCount = 1
+    commits.__getitem__ = lambda self, i: commit
+    pr.get_commits.return_value = commits
+
+    meta = extract_metadata(pr)
+
+    assert meta.old_version == "0.15.12"
+    assert len(meta.dependencies) == 1
+    assert meta.dependencies[0].old_version == "0.15.12"
+
+
+# --- gate_compatibility fallback after force-push ---
+
+
+def test_gate_compatibility_builds_badge_url_when_body_has_no_badge():
+    """After a force-push strips the badge URL, the fallback path works.
+
+    gate_compatibility should build a badge URL from dep metadata
+    (including old_version propagated from meta) and fetch the SVG.
+    """
+    dep = DependencyUpdate(
+        name="ruff",
+        version="0.15.13",
+        dependency_type="direct:development",
+        update_type="version-update:semver-patch",
+        old_version="0.15.12",
+    )
+    meta = PRMetadata(
+        dependencies=[dep],
+        ecosystem="pip",
+        raw_ecosystem="pip",
+        old_version="0.15.12",
+        new_version="0.15.13",
+    )
+
+    pr = MagicMock()
+    pr.body = "Some PR body with no badge URL"
+
+    badge_svg = '<svg><text aria-label="compatibility: 89%">89%</text></svg>'
+    with patch(
+        "scripts.automerge_dependabot.fetch_badge_svg", return_value=badge_svg
+    ):
+        score = gate_compatibility(pr, meta, min_compat_score=70)
+
+    assert score == 89
+
+
+def test_gate_compatibility_raises_when_dep_has_no_old_version():
+    """Without old_version on deps and no badge in body, gate raises RetryPR."""
+    dep = DependencyUpdate(
+        name="ruff",
+        version="0.15.13",
+        dependency_type="direct:development",
+        update_type="version-update:semver-patch",
+        old_version="",  # missing
+    )
+    meta = PRMetadata(
+        dependencies=[dep],
+        ecosystem="pip",
+        raw_ecosystem="pip",
+        old_version="",
+        new_version="0.15.13",
+    )
+
+    pr = MagicMock()
+    pr.body = "No badge here"
+
+    with pytest.raises(RetryPR, match="no compatibility badge"):
+        gate_compatibility(pr, meta)
