@@ -16,7 +16,9 @@ from scripts.alert_report import (
 from scripts.post_alert_action import (
     create_advisory_and_fork,
     create_bump_pr,
+    detect_pip_lock_tool,
     dismiss_alert,
+    fetch_patched_version,
     find_dependency_pin,
     find_existing_bump_pr,
     load_verdict,
@@ -173,6 +175,7 @@ class TestMainFlow:
             "ALERT_PACKAGE": "lodash",
             "ALERT_ECOSYSTEM": "npm",
             "ALERT_SEVERITY": "low",
+            "ALERT_PATCHED_VERSION": "1.0.0",
             "DISMISS_UNAFFECTED": "false",
             "DRY_RUN": "false",
             "GITHUB_STEP_SUMMARY": summary_file,
@@ -379,4 +382,135 @@ class TestMainFlow:
         )
 
         outputs = open(output_file).read()
+        assert "action=noop" in outputs
+
+
+class TestFetchPatchedVersion:
+    def test_fetches_from_api(self):
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        repo._requester.requestJsonAndCheck.return_value = (
+            None,
+            {
+                "security_vulnerability": {
+                    "first_patched_version": {"identifier": "3.15"},
+                }
+            },
+        )
+        assert fetch_patched_version(repo, 2) == "3.15"
+
+    def test_returns_empty_on_api_error(self):
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        repo._requester.requestJsonAndCheck.side_effect = Exception("403")
+        assert fetch_patched_version(repo, 2) == ""
+
+    def test_returns_empty_when_no_patched_version(self):
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        repo._requester.requestJsonAndCheck.return_value = (
+            None,
+            {"security_vulnerability": {}},
+        )
+        assert fetch_patched_version(repo, 2) == ""
+
+
+class TestDetectPipLockTool:
+    """detect_pip_lock_tool checks files in order: uv.lock, poetry.lock, Pipfile.lock."""
+
+    @pytest.mark.parametrize(
+        "files_present, expected_tool",
+        [
+            ({"uv.lock"}, "uv"),
+            ({"poetry.lock"}, "poetry"),
+            ({"Pipfile.lock"}, "pipenv"),
+            ({"uv.lock", "poetry.lock"}, "uv"),  # uv wins when both exist
+            (set(), None),
+        ],
+        ids=["uv", "poetry", "pipenv", "uv-wins-over-poetry", "none"],
+    )
+    def test_lock_tool_detection(self, files_present, expected_tool):
+        repo = MagicMock()
+
+        def get_contents(path):
+            if path in files_present:
+                return MagicMock()
+            raise Exception("404")
+
+        repo.get_contents.side_effect = get_contents
+
+        result = detect_pip_lock_tool(repo)
+        if expected_tool is None:
+            assert result is None
+        else:
+            assert result is not None
+            assert result[0] == expected_tool
+
+
+class TestPipLockBumpFlow:
+    """Integration: pip transitive dep with no pin triggers lock bump."""
+
+    def _run_pip_main(self, verdict_file, tmp_path, monkeypatch, mock_repo):
+        """Run main() with pip ecosystem defaults. Returns (outputs, summary)."""
+        verdict_file(SAMPLE_VERDICT)
+
+        output_file = str(tmp_path / "github_output")
+        open(output_file, "w").close()
+        summary_file = str(tmp_path / "step-summary.md")
+
+        for k, v in {
+            "GH_TOKEN": "fake",
+            "REPO": "owner/repo",
+            "ALERT_NUMBER": "2",
+            "ALERT_PACKAGE": "idna",
+            "ALERT_ECOSYSTEM": "pip",
+            "ALERT_SEVERITY": "high",
+            "ALERT_PATCHED_VERSION": "3.15",
+            "DRY_RUN": "false",
+            "DISMISS_UNAFFECTED": "false",
+            "GITHUB_STEP_SUMMARY": summary_file,
+            "GITHUB_OUTPUT": output_file,
+        }.items():
+            monkeypatch.setenv(k, v)
+
+        with patch("scripts.post_alert_action.Github") as mock_gh:
+            mock_gh.return_value.get_repo.return_value = mock_repo
+            main()
+
+        return open(output_file).read(), open(summary_file).read()
+
+    def test_pip_no_pin_with_uv_lock(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        def get_contents_side_effect(path):
+            if path == "uv.lock":
+                return MagicMock()
+            raise Exception("404 Not Found")
+
+        mock_repo.get_contents.side_effect = get_contents_side_effect
+
+        outputs, summary = self._run_pip_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo
+        )
+        assert "action=pip_lock_bump" in outputs
+        assert "pip_package=idna" in outputs
+        assert "pip_version=3.15" in outputs
+        assert "pip_lock_tool=uv" in outputs
+        assert "pip lock bump" in summary.lower()
+
+    def test_pip_no_pin_no_lock_noop(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+        mock_repo.get_contents.side_effect = Exception("404 Not Found")
+
+        outputs, _ = self._run_pip_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo
+        )
         assert "action=noop" in outputs

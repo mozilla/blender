@@ -4,7 +4,7 @@
 Reads .blender-alert-verdict.json and takes the appropriate action:
 
   unaffected + existing PR       -> comment on the PR, let other workflows handle
-  unaffected + no PR             -> trigger Dependabot security update
+  unaffected + no PR             -> bump via lock tool or create PR
   unaffected + dismiss enabled   -> dismiss the alert (low/medium only)
   affected                       -> create advisory with private fork
 
@@ -232,6 +232,16 @@ def find_dependency_pin(
             except Exception:
                 continue
 
+        # Also check pyproject.toml [project.dependencies] and optional-deps
+        try:
+            file_content = repo.get_contents("pyproject.toml")
+            text = file_content.decoded_content.decode("utf-8")
+            if pin_pattern.search(text):
+                print(f"  Found {package_name} pin in pyproject.toml")
+                return ("pyproject.toml", text, file_content.sha)
+        except Exception:
+            pass
+
     elif ecosystem == "npm":
         try:
             file_content = repo.get_contents("package.json")
@@ -349,6 +359,45 @@ def create_bump_pr(
         return None
 
 
+def fetch_patched_version(repo, alert_number: int) -> str:
+    """Fetch the patched version from the Dependabot alert API."""
+    url = f"/repos/{repo.full_name}/dependabot/alerts/{alert_number}"
+    try:
+        _, data = repo._requester.requestJsonAndCheck("GET", url)
+        vuln = data.get("security_vulnerability", {})
+        patched = vuln.get("first_patched_version") or {}
+        version = patched.get("identifier", "")
+        if version:
+            print(f"  Fetched patched version from alert: {version}")
+        return version
+    except Exception as e:
+        print(f"  Could not fetch patched version: {e}")
+        return ""
+
+
+def detect_pip_lock_tool(
+    repo,
+) -> tuple[str, str] | None:
+    """Detect which pip lock tool the repo uses.
+
+    Checks for lock files in order of preference and returns
+    (tool_name, command_template) or None if no lock file found.
+    """
+    lock_files = {
+        "uv.lock": ("uv", "uv lock --upgrade-package {pkg}"),
+        "poetry.lock": ("poetry", "poetry update {pkg}"),
+        "Pipfile.lock": ("pipenv", "pipenv update {pkg}"),
+    }
+    for lock_file, (tool, cmd) in lock_files.items():
+        try:
+            repo.get_contents(lock_file)
+            print(f"  Found {lock_file} — using {tool}")
+            return (tool, cmd)
+        except Exception:
+            continue
+    return None
+
+
 def dismiss_alert(
     repo,
     alert_number: int,
@@ -396,6 +445,10 @@ def main() -> None:
     g = Github(auth=Auth.Token(token))
     repo = g.get_repo(repo_name)
 
+    # Fetch patched version from the alert API if not provided
+    if not patched_version and alert_number:
+        patched_version = fetch_patched_version(repo, alert_number)
+
     verdict = load_verdict()
     if verdict is None:
         print("No valid verdict. Defaulting to no-op.")
@@ -442,7 +495,22 @@ def main() -> None:
                     if pr_num > 0:
                         write_output("bump_pr_number", str(pr_num))
                 else:
-                    action = "noop"
+                    # No direct pin — try lock file upgrade
+                    if ecosystem == "pip" and patched_version:
+                        lock_tool = detect_pip_lock_tool(repo)
+                        if lock_tool:
+                            tool_name, _ = lock_tool
+                            print(f"  Lock tool detected: {tool_name}")
+                            action = "pip_lock_bump"
+                            write_output("pip_package", package_name)
+                            write_output("pip_version", patched_version)
+                            write_output("pip_lock_tool", tool_name)
+                            write_output("alert_number", str(alert_number))
+                        else:
+                            print("  No direct pin or lock tool. No action.")
+                            action = "noop"
+                    else:
+                        action = "noop"
         elif dismiss_enabled and severity.lower() not in DISMISS_BLOCKED_SEVERITIES:
             print("  Unaffected + dismiss enabled. Dismissing alert.")
             dismiss_alert(repo, alert_number, reason, dry_run)

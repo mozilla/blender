@@ -204,6 +204,51 @@ jobs:
           REPO: ${{ inputs.target_repo }}
           GH_TOKEN: ${{ steps.setup.outputs.token }}
 
+      # --- pip transitive dependency bump (lock file only) ---
+      - name: Run pip lock upgrade
+        id: pip-fix
+        if: steps.post-action.outputs.action == 'pip_lock_bump'
+        working-directory: target
+        run: |
+          echo "Upgrading ${PIP_PACKAGE} via ${PIP_LOCK_TOOL}..."
+          case "$PIP_LOCK_TOOL" in
+            uv)
+              pip install uv
+              uv lock --upgrade-package "$PIP_PACKAGE"
+              ;;
+            poetry)
+              pip install poetry
+              poetry update "$PIP_PACKAGE"
+              ;;
+            pipenv)
+              pip install pipenv
+              pipenv update "$PIP_PACKAGE"
+              ;;
+            *)
+              echo "Unknown lock tool: ${PIP_LOCK_TOOL}"
+              exit 1
+              ;;
+          esac
+          echo "upgraded=true" >> "$GITHUB_OUTPUT"
+        env:
+          PIP_PACKAGE: ${{ steps.post-action.outputs.pip_package }}
+          PIP_LOCK_TOOL: ${{ steps.post-action.outputs.pip_lock_tool }}
+
+      - name: Create pip bump PR
+        if: >-
+          steps.post-action.outputs.action == 'pip_lock_bump'
+          && steps.pip-fix.outputs.upgraded == 'true'
+          && inputs.dry_run != 'true'
+        working-directory: target
+        run: bash ${{ github.workspace }}/scripts/pip-lock-bump.sh
+        env:
+          PACKAGE: ${{ steps.post-action.outputs.pip_package }}
+          PATCHED_VERSION: ${{ steps.post-action.outputs.pip_version }}
+          ALERT_NUMBER: ${{ inputs.alert_number }}
+          REPO: ${{ inputs.target_repo }}
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+          PIP_LOCK_TOOL: ${{ steps.post-action.outputs.pip_lock_tool }}
+
       # --- Private fork remediation (only for affected alerts) ---
       - name: Clone private fork
         if: steps.post-action.outputs.action == 'private_fork'
