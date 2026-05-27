@@ -4,7 +4,7 @@
 Reads .blender-alert-verdict.json and takes the appropriate action:
 
   unaffected + existing PR       -> comment on the PR, let other workflows handle
-  unaffected + no PR             -> trigger Dependabot security update
+  unaffected + no PR             -> bump via lock tool or create PR
   unaffected + dismiss enabled   -> dismiss the alert (low/medium only)
   affected                       -> create advisory with private fork
 
@@ -359,40 +359,27 @@ def create_bump_pr(
         return None
 
 
-def request_dependabot_update(
+def detect_pip_lock_tool(
     repo,
-    alert_number: int,
-    package_name: str,
-    dry_run: bool,
-) -> str | None:
-    """Ask GitHub to create a Dependabot security update for this alert.
+) -> tuple[str, str] | None:
+    """Detect which pip lock tool the repo uses.
 
-    Ensures automated security fixes are enabled on the repo, then
-    returns 'dependabot_requested' on success or None on failure.
+    Checks for lock files in order of preference and returns
+    (tool_name, command_template) or None if no lock file found.
     """
-    fixes_url = f"/repos/{repo.full_name}/automated-security-fixes"
-
-    if dry_run:
-        print("  DRY_RUN: would enable automated security fixes")
-        return "dependabot_requested"
-
-    try:
-        repo._requester.requestJsonAndCheck("PUT", fixes_url)
-        print(f"  Enabled automated security fixes for {repo.full_name}")
-    except Exception as e:
-        error_str = str(e)
-        # 409 means already enabled — that's fine
-        if "409" in error_str or "already enabled" in error_str.lower():
-            print("  Automated security fixes already enabled.")
-        else:
-            print(f"  Could not enable automated security fixes: {e}")
-            return None
-
-    print(
-        f"  Dependabot will create a security update for {package_name}"
-        f" (alert #{alert_number}) if it can resolve the dependency."
-    )
-    return "dependabot_requested"
+    lock_files = {
+        "uv.lock": ("uv", "uv lock --upgrade-package {pkg}"),
+        "poetry.lock": ("poetry", "poetry update {pkg}"),
+        "Pipfile.lock": ("pipenv", "pipenv update {pkg}"),
+    }
+    for lock_file, (tool, cmd) in lock_files.items():
+        try:
+            repo.get_contents(lock_file)
+            print(f"  Found {lock_file} — using {tool}")
+            return (tool, cmd)
+        except Exception:
+            continue
+    return None
 
 
 def dismiss_alert(
@@ -488,12 +475,22 @@ def main() -> None:
                     if pr_num > 0:
                         write_output("bump_pr_number", str(pr_num))
                 else:
-                    # No direct pin found — ask Dependabot to handle it
-                    print("  Falling back to Dependabot security update.")
-                    result = request_dependabot_update(
-                        repo, alert_number, package_name, dry_run
-                    )
-                    action = result or "noop"
+                    # No direct pin — try lock file upgrade
+                    if ecosystem == "pip" and patched_version:
+                        lock_tool = detect_pip_lock_tool(repo)
+                        if lock_tool:
+                            tool_name, _ = lock_tool
+                            print(f"  Lock tool detected: {tool_name}")
+                            action = "pip_lock_bump"
+                            write_output("pip_package", package_name)
+                            write_output("pip_version", patched_version)
+                            write_output("pip_lock_tool", tool_name)
+                            write_output("alert_number", str(alert_number))
+                        else:
+                            print("  No direct pin or lock tool. No action.")
+                            action = "noop"
+                    else:
+                        action = "noop"
         elif dismiss_enabled and severity.lower() not in DISMISS_BLOCKED_SEVERITIES:
             print("  Unaffected + dismiss enabled. Dismissing alert.")
             dismiss_alert(repo, alert_number, reason, dry_run)

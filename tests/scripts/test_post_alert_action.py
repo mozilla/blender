@@ -16,12 +16,12 @@ from scripts.alert_report import (
 from scripts.post_alert_action import (
     create_advisory_and_fork,
     create_bump_pr,
+    detect_pip_lock_tool,
     dismiss_alert,
     find_dependency_pin,
     find_existing_bump_pr,
     load_verdict,
     main,
-    request_dependabot_update,
 )
 
 
@@ -383,48 +383,97 @@ class TestMainFlow:
         assert "action=noop" in outputs
 
 
-class TestRequestDependabotUpdate:
-    def test_dry_run_skips(self):
+class TestDetectPipLockTool:
+    def test_uv_lock_detected(self):
         repo = MagicMock()
-        result = request_dependabot_update(repo, 42, "idna", dry_run=True)
-        assert result == "dependabot_requested"
-        repo._requester.requestJsonAndCheck.assert_not_called()
+        repo.get_contents.return_value = MagicMock()
+        result = detect_pip_lock_tool(repo)
+        assert result is not None
+        tool, cmd = result
+        assert tool == "uv"
+        assert "uv lock" in cmd
+        repo.get_contents.assert_called_once_with("uv.lock")
 
-    def test_enables_automated_fixes(self):
+    def test_poetry_lock_detected(self):
         repo = MagicMock()
-        repo.full_name = "owner/repo"
-        result = request_dependabot_update(repo, 42, "idna", dry_run=False)
-        assert result == "dependabot_requested"
-        repo._requester.requestJsonAndCheck.assert_called_once_with(
-            "PUT", "/repos/owner/repo/automated-security-fixes"
-        )
+        repo.get_contents.side_effect = [Exception("404"), MagicMock()]
+        result = detect_pip_lock_tool(repo)
+        assert result is not None
+        assert result[0] == "poetry"
 
-    def test_already_enabled_succeeds(self):
+    def test_pipfile_lock_detected(self):
         repo = MagicMock()
-        repo.full_name = "owner/repo"
-        repo._requester.requestJsonAndCheck.side_effect = Exception("409 Conflict")
-        result = request_dependabot_update(repo, 42, "idna", dry_run=False)
-        assert result == "dependabot_requested"
+        repo.get_contents.side_effect = [
+            Exception("404"),
+            Exception("404"),
+            MagicMock(),
+        ]
+        result = detect_pip_lock_tool(repo)
+        assert result is not None
+        assert result[0] == "pipenv"
 
-    def test_api_failure_returns_none(self):
+    def test_no_lock_file(self):
         repo = MagicMock()
-        repo.full_name = "owner/repo"
-        repo._requester.requestJsonAndCheck.side_effect = Exception("500 Server Error")
-        result = request_dependabot_update(repo, 42, "idna", dry_run=False)
-        assert result is None
+        repo.get_contents.side_effect = Exception("404")
+        assert detect_pip_lock_tool(repo) is None
 
 
-class TestFallbackToDependabot:
-    """Integration: pip transitive dep with no pin falls back to Dependabot."""
+class TestPipLockBumpFlow:
+    """Integration: pip transitive dep with no pin triggers lock bump."""
 
-    def test_pip_no_pin_requests_dependabot(
+    def test_pip_no_pin_with_uv_lock(
         self, verdict_file, tmp_path, monkeypatch
     ):
         verdict_file(SAMPLE_VERDICT)
         mock_repo = MagicMock()
         mock_repo.full_name = "owner/repo"
         mock_repo.get_pulls.return_value = []
-        # get_contents raises for every file — no pin found
+
+        def get_contents_side_effect(path):
+            if path == "uv.lock":
+                return MagicMock()
+            raise Exception("404 Not Found")
+
+        mock_repo.get_contents.side_effect = get_contents_side_effect
+
+        output_file = str(tmp_path / "github_output")
+        open(output_file, "w").close()
+
+        summary_file = str(tmp_path / "step-summary.md")
+        for k, v in {
+            "GH_TOKEN": "fake",
+            "REPO": "owner/repo",
+            "ALERT_NUMBER": "2",
+            "ALERT_PACKAGE": "idna",
+            "ALERT_ECOSYSTEM": "pip",
+            "ALERT_SEVERITY": "high",
+            "ALERT_PATCHED_VERSION": "3.15",
+            "DRY_RUN": "false",
+            "DISMISS_UNAFFECTED": "false",
+            "GITHUB_STEP_SUMMARY": summary_file,
+            "GITHUB_OUTPUT": output_file,
+        }.items():
+            monkeypatch.setenv(k, v)
+
+        with patch("scripts.post_alert_action.Github") as mock_gh:
+            mock_gh.return_value.get_repo.return_value = mock_repo
+            main()
+
+        outputs = open(output_file).read()
+        assert "action=pip_lock_bump" in outputs
+        assert "pip_package=idna" in outputs
+        assert "pip_version=3.15" in outputs
+        assert "pip_lock_tool=uv" in outputs
+        content = open(summary_file).read()
+        assert "pip lock bump" in content.lower()
+
+    def test_pip_no_pin_no_lock_noop(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        verdict_file(SAMPLE_VERDICT)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
         mock_repo.get_contents.side_effect = Exception("404 Not Found")
 
         output_file = str(tmp_path / "github_output")
@@ -451,6 +500,4 @@ class TestFallbackToDependabot:
             main()
 
         outputs = open(output_file).read()
-        assert "action=dependabot_requested" in outputs
-        content = open(summary_file).read()
-        assert "Dependabot security update requested" in content
+        assert "action=noop" in outputs
