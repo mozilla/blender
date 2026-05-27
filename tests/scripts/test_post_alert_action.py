@@ -18,6 +18,7 @@ from scripts.post_alert_action import (
     create_bump_pr,
     detect_pip_lock_tool,
     dismiss_alert,
+    fetch_patched_version,
     find_dependency_pin,
     find_existing_bump_pr,
     load_verdict,
@@ -174,6 +175,7 @@ class TestMainFlow:
             "ALERT_PACKAGE": "lodash",
             "ALERT_ECOSYSTEM": "npm",
             "ALERT_SEVERITY": "low",
+            "ALERT_PATCHED_VERSION": "1.0.0",
             "DISMISS_UNAFFECTED": "false",
             "DRY_RUN": "false",
             "GITHUB_STEP_SUMMARY": summary_file,
@@ -381,6 +383,36 @@ class TestMainFlow:
 
         outputs = open(output_file).read()
         assert "action=noop" in outputs
+
+
+class TestFetchPatchedVersion:
+    def test_fetches_from_api(self):
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        repo._requester.requestJsonAndCheck.return_value = (
+            None,
+            {
+                "security_vulnerability": {
+                    "first_patched_version": {"identifier": "3.15"},
+                }
+            },
+        )
+        assert fetch_patched_version(repo, 2) == "3.15"
+
+    def test_returns_empty_on_api_error(self):
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        repo._requester.requestJsonAndCheck.side_effect = Exception("403")
+        assert fetch_patched_version(repo, 2) == ""
+
+    def test_returns_empty_when_no_patched_version(self):
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        repo._requester.requestJsonAndCheck.return_value = (
+            None,
+            {"security_vulnerability": {}},
+        )
+        assert fetch_patched_version(repo, 2) == ""
 
 
 class TestDetectPipLockTool:

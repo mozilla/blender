@@ -359,6 +359,22 @@ def create_bump_pr(
         return None
 
 
+def fetch_patched_version(repo, alert_number: int) -> str:
+    """Fetch the patched version from the Dependabot alert API."""
+    url = f"/repos/{repo.full_name}/dependabot/alerts/{alert_number}"
+    try:
+        _, data = repo._requester.requestJsonAndCheck("GET", url)
+        vuln = data.get("security_vulnerability", {})
+        patched = vuln.get("first_patched_version") or {}
+        version = patched.get("identifier", "")
+        if version:
+            print(f"  Fetched patched version from alert: {version}")
+        return version
+    except Exception as e:
+        print(f"  Could not fetch patched version: {e}")
+        return ""
+
+
 def detect_pip_lock_tool(
     repo,
 ) -> tuple[str, str] | None:
@@ -428,6 +444,10 @@ def main() -> None:
 
     g = Github(auth=Auth.Token(token))
     repo = g.get_repo(repo_name)
+
+    # Fetch patched version from the alert API if not provided
+    if not patched_version and alert_number:
+        patched_version = fetch_patched_version(repo, alert_number)
 
     verdict = load_verdict()
     if verdict is None:
