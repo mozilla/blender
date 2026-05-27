@@ -604,27 +604,28 @@ def test_extract_metadata_propagates_old_version_to_single_dep():
 # --- gate_compatibility fallback after force-push ---
 
 
-def test_gate_compatibility_builds_badge_url_when_body_has_no_badge():
-    """After a force-push strips the badge URL, the fallback path works.
-
-    gate_compatibility should build a badge URL from dep metadata
-    (including old_version propagated from meta) and fetch the SVG.
-    """
+def _ruff_bump_meta(old_version="0.15.12"):
+    """Build DependencyUpdate + PRMetadata for a ruff patch bump."""
     dep = DependencyUpdate(
         name="ruff",
         version="0.15.13",
         dependency_type="direct:development",
         update_type="version-update:semver-patch",
-        old_version="0.15.12",
+        old_version=old_version,
     )
     meta = PRMetadata(
         dependencies=[dep],
         ecosystem="pip",
         raw_ecosystem="pip",
-        old_version="0.15.12",
+        old_version=old_version,
         new_version="0.15.13",
     )
+    return dep, meta
 
+
+def test_gate_compatibility_builds_badge_url_when_body_has_no_badge():
+    """After a force-push strips the badge URL, the fallback path works."""
+    _, meta = _ruff_bump_meta()
     pr = MagicMock()
     pr.body = "Some PR body with no badge URL"
 
@@ -639,21 +640,7 @@ def test_gate_compatibility_builds_badge_url_when_body_has_no_badge():
 
 def test_gate_compatibility_raises_when_dep_has_no_old_version():
     """Without old_version on deps and no badge in body, gate raises RetryPR."""
-    dep = DependencyUpdate(
-        name="ruff",
-        version="0.15.13",
-        dependency_type="direct:development",
-        update_type="version-update:semver-patch",
-        old_version="",  # missing
-    )
-    meta = PRMetadata(
-        dependencies=[dep],
-        ecosystem="pip",
-        raw_ecosystem="pip",
-        old_version="",
-        new_version="0.15.13",
-    )
-
+    _, meta = _ruff_bump_meta(old_version="")
     pr = MagicMock()
     pr.body = "No badge here"
 
