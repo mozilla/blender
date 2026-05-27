@@ -15,10 +15,31 @@ import sys
 VERDICT_FILE = ".blender-alert-verdict.json"
 
 
-def extract(log: str) -> dict | None:
-    """Try to extract verdict JSON from Claude's output text."""
+def _extract_text_from_json_log(log: str) -> str:
+    """Extract assistant text from --output-format json session logs."""
+    try:
+        events = json.loads(log)
+    except (json.JSONDecodeError, TypeError):
+        return ""
+
+    if not isinstance(events, list):
+        return ""
+
+    parts = []
+    for event in events:
+        msg = event.get("message") if isinstance(event, dict) else None
+        if not msg or msg.get("role") != "assistant":
+            continue
+        for block in msg.get("content", []):
+            if isinstance(block, dict) and block.get("type") == "text":
+                parts.append(block["text"])
+    return "\n".join(parts)
+
+
+def _search_text(text: str) -> dict | None:
+    """Search plain text for a VERDICT_JSON block or bare verdict object."""
     # Primary: look for ```VERDICT_JSON ... ``` fenced block
-    m = re.search(r"```VERDICT_JSON\s*\n(.*?)\n\s*```", log, re.DOTALL)
+    m = re.search(r"```VERDICT_JSON\s*\n(.*?)\n\s*```", text, re.DOTALL)
     if m:
         try:
             obj = json.loads(m.group(1))
@@ -28,7 +49,7 @@ def extract(log: str) -> dict | None:
             print(f"VERDICT_JSON block found but invalid JSON: {e}", file=sys.stderr)
 
     # Fallback: any JSON object containing "affected" key
-    for m2 in re.finditer(r"\{[^{}]*\"affected\"[^{}]*\}", log, re.DOTALL):
+    for m2 in re.finditer(r"\{[^{}]*\"affected\"[^{}]*\}", text, re.DOTALL):
         try:
             obj = json.loads(m2.group())
             if "affected" in obj and "reason" in obj:
@@ -36,6 +57,25 @@ def extract(log: str) -> dict | None:
                 return obj
         except json.JSONDecodeError:
             continue
+
+    return None
+
+
+def extract(log: str) -> dict | None:
+    """Try to extract verdict JSON from Claude's output text.
+
+    Handles both plain-text output (-p) and JSON session logs
+    (--output-format json) produced when CLAUDE_VERBOSE=true.
+    """
+    # Try plain text first (non-verbose mode)
+    result = _search_text(log)
+    if result:
+        return result
+
+    # Try JSON session log (verbose mode)
+    text = _extract_text_from_json_log(log)
+    if text:
+        return _search_text(text)
 
     return None
 
