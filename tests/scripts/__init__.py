@@ -25,3 +25,17 @@ def make_commit(message, date=None):
     if date is not None:
         c.commit.committer.date = date
     return c
+
+
+def make_branch(name):
+    """Build a mock branch object with .name."""
+    b = MagicMock()
+    b.name = name
+    return b
+
+
+def make_tag(name):
+    """Build a mock git tag object with .name."""
+    t = MagicMock()
+    t.name = name
+    return t

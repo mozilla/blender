@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, PropertyMock, patch
 
-from tests.scripts import make_comment, make_commit, make_review
+from tests.scripts import make_branch, make_comment, make_commit, make_review, make_tag
 
 from scripts.sweep import (
     ALLOWED_OWNERS,
@@ -324,13 +324,6 @@ def _make_alert(number: int, package: str, severity: str = "high"):
     }
 
 
-def _make_branch(name: str):
-    """Build a mock branch object."""
-    b = MagicMock()
-    b.name = name
-    return b
-
-
 class TestAlertDiscovery:
     def test_alert_discovery_emits_investigate_action(self):
         """Open alert with no existing branch -> investigate action."""
@@ -357,7 +350,7 @@ class TestAlertDiscovery:
             [_make_alert(42, "lodash")],
         )
         repo.get_branches.return_value = [
-            _make_branch("blender/security/42-lodash"),
+            make_branch("blender/security/42-lodash"),
         ]
 
         actions = check_alerts(repo)
@@ -382,7 +375,6 @@ class TestAlertDiscovery:
 
         actions = check_alerts(repo)
         assert actions == []
-
 
     def test_already_investigated_alert_skipped(self):
         """Alert with an investigated tag -> skip."""
@@ -417,20 +409,13 @@ class TestAlertDiscovery:
 # --- fetch_investigated_alerts ---
 
 
-def _make_tag(name: str):
-    """Build a mock git tag object."""
-    tag = MagicMock()
-    tag.name = name
-    return tag
-
-
 class TestFetchInvestigatedAlerts:
     def test_parses_investigated_tags(self):
         """Investigated tags are parsed into (repo, alert_number) pairs."""
         tags = [
-            _make_tag("investigated/mozilla/blurts-server/138"),
-            _make_tag("investigated/mozilla/fx-private-relay/161"),
-            _make_tag("v1.0.0"),  # unrelated tag, ignored
+            make_tag("investigated/mozilla/blurts-server/138"),
+            make_tag("investigated/mozilla/fx-private-relay/161"),
+            make_tag("v1.0.0"),  # unrelated tag, ignored
         ]
 
         integration = MagicMock()
