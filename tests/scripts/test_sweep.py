@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, PropertyMock, patch
 
+import pytest
+
 from tests.scripts import make_branch, make_comment, make_commit, make_review, make_tag
 
 from scripts.sweep import (
@@ -376,34 +378,27 @@ class TestAlertDiscovery:
         actions = check_alerts(repo)
         assert actions == []
 
-    def test_already_investigated_alert_skipped(self):
-        """Alert with an investigated tag -> skip."""
+    @pytest.mark.parametrize(
+        "alert_number, package, expected_count",
+        [
+            (138, "minimatch", 0),  # matches investigated set -> skip
+            (999, "new-vuln", 1),  # not in investigated set -> emit
+        ],
+        ids=["investigated-skipped", "uninvestigated-emitted"],
+    )
+    def test_investigated_alert_dedup(self, alert_number, package, expected_count):
+        """Alerts in the investigated set are skipped; others are emitted."""
         repo = MagicMock()
         repo.full_name = "mozilla/blurts-server"
         repo._requester.requestJsonAndCheck.return_value = (
             {},
-            [_make_alert(138, "minimatch")],
+            [_make_alert(alert_number, package)],
         )
         repo.get_branches.return_value = []
 
         investigated = {("mozilla/blurts-server", 138)}
         actions = check_alerts(repo, investigated=investigated)
-        assert actions == []
-
-    def test_uninvestigated_alert_emitted(self):
-        """Alert not in the investigated set -> emit action."""
-        repo = MagicMock()
-        repo.full_name = "mozilla/blurts-server"
-        repo._requester.requestJsonAndCheck.return_value = (
-            {},
-            [_make_alert(999, "new-vuln")],
-        )
-        repo.get_branches.return_value = []
-
-        investigated = {("mozilla/blurts-server", 138)}
-        actions = check_alerts(repo, investigated=investigated)
-        assert len(actions) == 1
-        assert actions[0].alert_number == 999
+        assert len(actions) == expected_count
 
 
 # --- fetch_investigated_alerts ---
