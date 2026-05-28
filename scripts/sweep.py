@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from dataclasses import dataclass
 
@@ -43,6 +44,11 @@ BOT_LOGIN = "mozilla-blender[bot]"
 # Only process repos owned by these GitHub orgs/users.
 # Any installation from an owner not on this list is ignored.
 ALLOWED_OWNERS = frozenset({"mozilla", "mozilla-services", "mozilla-extensions"})
+
+# Used to skip alerts that already have an investigated tag.
+BLENDER_REPO = "mozilla/blender"
+INVESTIGATED_TAG_PREFIX = "investigated/"
+_INVESTIGATED_TAG_RE = re.compile(r"^investigated/(.+)/(\d+)$")
 
 
 @dataclass
@@ -125,7 +131,10 @@ def discover_repos(
     return results
 
 
-def process_repo(repo: Repository) -> list[Action]:
+def process_repo(
+    repo: Repository,
+    investigated: set[tuple[str, int]] | None = None,
+) -> list[Action]:
     """Check a single repo for actionable Dependabot PRs."""
     actions: list[Action] = []
 
@@ -221,7 +230,7 @@ def process_repo(repo: Repository) -> list[Action]:
 
     # Check Dependabot security alerts
     try:
-        alert_actions = check_alerts(repo)
+        alert_actions = check_alerts(repo, investigated=investigated)
         actions.extend(alert_actions)
     except Exception as e:
         print(f"    Error checking alerts: {e}")
@@ -229,7 +238,36 @@ def process_repo(repo: Repository) -> list[Action]:
     return actions
 
 
-def check_alerts(repo: Repository) -> list[Action]:
+def fetch_investigated_alerts(
+    integration: GithubIntegration,
+) -> set[tuple[str, int]]:
+    """Return (repo, alert_number) pairs already investigated.
+
+    Reads lightweight tags on the blender repo. Each successful
+    investigation creates a tag like ``investigated/{repo}/{number}``.
+    One API call fetches all tags.
+    """
+    investigated: set[tuple[str, int]] = set()
+
+    try:
+        install = integration.get_repo_installation("mozilla", "blender")
+        gh = integration.get_github_for_installation(install.id)
+        repo = gh.get_repo(BLENDER_REPO)
+        for tag in repo.get_tags():
+            m = _INVESTIGATED_TAG_RE.match(tag.name)
+            if m:
+                investigated.add((m.group(1), int(m.group(2))))
+    except Exception as e:
+        print(f"  Warning: could not fetch investigated tags: {e}")
+
+    print(f"  Found {len(investigated)} previously investigated alert(s)")
+    return investigated
+
+
+def check_alerts(
+    repo: Repository,
+    investigated: set[tuple[str, int]] | None = None,
+) -> list[Action]:
     """Check for open Dependabot security alerts and emit investigate actions.
 
     Uses PyGithub's raw requester because there is no built-in method
@@ -278,6 +316,11 @@ def check_alerts(repo: Repository) -> list[Action]:
             print(f"    Alert #{alert_number}: branch exists, skipping")
             continue
 
+        # Skip if a successful investigate run already completed for this alert
+        if investigated and (repo.full_name, alert_number) in investigated:
+            print(f"    Alert #{alert_number}: already investigated, skipping")
+            continue
+
         print(f"    Alert #{alert_number}: {package_name} ({severity})")
         actions.append(
             Action(
@@ -303,6 +346,9 @@ def sweep(app_id: str, private_key: str) -> list[Action]:
 
     actions: list[Action] = []
 
+    print("Checking previous investigate runs...")
+    investigated = fetch_investigated_alerts(integration)
+
     print("Discovering installations...")
     install_repos = discover_repos(integration)
 
@@ -316,7 +362,7 @@ def sweep(app_id: str, private_key: str) -> list[Action]:
                 continue
             print(f"\n  Checking {repo.full_name}...")
             try:
-                actions.extend(process_repo(repo))
+                actions.extend(process_repo(repo, investigated=investigated))
             except Exception as e:
                 print(f"    Error processing {repo.full_name}: {e}")
                 continue

@@ -7,7 +7,13 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 from tests.scripts import make_comment, make_commit, make_review
 
-from scripts.sweep import ALLOWED_OWNERS, check_alerts, process_repo, sweep
+from scripts.sweep import (
+    ALLOWED_OWNERS,
+    check_alerts,
+    fetch_investigated_alerts,
+    process_repo,
+    sweep,
+)
 
 # --- Shared timestamps ---
 
@@ -378,6 +384,76 @@ class TestAlertDiscovery:
         assert actions == []
 
 
+    def test_already_investigated_alert_skipped(self):
+        """Alert with an investigated tag -> skip."""
+        repo = MagicMock()
+        repo.full_name = "mozilla/blurts-server"
+        repo._requester.requestJsonAndCheck.return_value = (
+            {},
+            [_make_alert(138, "minimatch")],
+        )
+        repo.get_branches.return_value = []
+
+        investigated = {("mozilla/blurts-server", 138)}
+        actions = check_alerts(repo, investigated=investigated)
+        assert actions == []
+
+    def test_uninvestigated_alert_emitted(self):
+        """Alert not in the investigated set -> emit action."""
+        repo = MagicMock()
+        repo.full_name = "mozilla/blurts-server"
+        repo._requester.requestJsonAndCheck.return_value = (
+            {},
+            [_make_alert(999, "new-vuln")],
+        )
+        repo.get_branches.return_value = []
+
+        investigated = {("mozilla/blurts-server", 138)}
+        actions = check_alerts(repo, investigated=investigated)
+        assert len(actions) == 1
+        assert actions[0].alert_number == 999
+
+
+# --- fetch_investigated_alerts ---
+
+
+def _make_tag(name: str):
+    """Build a mock git tag object."""
+    tag = MagicMock()
+    tag.name = name
+    return tag
+
+
+class TestFetchInvestigatedAlerts:
+    def test_parses_investigated_tags(self):
+        """Investigated tags are parsed into (repo, alert_number) pairs."""
+        tags = [
+            _make_tag("investigated/mozilla/blurts-server/138"),
+            _make_tag("investigated/mozilla/fx-private-relay/161"),
+            _make_tag("v1.0.0"),  # unrelated tag, ignored
+        ]
+
+        integration = MagicMock()
+        install = MagicMock()
+        integration.get_repo_installation.return_value = install
+        gh = MagicMock()
+        integration.get_github_for_installation.return_value = gh
+        gh.get_repo.return_value.get_tags.return_value = tags
+
+        result = fetch_investigated_alerts(integration)
+        assert ("mozilla/blurts-server", 138) in result
+        assert ("mozilla/fx-private-relay", 161) in result
+        assert len(result) == 2
+
+    def test_api_failure_returns_empty_set(self):
+        """API error -> empty set, no crash."""
+        integration = MagicMock()
+        integration.get_repo_installation.side_effect = RuntimeError("oops")
+
+        result = fetch_investigated_alerts(integration)
+        assert result == set()
+
+
 # --- Code-owner approval resets fix guards ---
 
 
@@ -448,6 +524,7 @@ class TestOwnerAllowlist:
         with (
             patch("scripts.sweep.GithubIntegration", return_value=integration),
             patch("scripts.sweep.Auth.AppAuth"),
+            patch("scripts.sweep.fetch_investigated_alerts", return_value=set()),
             patch("scripts.sweep.process_repo") as mock_process,
         ):
             actions = sweep("12345", "fake-key")

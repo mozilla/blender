@@ -121,14 +121,14 @@ jobs:
   remediate:
     needs: investigate
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       action: ${{ steps.post-action.outputs.action }}
       fork_repo: ${{ steps.post-action.outputs.fork_repo }}
       advisory_ghsa_id: ${{ steps.post-action.outputs.advisory_ghsa_id }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
-        with:
-          persist-credentials: false
 
       - name: Setup target repo
         id: setup
@@ -325,3 +325,14 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.setup.outputs.token }}
           REPO: ${{ steps.post-action.outputs.fork_repo }}
+
+      # Mark this alert as investigated so the sweep does not re-trigger it.
+      # Uses a lightweight tag on the blender repo.
+      - name: Tag alert as investigated
+        if: inputs.dry_run != 'true'
+        run: |
+          git tag "investigated/${TARGET_REPO}/${ALERT_NUMBER}"
+          git push origin "investigated/${TARGET_REPO}/${ALERT_NUMBER}"
+        env:
+          TARGET_REPO: ${{ inputs.target_repo }}
+          ALERT_NUMBER: ${{ inputs.alert_number }}
