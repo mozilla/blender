@@ -128,9 +128,9 @@ jobs:
       fork_repo: ${{ steps.post-action.outputs.fork_repo }}
       advisory_ghsa_id: ${{ steps.post-action.outputs.advisory_ghsa_id }}
     steps:
-      # persist-credentials left enabled so the "Tag alert as investigated"
-      # step can push a lightweight tag to the blender repo.
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          persist-credentials: false
 
       - name: Setup target repo
         id: setup
@@ -333,8 +333,10 @@ jobs:
       - name: Tag alert as investigated
         if: inputs.dry_run != 'true'
         run: |
-          git tag "investigated/${TARGET_REPO}/${ALERT_NUMBER}"
-          git push origin "investigated/${TARGET_REPO}/${ALERT_NUMBER}"
+          TAG_NAME="investigated/${TARGET_REPO}/${ALERT_NUMBER}"
+          git tag "$TAG_NAME"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG_NAME"
         env:
           TARGET_REPO: ${{ inputs.target_repo }}
           ALERT_NUMBER: ${{ inputs.alert_number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
