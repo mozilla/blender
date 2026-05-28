@@ -5,9 +5,17 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, PropertyMock, patch
 
-from tests.scripts import make_comment, make_commit, make_review
+import pytest
 
-from scripts.sweep import ALLOWED_OWNERS, check_alerts, process_repo, sweep
+from tests.scripts import make_branch, make_comment, make_commit, make_review, make_tag
+
+from scripts.sweep import (
+    ALLOWED_OWNERS,
+    check_alerts,
+    fetch_investigated_alerts,
+    process_repo,
+    sweep,
+)
 
 # --- Shared timestamps ---
 
@@ -318,13 +326,6 @@ def _make_alert(number: int, package: str, severity: str = "high"):
     }
 
 
-def _make_branch(name: str):
-    """Build a mock branch object."""
-    b = MagicMock()
-    b.name = name
-    return b
-
-
 class TestAlertDiscovery:
     def test_alert_discovery_emits_investigate_action(self):
         """Open alert with no existing branch -> investigate action."""
@@ -351,7 +352,7 @@ class TestAlertDiscovery:
             [_make_alert(42, "lodash")],
         )
         repo.get_branches.return_value = [
-            _make_branch("blender/security/42-lodash"),
+            make_branch("blender/security/42-lodash"),
         ]
 
         actions = check_alerts(repo)
@@ -376,6 +377,61 @@ class TestAlertDiscovery:
 
         actions = check_alerts(repo)
         assert actions == []
+
+    @pytest.mark.parametrize(
+        "alert_number, package, expected_count",
+        [
+            (138, "minimatch", 0),  # matches investigated set -> skip
+            (999, "new-vuln", 1),  # not in investigated set -> emit
+        ],
+        ids=["investigated-skipped", "uninvestigated-emitted"],
+    )
+    def test_investigated_alert_dedup(self, alert_number, package, expected_count):
+        """Alerts in the investigated set are skipped; others are emitted."""
+        repo = MagicMock()
+        repo.full_name = "mozilla/blurts-server"
+        repo._requester.requestJsonAndCheck.return_value = (
+            {},
+            [_make_alert(alert_number, package)],
+        )
+        repo.get_branches.return_value = []
+
+        investigated = {("mozilla/blurts-server", 138)}
+        actions = check_alerts(repo, investigated=investigated)
+        assert len(actions) == expected_count
+
+
+# --- fetch_investigated_alerts ---
+
+
+class TestFetchInvestigatedAlerts:
+    def test_parses_investigated_tags(self):
+        """Investigated tags are parsed into (repo, alert_number) pairs."""
+        tags = [
+            make_tag("investigated/mozilla/blurts-server/138"),
+            make_tag("investigated/mozilla/fx-private-relay/161"),
+            make_tag("v1.0.0"),  # unrelated tag, ignored
+        ]
+
+        integration = MagicMock()
+        install = MagicMock()
+        integration.get_repo_installation.return_value = install
+        gh = MagicMock()
+        integration.get_github_for_installation.return_value = gh
+        gh.get_repo.return_value.get_tags.return_value = tags
+
+        result = fetch_investigated_alerts(integration)
+        assert ("mozilla/blurts-server", 138) in result
+        assert ("mozilla/fx-private-relay", 161) in result
+        assert len(result) == 2
+
+    def test_api_failure_returns_empty_set(self):
+        """API error -> empty set, no crash."""
+        integration = MagicMock()
+        integration.get_repo_installation.side_effect = RuntimeError("oops")
+
+        result = fetch_investigated_alerts(integration)
+        assert result == set()
 
 
 # --- Code-owner approval resets fix guards ---
@@ -448,6 +504,7 @@ class TestOwnerAllowlist:
         with (
             patch("scripts.sweep.GithubIntegration", return_value=integration),
             patch("scripts.sweep.Auth.AppAuth"),
+            patch("scripts.sweep.fetch_investigated_alerts", return_value=set()),
             patch("scripts.sweep.process_repo") as mock_process,
         ):
             actions = sweep("12345", "fake-key")
