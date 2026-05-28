@@ -7,13 +7,12 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 from tests.scripts import make_comment, make_commit, make_review
 
-from scripts.sweep import check_alerts, process_repo
+from scripts.sweep import ALLOWED_OWNERS, check_alerts, process_repo, sweep
 
 # --- Shared timestamps ---
 
 T_EARLY = datetime(2025, 1, 1, tzinfo=timezone.utc)
 T_LATE = datetime(2025, 1, 2, tzinfo=timezone.utc)
-
 
 
 def _make_pr(
@@ -423,4 +422,35 @@ class TestCodeownerApprovalResetsFix:
             reviews=[make_review("some-app[bot]")],
         )
         actions = _run_sweep([(pr, status)])
+        assert actions == []
+
+
+# --- Owner allowlist ---
+
+
+class TestOwnerAllowlist:
+    def test_allowed_owner_is_processed(self):
+        """Repo under an allowed owner -> process it."""
+        assert "mozilla" in ALLOWED_OWNERS
+
+    def test_disallowed_owner_is_skipped(self):
+        """Repo under an unknown owner -> skipped, no process_repo call."""
+        repo = MagicMock()
+        repo.full_name = "abenj1062-hash/arnika"
+
+        installation = MagicMock()
+        installation.id = 999
+        installation.get_repos.return_value = [repo]
+
+        integration = MagicMock()
+        integration.get_installations.return_value = [installation]
+
+        with (
+            patch("scripts.sweep.GithubIntegration", return_value=integration),
+            patch("scripts.sweep.Auth.AppAuth"),
+            patch("scripts.sweep.process_repo") as mock_process,
+        ):
+            actions = sweep("12345", "fake-key")
+
+        mock_process.assert_not_called()
         assert actions == []
