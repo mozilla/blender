@@ -40,6 +40,10 @@ except ImportError:
 
 BOT_LOGIN = "mozilla-blender[bot]"
 
+# Only process repos owned by these GitHub orgs/users.
+# Any installation from an owner not on this list is ignored.
+ALLOWED_OWNERS = frozenset({"mozilla", "mozilla-services", "mozilla-extensions"})
+
 
 @dataclass
 class Action:
@@ -306,6 +310,10 @@ def sweep(app_id: str, private_key: str) -> list[Action]:
         print(f"\nInstallation {install_id}: {len(repos)} repo(s)")
 
         for repo in repos:
+            owner = repo.full_name.split("/")[0]
+            if owner not in ALLOWED_OWNERS:
+                print(f"\n  Skipping {repo.full_name} (owner not allowed)")
+                continue
             print(f"\n  Checking {repo.full_name}...")
             try:
                 actions.extend(process_repo(repo))
