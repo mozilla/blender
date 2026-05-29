@@ -48,7 +48,22 @@ CLAUDE_LOG=$(mktemp /tmp/blender-claude-XXXXXX.log)
 trap 'rm -f "$CLAUDE_LOG"' EXIT
 
 # --- Mode-specific settings ---
-if [ "$BLENDER_MODE" = "investigate" ]; then
+if [ "$BLENDER_MODE" = "plan" ]; then
+  ALLOWED_TOOLS="Read,Bash"
+  MAX_TURNS="${MAX_CLAUDE_TURNS:-20}"
+  MAX_BUDGET="${MAX_BUDGET_USD:-1.50}"
+  SYSTEM_PROMPT="You are BLEnder, a software engineering agent for ${REPO_DISPLAY_NAME}. Before starting, read these files if they exist: .blender/agents.md, ${BLENDER_DIR}/prompts/instructions.md, CLAUDE.md, AGENTS.md. They contain repo context and operational rules. Read the issue and codebase. Produce a detailed implementation plan. Output your plan as a PLAN_MD fenced block in your final response. Do not create or edit any files. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
+elif [ "$BLENDER_MODE" = "implement" ]; then
+  ALLOWED_TOOLS="Read,Edit,Bash"
+  MAX_TURNS="${MAX_CLAUDE_TURNS:-40}"
+  MAX_BUDGET="${MAX_BUDGET_USD:-4.00}"
+  SYSTEM_PROMPT="You are BLEnder, a software engineering agent for ${REPO_DISPLAY_NAME}. Before starting, read these files if they exist: .blender/agents.md, ${BLENDER_DIR}/prompts/instructions.md, CLAUDE.md, AGENTS.md. They contain repo context and operational rules. Implement the plan described in the prompt. Edit files, run tests, and write your commit message to .blender-commit-msg. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
+elif [ "$BLENDER_MODE" = "self-review" ]; then
+  ALLOWED_TOOLS="Read,Bash"
+  MAX_TURNS="${MAX_CLAUDE_TURNS:-15}"
+  MAX_BUDGET="${MAX_BUDGET_USD:-1.00}"
+  SYSTEM_PROMPT="You are BLEnder, a software engineering agent for ${REPO_DISPLAY_NAME}. Before starting, read these files if they exist: .blender/agents.md, ${BLENDER_DIR}/prompts/instructions.md, CLAUDE.md, AGENTS.md. They contain repo context and operational rules. Compare the final merged diff against the original plan. Summarize what changed, what was added, and what was dropped. Output your summary as a SELF_REVIEW_MD fenced block in your final response. Do not create or edit any files. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
+elif [ "$BLENDER_MODE" = "investigate" ]; then
   ALLOWED_TOOLS="Read,Bash"
   MAX_TURNS=25
   MAX_BUDGET="1.50"
@@ -106,8 +121,8 @@ else
 fi
 if [ "$claude_exit" -ne 0 ]; then
   echo "Claude exited with code ${claude_exit} (likely hit max-turns or budget)."
-  # In major/investigate mode, a non-zero exit is not fatal — post steps handle missing verdict
-  if [ "$BLENDER_MODE" = "major" ] || [ "$BLENDER_MODE" = "investigate" ]; then
+  # In read-only modes, a non-zero exit is not fatal — post steps handle missing output
+  if [ "$BLENDER_MODE" = "major" ] || [ "$BLENDER_MODE" = "investigate" ] || [ "$BLENDER_MODE" = "plan" ] || [ "$BLENDER_MODE" = "self-review" ]; then
     echo "Continuing to post step (verdict may be missing)."
     exit 0
   fi
@@ -138,6 +153,20 @@ for secret_label in "ANTHROPIC_API_KEY" "PROMPT_NONCE"; do
     if grep -qF "$secret_value" .blender-alert-verdict.json; then
       echo "ABORT: ${secret_label} leaked into alert verdict file."
       rm -f .blender-alert-verdict.json
+      exit 1
+    fi
+  fi
+  if [ "$BLENDER_MODE" = "plan" ] && [ -f .blender-plan.md ]; then
+    if grep -qF "$secret_value" .blender-plan.md; then
+      echo "ABORT: ${secret_label} leaked into plan file."
+      rm -f .blender-plan.md
+      exit 1
+    fi
+  fi
+  if [ "$BLENDER_MODE" = "self-review" ] && [ -f .blender-self-review.md ]; then
+    if grep -qF "$secret_value" .blender-self-review.md; then
+      echo "ABORT: ${secret_label} leaked into self-review file."
+      rm -f .blender-self-review.md
       exit 1
     fi
   fi
@@ -178,6 +207,48 @@ if [ "$BLENDER_MODE" = "major" ]; then
     echo "Verdict file validated."
   else
     echo "No verdict file produced. Post-review will handle this."
+  fi
+
+  exit 0
+fi
+
+# --- Plan mode: extract plan from output ---
+if [ "$BLENDER_MODE" = "plan" ]; then
+  # No tracked files should be modified
+  if ! git diff --quiet; then
+    echo "ABORT: Claude modified tracked files in plan mode."
+    git diff --name-only
+    git checkout -- .
+    exit 1
+  fi
+
+  echo "Extracting plan from Claude output..."
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if python3 "${SCRIPT_DIR}/extract_plan.py" "$CLAUDE_LOG" PLAN_MD .blender-plan.md; then
+    echo "Plan file written from Claude output."
+  else
+    echo "No plan extracted. Workflow will handle this."
+  fi
+
+  exit 0
+fi
+
+# --- Self-review mode: extract summary from output ---
+if [ "$BLENDER_MODE" = "self-review" ]; then
+  # No tracked files should be modified
+  if ! git diff --quiet; then
+    echo "ABORT: Claude modified tracked files in self-review mode."
+    git diff --name-only
+    git checkout -- .
+    exit 1
+  fi
+
+  echo "Extracting self-review from Claude output..."
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if python3 "${SCRIPT_DIR}/extract_plan.py" "$CLAUDE_LOG" SELF_REVIEW_MD .blender-self-review.md; then
+    echo "Self-review file written from Claude output."
+  else
+    echo "No self-review extracted. Workflow will handle this."
   fi
 
   exit 0

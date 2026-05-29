@@ -23,6 +23,9 @@ inputs:
   permission-pull-requests:
     description: 'Token permission for pull-requests (omit to inherit all)'
     default: ''
+  permission-issues:
+    description: 'Token permission for issues (omit to inherit all)'
+    default: ''
   permission-vulnerability-alerts:
     description: 'Token permission for vulnerability-alerts (omit to inherit all)'
     default: ''
@@ -98,6 +101,7 @@ runs:
         repositories: ${{ steps.parse.outputs.name }}
         permission-contents: ${{ inputs.permission-contents || '' }}
         permission-pull-requests: ${{ inputs.permission-pull-requests || '' }}
+        permission-issues: ${{ inputs.permission-issues || '' }}
         permission-vulnerability-alerts: ${{ inputs.permission-vulnerability-alerts || '' }}
         permission-security-events: ${{ inputs.permission-security-events || '' }}
 

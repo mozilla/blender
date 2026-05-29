@@ -29,6 +29,7 @@ import re
 import sys
 from dataclasses import dataclass
 
+import yaml
 from github import Auth, GithubIntegration
 from github.GithubException import UnknownObjectException
 from github.PullRequest import PullRequest
@@ -51,9 +52,13 @@ INVESTIGATED_TAG_PREFIX = "investigated/"
 _INVESTIGATED_TAG_RE = re.compile(r"^investigated/(.+)/(\d+)$")
 
 
+AUTO_ENGINEER_LABEL = "blender:auto-engineer"
+AUTO_ENGINEER_BRANCH_PREFIX = "blender/auto-engineer/"
+
+
 @dataclass
 class Action:
-    action: str  # "fix", "automerge", or "investigate"
+    action: str  # "fix", "automerge", "investigate", or "auto-engineer"
     repo: str
     pr_number: int
     pr_title: str
@@ -62,6 +67,9 @@ class Action:
     alert_ecosystem: str | None = None
     alert_severity: str | None = None
     alert_patched_version: str | None = None
+    phase: str | None = None  # "plan", "implement", "self-review"
+    issue_number: int | None = None
+    issue_title: str | None = None
 
     def to_dict(self) -> dict:
         d: dict = {
@@ -76,6 +84,10 @@ class Action:
             d["alert_ecosystem"] = self.alert_ecosystem
             d["alert_severity"] = self.alert_severity
             d["alert_patched_version"] = self.alert_patched_version
+        if self.phase is not None:
+            d["phase"] = self.phase
+            d["issue_number"] = self.issue_number
+            d["issue_title"] = self.issue_title
         return d
 
 
@@ -129,6 +141,243 @@ def discover_repos(
         repos = list(installation.get_repos())
         results.append((installation.id, repos))
     return results
+
+
+def _load_repo_config(repo: Repository) -> dict:
+    """Load .blender/blender.yml from a repo. Returns empty dict on failure."""
+    try:
+        content = repo.get_contents(".blender/blender.yml")
+        return yaml.safe_load(content.decoded_content) or {}
+    except Exception:
+        return {}
+
+
+def _pr_has_implementation_commits(pr: PullRequest) -> bool:
+    """True if the PR has commits beyond the initial plan commit."""
+    commits = list(pr.get_commits())
+    for c in commits:
+        msg = c.commit.message or ""
+        # Plan commits create/update .blender/plans/ files only.
+        # Implementation commits have different messages.
+        if not msg.startswith("BLEnder plan("):
+            return True
+    return False
+
+
+def _has_comments_after_latest_commit(pr: PullRequest) -> bool:
+    """True if non-bot comments exist after the latest commit date."""
+    commits = list(pr.get_commits())
+    latest_commit_date = max((c.commit.committer.date for c in commits), default=None)
+    if latest_commit_date is None:
+        return False
+    for c in pr.get_issue_comments():
+        if c.user.login.endswith("[bot]"):
+            continue
+        if c.created_at >= latest_commit_date:
+            return True
+    for r in pr.get_reviews():
+        if r.user.login.endswith("[bot]"):
+            continue
+        if r.submitted_at and r.submitted_at >= latest_commit_date:
+            return True
+    return False
+
+
+def check_auto_engineer(repo: Repository, config: dict) -> list[Action]:
+    """Check for auto-engineer work: issues to plan, PRs to advance."""
+    ae_config = config.get("auto_engineer", {})
+    if not ae_config.get("enabled", False):
+        return []
+
+    actions: list[Action] = []
+    issue_label = ae_config.get("issue_label", "auto-engineer")
+
+    # Check for open PRs with the auto-engineer label
+    open_prs = [
+        pr
+        for pr in repo.get_pulls(state="open")
+        if any(label.name == AUTO_ENGINEER_LABEL for label in pr.labels)
+    ]
+
+    if open_prs:
+        # One PR at a time per repo — process the first one
+        pr = open_prs[0]
+        print(f"    Auto-engineer PR #{pr.number} exists")
+
+        has_impl = _pr_has_implementation_commits(pr)
+        has_approval = has_codeowner_approval(pr)
+        has_comments = _has_comments_after_latest_commit(pr)
+
+        if not has_impl:
+            # Plan-only PR
+            if has_approval:
+                print(f"    PR #{pr.number}: plan approved → implement")
+                # Extract issue number from branch name
+                issue_num = _issue_number_from_branch(pr.head.ref)
+                actions.append(
+                    Action(
+                        action="auto-engineer",
+                        repo=repo.full_name,
+                        pr_number=pr.number,
+                        pr_title=pr.title,
+                        phase="implement",
+                        issue_number=issue_num,
+                        issue_title=pr.title,
+                    )
+                )
+            elif has_comments:
+                print(f"    PR #{pr.number}: plan has feedback → address")
+                issue_num = _issue_number_from_branch(pr.head.ref)
+                actions.append(
+                    Action(
+                        action="auto-engineer",
+                        repo=repo.full_name,
+                        pr_number=pr.number,
+                        pr_title=pr.title,
+                        phase="plan",
+                        issue_number=issue_num,
+                        issue_title=pr.title,
+                    )
+                )
+            else:
+                print(f"    PR #{pr.number}: waiting for plan review")
+        else:
+            # Has implementation commits
+            if has_comments:
+                print(f"    PR #{pr.number}: implementation has feedback → address")
+                issue_num = _issue_number_from_branch(pr.head.ref)
+                actions.append(
+                    Action(
+                        action="auto-engineer",
+                        repo=repo.full_name,
+                        pr_number=pr.number,
+                        pr_title=pr.title,
+                        phase="implement",
+                        issue_number=issue_num,
+                        issue_title=pr.title,
+                    )
+                )
+            else:
+                print(f"    PR #{pr.number}: waiting for code review")
+
+        return actions
+
+    # Check recently merged PRs for self-review
+    try:
+        closed_prs = repo.get_pulls(state="closed", sort="updated", direction="desc")
+        for pr in closed_prs:
+            if not pr.merged:
+                continue
+            if not any(label.name == AUTO_ENGINEER_LABEL for label in pr.labels):
+                continue
+            # Only consider PRs merged in the last 24 hours
+            if pr.merged_at is None:
+                continue
+            from datetime import datetime, timezone
+
+            age = datetime.now(timezone.utc) - pr.merged_at
+            if age.total_seconds() > 86400:
+                break  # sorted by updated desc, so stop here
+
+            # Check if self-review comment already exists
+            has_self_review = any(
+                c.user.login == BOT_LOGIN
+                and (c.body or "").startswith("## Self-Review")
+                for c in pr.get_issue_comments()
+            )
+            if not has_self_review:
+                print(f"    Merged PR #{pr.number}: needs self-review")
+                issue_num = _issue_number_from_branch(pr.head.ref)
+                actions.append(
+                    Action(
+                        action="auto-engineer",
+                        repo=repo.full_name,
+                        pr_number=pr.number,
+                        pr_title=pr.title,
+                        phase="self-review",
+                        issue_number=issue_num,
+                        issue_title=pr.title,
+                    )
+                )
+                return actions  # one at a time
+            break  # most recent merged PR already reviewed
+    except Exception as e:
+        print(f"    Error checking merged PRs: {e}")
+
+    # No open or recent merged PR — look for issues to pick up
+    existing_branches: set[str] = set()
+    try:
+        for branch in repo.get_branches():
+            if branch.name.startswith(AUTO_ENGINEER_BRANCH_PREFIX):
+                existing_branches.add(branch.name)
+    except Exception:
+        pass
+
+    try:
+        labeled_issues = list(repo.get_issues(state="open", labels=[issue_label]))
+        # Filter out PRs (GitHub API returns PRs as issues too)
+        labeled_issues = [i for i in labeled_issues if i.pull_request is None]
+        # Filter out assigned issues
+        labeled_issues = [i for i in labeled_issues if not i.assignees]
+        # Filter out issues that already have a branch
+        labeled_issues = [
+            i
+            for i in labeled_issues
+            if not any(
+                b.startswith(f"{AUTO_ENGINEER_BRANCH_PREFIX}{i.number}-")
+                for b in existing_branches
+            )
+        ]
+
+        if labeled_issues:
+            # Pick the oldest labeled issue
+            issue = labeled_issues[-1]  # get_issues returns newest first
+            print(f"    Issue #{issue.number}: {issue.title} → plan")
+            actions.append(
+                Action(
+                    action="auto-engineer",
+                    repo=repo.full_name,
+                    pr_number=0,
+                    pr_title="",
+                    phase="plan",
+                    issue_number=issue.number,
+                    issue_title=issue.title,
+                )
+            )
+        else:
+            # No labeled issues — let Claude pick from all open issues
+            all_issues = list(repo.get_issues(state="open"))
+            all_issues = [i for i in all_issues if i.pull_request is None]
+            if all_issues:
+                print("    No labeled issues — Claude will pick from open issues")
+                actions.append(
+                    Action(
+                        action="auto-engineer",
+                        repo=repo.full_name,
+                        pr_number=0,
+                        pr_title="",
+                        phase="plan",
+                        issue_number=0,
+                        issue_title="",
+                    )
+                )
+    except Exception as e:
+        print(f"    Error checking issues: {e}")
+
+    return actions
+
+
+def _issue_number_from_branch(branch: str) -> int:
+    """Extract issue number from blender/auto-engineer/{number}-{slug}."""
+    prefix = AUTO_ENGINEER_BRANCH_PREFIX
+    if not branch.startswith(prefix):
+        return 0
+    rest = branch[len(prefix) :]
+    parts = rest.split("-", 1)
+    try:
+        return int(parts[0])
+    except (ValueError, IndexError):
+        return 0
 
 
 def process_repo(
@@ -234,6 +483,14 @@ def process_repo(
         actions.extend(alert_actions)
     except Exception as e:
         print(f"    Error checking alerts: {e}")
+
+    # Check for auto-engineer work
+    try:
+        config = _load_repo_config(repo)
+        ae_actions = check_auto_engineer(repo, config)
+        actions.extend(ae_actions)
+    except Exception as e:
+        print(f"    Error checking auto-engineer: {e}")
 
     return actions
 

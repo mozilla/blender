@@ -1,0 +1,327 @@
+---
+name: BLEnder Auto-Engineer
+run-name: >-
+  Auto-engineer ${{ inputs.target_repo }}
+  phase=${{ inputs.phase }} issue #${{ inputs.issue_number }}
+on:
+  workflow_dispatch:
+    inputs:
+      target_repo:
+        description: 'Target repo (e.g. mozilla/fx-private-relay)'
+        required: true
+      phase:
+        description: 'Phase: plan, implement, or self-review'
+        required: true
+      issue_number:
+        description: 'Issue number (0 = let Claude pick)'
+        default: '0'
+      issue_title:
+        description: 'Issue title'
+        default: ''
+      pr_number:
+        description: 'Existing PR number (0 = no PR yet)'
+        default: '0'
+      dry_run:
+        description: 'Dry run (true = no mutations)'
+        default: 'true'
+      verbose:
+        description: 'Print full Claude output'
+        default: 'false'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blender-auto-engineer-${{ inputs.target_repo }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    if: inputs.phase == 'plan'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          persist-credentials: false
+
+      - name: Setup target repo
+        id: setup
+        uses: ./.github/actions/setup-target
+        with:
+          target-repo: ${{ inputs.target_repo }}
+          app-id: ${{ secrets.BLENDER_APP_ID }}
+          private-key: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
+          blender-workspace: ${{ github.workspace }}
+          permission-issues: read
+          permission-contents: write
+          permission-pull-requests: write
+          install-sandbox: 'true'
+          install-claude: 'true'
+
+      - name: Check for existing auto-engineer PR
+        id: existing-pr
+        run: |
+          if [ "$PR_NUMBER" != "0" ]; then
+            echo "pr_exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "pr_exists=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+
+      - name: Gather context (new plan)
+        if: steps.existing-pr.outputs.pr_exists != 'true'
+        working-directory: target
+        run: ${{ github.workspace }}/scripts/gather-issue-context.sh
+        env:
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+          ISSUE_NUMBER: ${{ inputs.issue_number }}
+          REPO: ${{ inputs.target_repo }}
+          PROMPT_TEMPLATE: ${{ github.workspace }}/prompts/auto-engineer-plan-prompt.md
+          ISSUE_TITLE: ${{ inputs.issue_title }}
+
+      - name: Gather context (plan feedback)
+        if: steps.existing-pr.outputs.pr_exists == 'true'
+        working-directory: target
+        run: ${{ github.workspace }}/scripts/gather-review-context.sh
+        env:
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          ISSUE_NUMBER: ${{ inputs.issue_number }}
+          REPO: ${{ inputs.target_repo }}
+          PROMPT_TEMPLATE: ${{ github.workspace }}/prompts/auto-engineer-plan-prompt.md
+          ISSUE_TITLE: ${{ inputs.issue_title }}
+
+      - name: Run Claude (plan)
+        working-directory: target
+        run: ${{ github.workspace }}/scripts/run-claude.sh
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          REPO: ${{ inputs.target_repo }}
+          REPO_NAME: ${{ steps.setup.outputs.repo_name }}
+          BLENDER_DIR: ${{ github.workspace }}
+          BLENDER_MODE: plan
+          CLAUDE_VERBOSE: ${{ inputs.verbose }}
+
+      - name: Create or update plan PR
+        if: inputs.dry_run != 'true'
+        working-directory: target
+        run: |
+          if [ ! -f .blender-plan.md ]; then
+            echo "No plan file produced. Skipping PR creation."
+            exit 0
+          fi
+
+          SLUG=$(echo "${ISSUE_TITLE}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | head -c 40)
+          BRANCH="blender/auto-engineer/${ISSUE_NUMBER}-${SLUG}"
+
+          mkdir -p .blender/plans
+          cp .blender-plan.md ".blender/plans/${ISSUE_NUMBER}.md"
+
+          git config user.name "mozilla-blender[bot]"
+          git config user.email "mozilla-blender[bot]@users.noreply.github.com"
+
+          if [ "${PR_EXISTS}" = "true" ]; then
+            git fetch "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "${BRANCH}"
+            git checkout "${BRANCH}"
+            git add ".blender/plans/${ISSUE_NUMBER}.md"
+            git commit -m "BLEnder plan(#${ISSUE_NUMBER}): update plan based on feedback"
+          else
+            git checkout -b "${BRANCH}"
+            git add ".blender/plans/${ISSUE_NUMBER}.md"
+            git commit -m "BLEnder plan(#${ISSUE_NUMBER}): ${ISSUE_TITLE}"
+          fi
+
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "${BRANCH}" --force-with-lease
+
+          if [ "${PR_EXISTS}" != "true" ]; then
+            PR_BODY="## Auto-Engineer Plan for #${ISSUE_NUMBER}
+
+          This PR contains a plan for implementing #${ISSUE_NUMBER}.
+
+          **Please review the plan** in \`.blender/plans/${ISSUE_NUMBER}.md\`.
+          Once approved, BLEnder will implement it.
+
+          ---
+          🤖 Generated by [BLEnder](https://github.com/mozilla/blender)"
+
+            PR_URL=$(gh pr create \
+              --repo "${REPO}" \
+              --head "${BRANCH}" \
+              --title "BLEnder: ${ISSUE_TITLE}" \
+              --label "blender:auto-engineer" \
+              --body "${PR_BODY}")
+
+            if [ "${ISSUE_NUMBER}" != "0" ]; then
+              gh issue comment "${ISSUE_NUMBER}" \
+                --repo "${REPO}" \
+                --body "BLEnder created a plan for this issue: ${PR_URL}
+
+          Please review the plan and approve the PR when ready for implementation."
+            fi
+          fi
+        env:
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+          REPO: ${{ inputs.target_repo }}
+          ISSUE_NUMBER: ${{ inputs.issue_number }}
+          ISSUE_TITLE: ${{ inputs.issue_title }}
+          PR_EXISTS: ${{ steps.existing-pr.outputs.pr_exists }}
+
+  implement:
+    if: inputs.phase == 'implement'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          persist-credentials: false
+
+      - name: Setup target repo
+        id: setup
+        uses: ./.github/actions/setup-target
+        with:
+          target-repo: ${{ inputs.target_repo }}
+          app-id: ${{ secrets.BLENDER_APP_ID }}
+          private-key: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
+          blender-workspace: ${{ github.workspace }}
+          permission-issues: read
+          permission-contents: write
+          permission-pull-requests: write
+          install-sandbox: 'true'
+          install-claude: 'true'
+
+      - name: Checkout PR branch
+        working-directory: target
+        run: |
+          PR_JSON=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}")
+          BRANCH=$(echo "$PR_JSON" | jq -r '.head.ref')
+          git fetch "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "${BRANCH}"
+          git checkout "${BRANCH}"
+        env:
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+          REPO: ${{ inputs.target_repo }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+
+      - name: Check if addressing code review
+        id: check-review
+        run: |
+          IMPL_COMMITS=$(git log --oneline | grep -cv "BLEnder plan(" || true)
+          if [ "$IMPL_COMMITS" -gt 1 ]; then
+            echo "has_impl=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_impl=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Gather context (first implementation)
+        if: steps.check-review.outputs.has_impl != 'true'
+        working-directory: target
+        run: ${{ github.workspace }}/scripts/gather-implement-context.sh
+        env:
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+          ISSUE_NUMBER: ${{ inputs.issue_number }}
+          REPO: ${{ inputs.target_repo }}
+          PROMPT_TEMPLATE: ${{ github.workspace }}/prompts/auto-engineer-implement-prompt.md
+          ISSUE_TITLE: ${{ inputs.issue_title }}
+
+      - name: Gather context (code review feedback)
+        if: steps.check-review.outputs.has_impl == 'true'
+        working-directory: target
+        run: ${{ github.workspace }}/scripts/gather-review-context.sh
+        env:
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          ISSUE_NUMBER: ${{ inputs.issue_number }}
+          REPO: ${{ inputs.target_repo }}
+          PROMPT_TEMPLATE: ${{ github.workspace }}/prompts/auto-engineer-implement-prompt.md
+          ISSUE_TITLE: ${{ inputs.issue_title }}
+
+      - name: Run Claude (implement)
+        working-directory: target
+        run: ${{ github.workspace }}/scripts/run-claude.sh
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          REPO: ${{ inputs.target_repo }}
+          REPO_NAME: ${{ steps.setup.outputs.repo_name }}
+          BLENDER_DIR: ${{ github.workspace }}
+          BLENDER_MODE: implement
+          CLAUDE_VERBOSE: ${{ inputs.verbose }}
+
+      - name: Commit and push
+        if: inputs.dry_run != 'true'
+        working-directory: target
+        run: ${{ github.workspace }}/scripts/commit.sh
+        env:
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+          REPO: ${{ inputs.target_repo }}
+
+  self-review:
+    if: inputs.phase == 'self-review'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          persist-credentials: false
+
+      - name: Setup target repo
+        id: setup
+        uses: ./.github/actions/setup-target
+        with:
+          target-repo: ${{ inputs.target_repo }}
+          app-id: ${{ secrets.BLENDER_APP_ID }}
+          private-key: ${{ secrets.BLENDER_APP_PRIVATE_KEY }}
+          blender-workspace: ${{ github.workspace }}
+          permission-issues: read
+          permission-contents: read
+          permission-pull-requests: write
+          install-sandbox: 'true'
+          install-claude: 'true'
+
+      - name: Gather self-review context
+        working-directory: target
+        run: ${{ github.workspace }}/scripts/gather-self-review-context.sh
+        env:
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          ISSUE_NUMBER: ${{ inputs.issue_number }}
+          REPO: ${{ inputs.target_repo }}
+          PROMPT_TEMPLATE: ${{ github.workspace }}/prompts/auto-engineer-self-review-prompt.md
+
+      - name: Run Claude (self-review)
+        working-directory: target
+        run: ${{ github.workspace }}/scripts/run-claude.sh
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          REPO: ${{ inputs.target_repo }}
+          REPO_NAME: ${{ steps.setup.outputs.repo_name }}
+          BLENDER_DIR: ${{ github.workspace }}
+          BLENDER_MODE: self-review
+          CLAUDE_VERBOSE: ${{ inputs.verbose }}
+
+      - name: Post self-review comment
+        if: inputs.dry_run != 'true'
+        working-directory: target
+        run: |
+          if [ ! -f .blender-self-review.md ]; then
+            echo "No self-review file produced. Posting fallback comment."
+            BODY="## Self-Review
+
+          BLEnder could not produce a self-review summary for this PR."
+          else
+            BODY=$(cat .blender-self-review.md)
+          fi
+
+          gh pr comment "${PR_NUMBER}" \
+            --repo "${REPO}" \
+            --body "${BODY}"
+        env:
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+          REPO: ${{ inputs.target_repo }}
+          PR_NUMBER: ${{ inputs.pr_number }}

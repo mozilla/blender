@@ -10,11 +10,12 @@ def make_comment(body, login="mozilla-blender[bot]", created_at=None):
     return c
 
 
-def make_review(login, state="APPROVED"):
-    """Build a mock PR review with .user.login and .state."""
+def make_review(login, state="APPROVED", submitted_at=None):
+    """Build a mock PR review with .user.login, .state, and .submitted_at."""
     r = MagicMock()
     r.user.login = login
     r.state = state
+    r.submitted_at = submitted_at
     return r
 
 
@@ -39,3 +40,20 @@ def make_tag(name):
     t = MagicMock()
     t.name = name
     return t
+
+
+def make_issue(number, title="Test issue", labels=None, assignees=None, is_pr=False):
+    """Build a mock GitHub issue with .number, .title, .labels, .assignees."""
+    i = MagicMock()
+    i.number = number
+    i.title = title
+    i.pull_request = MagicMock() if is_pr else None
+
+    mock_labels = []
+    for name in (labels or []):
+        lbl = MagicMock()
+        lbl.name = name
+        mock_labels.append(lbl)
+    i.labels = mock_labels
+    i.assignees = list(assignees or [])
+    return i
