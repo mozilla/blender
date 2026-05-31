@@ -21,3 +21,16 @@ investigate:
   run_tests: true
   severity_threshold: ""
   dismiss_unaffected: false
+
+auto_engineer:
+  enabled: false
+  dry_run: true
+  issue_label: "auto-engineer"
+  trusted_author_associations: "OWNER"
+  forbidden_paths: ".github/ .env .circleci/"
+  max_plan_turns: 20
+  max_plan_budget_usd: 1.50
+  max_implement_turns: 40
+  max_implement_budget_usd: 4.00
+  max_self_review_turns: 15
+  max_self_review_budget_usd: 1.00

@@ -27,6 +27,7 @@ WORKFLOW_MAP = {
     "fix": "fix-dependabot-pr.yml",
     "automerge": "chore-automerge-dependabot-prs.yml",
     "investigate": "investigate-security-alert.yml",
+    "auto-engineer": "auto-engineer.yml",
 }
 
 
@@ -61,6 +62,7 @@ def main() -> None:
     automerge_repos: set[str] = set()
     fix_actions = []
     investigate_actions = []
+    auto_engineer_actions = []
     for a in actions:
         if a["action"] == "automerge":
             automerge_repos.add(a["repo"])
@@ -68,6 +70,8 @@ def main() -> None:
             fix_actions.append(a)
         elif a["action"] == "investigate":
             investigate_actions.append(a)
+        elif a["action"] == "auto-engineer":
+            auto_engineer_actions.append(a)
         else:
             print(f"Unknown action: {a['action']}")
 
@@ -134,6 +138,38 @@ def main() -> None:
         ]
         print(f"Triggering {workflow} for {a['repo']} alert #{a['alert_number']}")
         if not trigger_workflow(cmd, f"investigate {a['repo']} #{a['alert_number']}"):
+            failures += 1
+
+    # Trigger auto-engineer once per action
+    for a in auto_engineer_actions:
+        workflow = WORKFLOW_MAP["auto-engineer"]
+        cmd = [
+            "gh",
+            "workflow",
+            "run",
+            workflow,
+            "-f",
+            f"target_repo={a['repo']}",
+            "-f",
+            f"phase={a.get('phase', 'plan')}",
+            "-f",
+            f"issue_number={a.get('issue_number', 0)}",
+            "-f",
+            f"issue_title={a.get('issue_title', '')}",
+            "-f",
+            f"pr_number={a.get('pr_number', 0)}",
+            "-f",
+            f"trusted_author_associations={a.get('trusted_author_associations', 'OWNER')}",
+            "-f",
+            f"forbidden_paths={a.get('forbidden_paths', '.github/ .env .circleci/')}",
+            "-f",
+            "dry_run=false",
+        ]
+        print(
+            f"Triggering {workflow} for {a['repo']}"
+            f" phase={a.get('phase')} issue #{a.get('issue_number', 0)}"
+        )
+        if not trigger_workflow(cmd, f"auto-engineer {a['repo']}"):
             failures += 1
 
     if failures:
