@@ -79,6 +79,7 @@ issue_comments=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate 
   2>/dev/null || echo "")
 
 # PR review comments via GraphQL — unresolved threads, trusted authors
+# shellcheck disable=SC2016  # $owner/$name/$number are GraphQL variables, not shell
 pr_review_comments=$(gh api graphql -f query='
   query($owner: String!, $name: String!, $number: Int!) {
     repository(owner: $owner, name: $name) {
