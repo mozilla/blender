@@ -60,5 +60,5 @@ prompt="${prompt//\{\{PLAN_CONTENT\}\}/$plan_content}"
 prompt="${prompt//\{\{PR_DIFF\}\}/$pr_diff}"
 
 # Write prompt to file for run-claude.sh
-echo "$prompt" > .blender-prompt
+printf '%s\n' "$prompt" > .blender-prompt
 echo "Prompt written to .blender-prompt"

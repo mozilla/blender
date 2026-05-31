@@ -61,6 +61,11 @@ echo "  Title: ${issue_title}"
 echo "Building prompt from ${PROMPT_TEMPLATE}..."
 prompt=$(cat "$PROMPT_TEMPLATE")
 
+# Neutralize template markers in API-fetched content to prevent
+# cross-placeholder injection (e.g., issue title containing "{{PLAN_CONTENT}}")
+issue_title="${issue_title//\{\{/\{_\{}"
+issue_body="${issue_body//\{\{/\{_\{}"
+
 prompt="${prompt//\{\{ISSUE_NUMBER\}\}/$ISSUE_NUMBER}"
 prompt="${prompt//\{\{ISSUE_TITLE\}\}/$issue_title}"
 prompt="${prompt//\{\{ISSUE_BODY\}\}/$issue_body}"
@@ -68,5 +73,5 @@ prompt="${prompt//\{\{PLAN_CONTENT\}\}/$plan_content}"
 prompt="${prompt//\{\{REVIEW_COMMENTS\}\}/}"
 
 # Write prompt to file for run-claude.sh
-echo "$prompt" > .blender-prompt
+printf '%s\n' "$prompt" > .blender-prompt
 echo "Prompt written to .blender-prompt"
