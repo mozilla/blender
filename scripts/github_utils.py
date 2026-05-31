@@ -10,6 +10,15 @@ from github.PullRequest import PullRequest
 BOT_LOGIN = "mozilla-blender[bot]"
 
 
+def is_bot(login: str) -> bool:
+    """True if the login belongs to a bot account.
+
+    GitHub enforces the ``name[bot]`` convention for App and bot
+    accounts — this is a platform invariant, not a heuristic.
+    """
+    return login.endswith("[bot]")
+
+
 class Verdict(Enum):
     """Review verdict codes and their comment messages.
 

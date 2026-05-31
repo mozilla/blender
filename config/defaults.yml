@@ -26,6 +26,8 @@ auto_engineer:
   enabled: false
   dry_run: true
   issue_label: "auto-engineer"
+  trusted_author_associations: "OWNER"
+  forbidden_paths: ".github/ .env .circleci/"
   max_plan_turns: 20
   max_plan_budget_usd: 1.50
   max_implement_turns: 40

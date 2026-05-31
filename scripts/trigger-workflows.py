@@ -159,6 +159,10 @@ def main() -> None:
             "-f",
             f"pr_number={a.get('pr_number', 0)}",
             "-f",
+            f"trusted_author_associations={a.get('trusted_author_associations', 'OWNER')}",
+            "-f",
+            f"forbidden_paths={a.get('forbidden_paths', '.github/ .env .circleci/')}",
+            "-f",
             "dry_run=false",
         ]
         print(

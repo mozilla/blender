@@ -33,15 +33,10 @@ if [ ! -f "$PROMPT_TEMPLATE" ]; then
   exit 1
 fi
 
-# --- Sanitize untrusted input before inserting into prompts ---
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=scripts/sanitize.sh
-source "${SCRIPT_DIR}/sanitize.sh"
-
 ISSUE_NUMBER="${ISSUE_NUMBER:-0}"
 echo "BLEnder gather-self-review-context: PR #${PR_NUMBER} repo=${REPO}"
 
-# --- Read plan file ---
+# --- Read plan file (BLEnder-authored, no sanitization needed) ---
 plan_file=".blender/plans/${ISSUE_NUMBER}.md"
 plan_content=""
 if [ -f "$plan_file" ]; then
@@ -61,11 +56,8 @@ pr_diff=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}" \
 echo "Building prompt from ${PROMPT_TEMPLATE}..."
 prompt=$(cat "$PROMPT_TEMPLATE")
 
-safe_plan=$(sanitize_for_prompt "$plan_content")
-safe_diff=$(sanitize_for_prompt "$pr_diff")
-
-prompt="${prompt//\{\{PLAN_CONTENT\}\}/$safe_plan}"
-prompt="${prompt//\{\{PR_DIFF\}\}/$safe_diff}"
+prompt="${prompt//\{\{PLAN_CONTENT\}\}/$plan_content}"
+prompt="${prompt//\{\{PR_DIFF\}\}/$pr_diff}"
 
 # Write prompt to file for run-claude.sh
 echo "$prompt" > .blender-prompt

@@ -10,6 +10,7 @@
 #   GH_TOKEN           -- GitHub token for API calls (required)
 #   PROMPT_TEMPLATE    -- Path to prompt template file (required)
 #   ISSUE_TITLE        -- Issue title (optional)
+#   TRUSTED_AUTHOR_ASSOCIATIONS -- Comma-separated list of trusted associations (default: OWNER)
 
 set -euo pipefail
 
@@ -33,14 +34,9 @@ if [ ! -f "$PROMPT_TEMPLATE" ]; then
   exit 1
 fi
 
-# --- Sanitize untrusted input before inserting into prompts ---
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=scripts/sanitize.sh
-source "${SCRIPT_DIR}/sanitize.sh"
-
 echo "BLEnder gather-implement-context: issue #${ISSUE_NUMBER} repo=${REPO}"
 
-# --- Read plan file ---
+# --- Read plan file (BLEnder-authored, no sanitization needed) ---
 plan_file=".blender/plans/${ISSUE_NUMBER}.md"
 plan_content=""
 if [ -f "$plan_file" ]; then
@@ -63,14 +59,10 @@ echo "  Title: ${issue_title}"
 echo "Building prompt from ${PROMPT_TEMPLATE}..."
 prompt=$(cat "$PROMPT_TEMPLATE")
 
-safe_title=$(sanitize_for_prompt "$issue_title")
-safe_body=$(sanitize_for_prompt "$issue_body")
-safe_plan=$(sanitize_for_prompt "$plan_content")
-
 prompt="${prompt//\{\{ISSUE_NUMBER\}\}/$ISSUE_NUMBER}"
-prompt="${prompt//\{\{ISSUE_TITLE\}\}/$safe_title}"
-prompt="${prompt//\{\{ISSUE_BODY\}\}/$safe_body}"
-prompt="${prompt//\{\{PLAN_CONTENT\}\}/$safe_plan}"
+prompt="${prompt//\{\{ISSUE_TITLE\}\}/$issue_title}"
+prompt="${prompt//\{\{ISSUE_BODY\}\}/$issue_body}"
+prompt="${prompt//\{\{PLAN_CONTENT\}\}/$plan_content}"
 prompt="${prompt//\{\{REVIEW_COMMENTS\}\}/}"
 
 # Write prompt to file for run-claude.sh

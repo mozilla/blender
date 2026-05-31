@@ -21,6 +21,12 @@ on:
       pr_number:
         description: 'Existing PR number (0 = no PR yet)'
         default: '0'
+      trusted_author_associations:
+        description: 'Comma-separated trusted author associations'
+        default: 'OWNER'
+      forbidden_paths:
+        description: 'Space-separated forbidden paths for implement mode'
+        default: '.github/ .env .circleci/'
       dry_run:
         description: 'Dry run (true = no mutations)'
         default: 'true'
@@ -41,7 +47,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
@@ -82,6 +87,7 @@ jobs:
           REPO: ${{ inputs.target_repo }}
           PROMPT_TEMPLATE: ${{ github.workspace }}/prompts/auto-engineer-plan-prompt.md
           ISSUE_TITLE: ${{ inputs.issue_title }}
+          TRUSTED_AUTHOR_ASSOCIATIONS: ${{ inputs.trusted_author_associations }}
 
       - name: Gather context (plan feedback)
         if: steps.existing-pr.outputs.pr_exists == 'true'
@@ -94,6 +100,7 @@ jobs:
           REPO: ${{ inputs.target_repo }}
           PROMPT_TEMPLATE: ${{ github.workspace }}/prompts/auto-engineer-plan-prompt.md
           ISSUE_TITLE: ${{ inputs.issue_title }}
+          TRUSTED_AUTHOR_ASSOCIATIONS: ${{ inputs.trusted_author_associations }}
 
       - name: Run Claude (plan)
         working-directory: target
@@ -175,7 +182,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
@@ -227,6 +233,7 @@ jobs:
           REPO: ${{ inputs.target_repo }}
           PROMPT_TEMPLATE: ${{ github.workspace }}/prompts/auto-engineer-implement-prompt.md
           ISSUE_TITLE: ${{ inputs.issue_title }}
+          TRUSTED_AUTHOR_ASSOCIATIONS: ${{ inputs.trusted_author_associations }}
 
       - name: Gather context (code review feedback)
         if: steps.check-review.outputs.has_impl == 'true'
@@ -239,6 +246,7 @@ jobs:
           REPO: ${{ inputs.target_repo }}
           PROMPT_TEMPLATE: ${{ github.workspace }}/prompts/auto-engineer-implement-prompt.md
           ISSUE_TITLE: ${{ inputs.issue_title }}
+          TRUSTED_AUTHOR_ASSOCIATIONS: ${{ inputs.trusted_author_associations }}
 
       - name: Run Claude (implement)
         working-directory: target
@@ -249,6 +257,7 @@ jobs:
           REPO_NAME: ${{ steps.setup.outputs.repo_name }}
           BLENDER_DIR: ${{ github.workspace }}
           BLENDER_MODE: implement
+          BLENDER_FORBIDDEN_PATHS: ${{ inputs.forbidden_paths }}
           CLAUDE_VERBOSE: ${{ inputs.verbose }}
 
       - name: Commit and push
@@ -264,7 +273,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:

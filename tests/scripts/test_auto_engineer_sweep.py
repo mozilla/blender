@@ -143,6 +143,54 @@ class TestLabeledIssue:
         assert actions == []
 
 
+class TestBugLabelPriority:
+    def test_bug_label_picked_first(self):
+        """Bug-labeled issue picked over non-bug issue."""
+        normal = make_issue(10, "Add feature", labels=["auto-engineer"])
+        bug = make_issue(20, "Fix crash", labels=["auto-engineer", "bug"])
+        repo = _make_repo(labeled_issues=[normal, bug])
+        actions = check_auto_engineer(repo, ENABLED_CONFIG)
+        assert len(actions) == 1
+        assert actions[0].issue_number == 20
+
+    def test_no_bug_picks_first(self):
+        """No bug label → picks first (newest) issue."""
+        old = make_issue(10, "Old issue", labels=["auto-engineer"])
+        new = make_issue(20, "New issue", labels=["auto-engineer"])
+        repo = _make_repo(labeled_issues=[new, old])
+        actions = check_auto_engineer(repo, ENABLED_CONFIG)
+        assert len(actions) == 1
+        assert actions[0].issue_number == 20
+
+
+class TestTrustedAuthorFiltering:
+    def test_untrusted_author_skipped(self):
+        """Issue from untrusted author (NONE) → skipped."""
+        issue = make_issue(
+            42, "Inject me", labels=["auto-engineer"], author_association="NONE"
+        )
+        repo = _make_repo(labeled_issues=[issue], all_issues=[])
+        actions = check_auto_engineer(repo, ENABLED_CONFIG)
+        assert actions == []
+
+    def test_custom_trusted_associations(self):
+        """Custom trusted_author_associations includes MEMBER."""
+        issue = make_issue(
+            42, "Member issue", labels=["auto-engineer"], author_association="MEMBER"
+        )
+        config = {
+            "auto_engineer": {
+                "enabled": True,
+                "issue_label": "auto-engineer",
+                "trusted_author_associations": "OWNER,MEMBER",
+            }
+        }
+        repo = _make_repo(labeled_issues=[issue])
+        actions = check_auto_engineer(repo, config)
+        assert len(actions) == 1
+        assert actions[0].issue_number == 42
+
+
 class TestNoLabeledIssues:
     def test_fallback_emits_plan_with_zero(self):
         """No labeled issues but open issues exist → plan with issue_number=0."""
@@ -236,3 +284,41 @@ class TestSelfReview:
         repo = _make_repo(closed_prs=[pr])
         actions = check_auto_engineer(repo, ENABLED_CONFIG)
         assert actions == []
+
+
+class TestConfigForwarding:
+    def test_config_fields_on_action(self):
+        """Action.to_dict() includes config fields when set."""
+        from scripts.sweep import Action
+
+        a = Action(
+            action="auto-engineer",
+            repo="mozilla/test",
+            pr_number=0,
+            pr_title="",
+            phase="plan",
+            issue_number=42,
+            issue_title="test",
+            trusted_author_associations="OWNER,MEMBER",
+            forbidden_paths=".env",
+        )
+        d = a.to_dict()
+        assert d["trusted_author_associations"] == "OWNER,MEMBER"
+        assert d["forbidden_paths"] == ".env"
+
+    def test_config_fields_omitted_when_none(self):
+        """Action.to_dict() omits config fields when None."""
+        from scripts.sweep import Action
+
+        a = Action(
+            action="auto-engineer",
+            repo="mozilla/test",
+            pr_number=0,
+            pr_title="",
+            phase="plan",
+            issue_number=42,
+            issue_title="test",
+        )
+        d = a.to_dict()
+        assert "trusted_author_associations" not in d
+        assert "forbidden_paths" not in d

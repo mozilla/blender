@@ -25,16 +25,10 @@ import sys
 
 import yaml
 
-
-def deep_merge(base: dict, override: dict) -> dict:
-    """Merge override into base. Override wins for leaf values."""
-    result = dict(base)
-    for key, value in override.items():
-        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            result[key] = deep_merge(result[key], value)
-        else:
-            result[key] = value
-    return result
+try:
+    from scripts.config_utils import deep_merge
+except ImportError:
+    from config_utils import deep_merge  # type: ignore[no-redef]
 
 
 def flatten(d: dict, prefix: str = "") -> dict[str, str]:

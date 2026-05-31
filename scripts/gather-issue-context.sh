@@ -10,6 +10,7 @@
 #   GH_TOKEN           -- GitHub token for API calls (required)
 #   PROMPT_TEMPLATE    -- Path to prompt template file (required)
 #   ISSUE_TITLE        -- Issue title (optional, for fallback)
+#   TRUSTED_AUTHOR_ASSOCIATIONS -- Comma-separated list of trusted associations (default: OWNER)
 
 set -euo pipefail
 
@@ -33,13 +34,12 @@ if [ ! -f "$PROMPT_TEMPLATE" ]; then
   exit 1
 fi
 
-# --- Sanitize untrusted input before inserting into prompts ---
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=scripts/sanitize.sh
-source "${SCRIPT_DIR}/sanitize.sh"
-
 ISSUE_NUMBER="${ISSUE_NUMBER:-0}"
+TRUSTED="${TRUSTED_AUTHOR_ASSOCIATIONS:-OWNER}"
 echo "BLEnder gather-issue-context: issue #${ISSUE_NUMBER} repo=${REPO}"
+
+# Build jq filter for trusted author_association values
+TRUST_FILTER=$(echo "$TRUSTED" | tr ',' '\n' | sed 's/^ *//;s/ *$//' | jq -R -s 'split("\n") | map(select(. != ""))')
 
 # --- Fetch issue details ---
 issue_body=""
@@ -52,9 +52,9 @@ if [ "$ISSUE_NUMBER" != "0" ]; then
   issue_title=$(echo "$issue_json" | jq -r '.title // ""')
   issue_body=$(echo "$issue_json" | jq -r '.body // "(no body)"')
 
-  echo "Fetching issue comments..."
-  comments_json=$(gh api "repos/${REPO}/issues/${ISSUE_NUMBER}/comments" --paginate)
-  issue_comments=$(echo "$comments_json" | jq -r '.[] | "### Comment by \(.user.login)\n\(.body)\n"')
+  echo "Fetching issue comments (trusted authors only)..."
+  issue_comments=$(gh api "repos/${REPO}/issues/${ISSUE_NUMBER}/comments" --paginate \
+    --jq ".[] | select(.user.login | endswith(\"[bot]\") | not) | select(.author_association as \$a | ${TRUST_FILTER} | index(\$a)) | \"### Comment by \(.user.login)\n\(.body)\n\"")
 else
   echo "No specific issue — fetching all open issues for Claude to pick..."
   issues_json=$(gh api "repos/${REPO}/issues?state=open&per_page=50" \
@@ -83,16 +83,11 @@ fi
 echo "Building prompt from ${PROMPT_TEMPLATE}..."
 prompt=$(cat "$PROMPT_TEMPLATE")
 
-safe_title=$(sanitize_for_prompt "$issue_title")
-safe_body=$(sanitize_for_prompt "$issue_body")
-safe_comments=$(sanitize_for_prompt "$issue_comments")
-safe_tree=$(sanitize_for_prompt "$repo_tree")
-
 prompt="${prompt//\{\{ISSUE_NUMBER\}\}/$ISSUE_NUMBER}"
-prompt="${prompt//\{\{ISSUE_TITLE\}\}/$safe_title}"
-prompt="${prompt//\{\{ISSUE_BODY\}\}/$safe_body}"
-prompt="${prompt//\{\{ISSUE_COMMENTS\}\}/$safe_comments}"
-prompt="${prompt//\{\{REPO_TREE\}\}/$safe_tree}"
+prompt="${prompt//\{\{ISSUE_TITLE\}\}/$issue_title}"
+prompt="${prompt//\{\{ISSUE_BODY\}\}/$issue_body}"
+prompt="${prompt//\{\{ISSUE_COMMENTS\}\}/$issue_comments}"
+prompt="${prompt//\{\{REPO_TREE\}\}/$repo_tree}"
 
 # Write prompt to file for run-claude.sh
 echo "$prompt" > .blender-prompt

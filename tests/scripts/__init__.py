@@ -42,12 +42,20 @@ def make_tag(name):
     return t
 
 
-def make_issue(number, title="Test issue", labels=None, assignees=None, is_pr=False):
+def make_issue(
+    number,
+    title="Test issue",
+    labels=None,
+    assignees=None,
+    is_pr=False,
+    author_association="OWNER",
+):
     """Build a mock GitHub issue with .number, .title, .labels, .assignees."""
     i = MagicMock()
     i.number = number
     i.title = title
     i.pull_request = MagicMock() if is_pr else None
+    i.author_association = author_association
 
     mock_labels = []
     for name in (labels or []):

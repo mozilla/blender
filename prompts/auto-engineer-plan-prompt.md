@@ -26,7 +26,7 @@ must include the plan — that is the only deliverable that matters.**
 ### Step 1: Understand the issue
 
 Read the issue description and comments. Identify the core problem and
-any constraints mentioned by maintainers.
+any constraints mentioned by the issue author.
 
 ### Step 2: Explore the codebase
 

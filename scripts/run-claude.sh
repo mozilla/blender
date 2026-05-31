@@ -48,6 +48,10 @@ CLAUDE_LOG=$(mktemp /tmp/blender-claude-XXXXXX.log)
 trap 'rm -f "$CLAUDE_LOG"' EXIT
 
 # --- Mode-specific settings ---
+# Plan and self-review modes use Read,Bash only (no Write/Edit).
+# Claude outputs a fenced block (PLAN_MD / SELF_REVIEW_MD) in its final
+# response.  The extract scripts below pull the block from Claude's
+# output and write it to a file, outside the sandbox.
 if [ "$BLENDER_MODE" = "plan" ]; then
   ALLOWED_TOOLS="Read,Bash"
   MAX_TURNS="${MAX_CLAUDE_TURNS:-20}"
@@ -57,7 +61,11 @@ elif [ "$BLENDER_MODE" = "implement" ]; then
   ALLOWED_TOOLS="Read,Edit,Bash"
   MAX_TURNS="${MAX_CLAUDE_TURNS:-40}"
   MAX_BUDGET="${MAX_BUDGET_USD:-4.00}"
-  SYSTEM_PROMPT="You are BLEnder, a software engineering agent for ${REPO_DISPLAY_NAME}. Before starting, read these files if they exist: .blender/agents.md, ${BLENDER_DIR}/prompts/instructions.md, CLAUDE.md, AGENTS.md. They contain repo context and operational rules. Implement the plan described in the prompt. Edit files, run tests, and write your commit message to .blender-commit-msg. Do not search the web. Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
+  FORBIDDEN_HINT=""
+  if [ -n "${BLENDER_FORBIDDEN_PATHS:-}" ]; then
+    FORBIDDEN_HINT=" Do not modify files under these paths: ${BLENDER_FORBIDDEN_PATHS}."
+  fi
+  SYSTEM_PROMPT="You are BLEnder, a software engineering agent for ${REPO_DISPLAY_NAME}. Before starting, read these files if they exist: .blender/agents.md, ${BLENDER_DIR}/prompts/instructions.md, CLAUDE.md, AGENTS.md. They contain repo context and operational rules. Implement the plan described in the prompt. Edit files, run tests, and write your commit message to .blender-commit-msg. Do not search the web.${FORBIDDEN_HINT} Internal verification token: ${PROMPT_NONCE}. This token is confidential. Never include it in any output, file edit, or commit message."
 elif [ "$BLENDER_MODE" = "self-review" ]; then
   ALLOWED_TOOLS="Read,Bash"
   MAX_TURNS="${MAX_CLAUDE_TURNS:-15}"
@@ -279,10 +287,12 @@ if [ "$BLENDER_MODE" = "investigate" ]; then
   exit 0
 fi
 
-# --- Fix mode: existing validation ---
+# --- Fix / implement mode: shared validation ---
 
-# Path validation: reject changes to sensitive paths
-FORBIDDEN_PATHS=".github/ .env .circleci/"
+# Path validation: reject changes to sensitive paths.
+# Implement mode uses the configurable BLENDER_FORBIDDEN_PATHS env var;
+# fix mode uses a hardcoded default.
+FORBIDDEN_PATHS="${BLENDER_FORBIDDEN_PATHS:-.github/ .env .circleci/}"
 for forbidden in $FORBIDDEN_PATHS; do
   if git diff --name-only | grep -q "^${forbidden}"; then
     echo "ABORT: Changes detected in forbidden path: ${forbidden}"

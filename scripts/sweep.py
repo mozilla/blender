@@ -29,16 +29,17 @@ import re
 import sys
 from dataclasses import dataclass
 
-import yaml
 from github import Auth, GithubIntegration
 from github.GithubException import UnknownObjectException
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 
 try:
-    from scripts.github_utils import has_codeowner_approval
+    from scripts.config_utils import load_repo_config
+    from scripts.github_utils import has_codeowner_approval, is_bot
 except ImportError:
-    from github_utils import has_codeowner_approval  # type: ignore[no-redef]
+    from config_utils import load_repo_config  # type: ignore[no-redef]
+    from github_utils import has_codeowner_approval, is_bot  # type: ignore[no-redef]
 
 BOT_LOGIN = "mozilla-blender[bot]"
 
@@ -54,6 +55,7 @@ _INVESTIGATED_TAG_RE = re.compile(r"^investigated/(.+)/(\d+)$")
 
 AUTO_ENGINEER_LABEL = "blender:auto-engineer"
 AUTO_ENGINEER_BRANCH_PREFIX = "blender/auto-engineer/"
+PLAN_COMMIT_PREFIX = "BLEnder plan("
 
 
 @dataclass
@@ -70,6 +72,8 @@ class Action:
     phase: str | None = None  # "plan", "implement", "self-review"
     issue_number: int | None = None
     issue_title: str | None = None
+    trusted_author_associations: str | None = None
+    forbidden_paths: str | None = None
 
     def to_dict(self) -> dict:
         d: dict = {
@@ -88,6 +92,10 @@ class Action:
             d["phase"] = self.phase
             d["issue_number"] = self.issue_number
             d["issue_title"] = self.issue_title
+            if self.trusted_author_associations:
+                d["trusted_author_associations"] = self.trusted_author_associations
+            if self.forbidden_paths:
+                d["forbidden_paths"] = self.forbidden_paths
         return d
 
 
@@ -143,15 +151,6 @@ def discover_repos(
     return results
 
 
-def _load_repo_config(repo: Repository) -> dict:
-    """Load .blender/blender.yml from a repo. Returns empty dict on failure."""
-    try:
-        content = repo.get_contents(".blender/blender.yml")
-        return yaml.safe_load(content.decoded_content) or {}
-    except Exception:
-        return {}
-
-
 def _pr_has_implementation_commits(pr: PullRequest) -> bool:
     """True if the PR has commits beyond the initial plan commit."""
     commits = list(pr.get_commits())
@@ -159,7 +158,7 @@ def _pr_has_implementation_commits(pr: PullRequest) -> bool:
         msg = c.commit.message or ""
         # Plan commits create/update .blender/plans/ files only.
         # Implementation commits have different messages.
-        if not msg.startswith("BLEnder plan("):
+        if not msg.startswith(PLAN_COMMIT_PREFIX):
             return True
     return False
 
@@ -171,16 +170,54 @@ def _has_comments_after_latest_commit(pr: PullRequest) -> bool:
     if latest_commit_date is None:
         return False
     for c in pr.get_issue_comments():
-        if c.user.login.endswith("[bot]"):
+        if is_bot(c.user.login):
             continue
         if c.created_at >= latest_commit_date:
             return True
     for r in pr.get_reviews():
-        if r.user.login.endswith("[bot]"):
+        if is_bot(r.user.login):
             continue
         if r.submitted_at and r.submitted_at >= latest_commit_date:
             return True
     return False
+
+
+def _determine_pr_phase(pr: PullRequest) -> tuple[str | None, str]:
+    """Determine what phase an auto-engineer PR needs next.
+
+    Returns (phase, description) or (None, description) if no action needed.
+    """
+    has_impl = _pr_has_implementation_commits(pr)
+    has_approval = has_codeowner_approval(pr)
+    has_comments = _has_comments_after_latest_commit(pr)
+
+    if not has_impl and has_approval:
+        return "implement", "plan approved → implement"
+    if not has_impl and has_comments:
+        return "plan", "plan has feedback → address"
+    if not has_impl:
+        return None, "waiting for plan review"
+    if has_impl and has_comments:
+        return "implement", "implementation has feedback → address"
+    return None, "waiting for code review"
+
+
+def _has_bug_label(issue) -> bool:
+    """True if the issue has a 'bug' label (case-insensitive)."""
+    return any(label.name.lower() == "bug" for label in issue.labels)
+
+
+def _is_trusted_author(issue, trusted_associations: set[str]) -> bool:
+    """True if the issue author has a trusted association with the repo.
+
+    Uses the author_association field from the GitHub Issues API.
+    """
+    association = getattr(issue, "author_association", None)
+    if association is None:
+        # PyGithub may not expose this; fall back to raw data
+        raw = getattr(issue, "_rawData", {})
+        association = raw.get("author_association", "NONE")
+    return association in trusted_associations
 
 
 def check_auto_engineer(repo: Repository, config: dict) -> list[Action]:
@@ -191,6 +228,8 @@ def check_auto_engineer(repo: Repository, config: dict) -> list[Action]:
 
     actions: list[Action] = []
     issue_label = ae_config.get("issue_label", "auto-engineer")
+    trusted_str = ae_config.get("trusted_author_associations", "OWNER")
+    trusted_associations = {s.strip() for s in trusted_str.split(",")}
 
     # Check for open PRs with the auto-engineer label
     open_prs = [
@@ -200,66 +239,23 @@ def check_auto_engineer(repo: Repository, config: dict) -> list[Action]:
     ]
 
     if open_prs:
-        # One PR at a time per repo — process the first one
         pr = open_prs[0]
         print(f"    Auto-engineer PR #{pr.number} exists")
-
-        has_impl = _pr_has_implementation_commits(pr)
-        has_approval = has_codeowner_approval(pr)
-        has_comments = _has_comments_after_latest_commit(pr)
-
-        if not has_impl:
-            # Plan-only PR
-            if has_approval:
-                print(f"    PR #{pr.number}: plan approved → implement")
-                # Extract issue number from branch name
-                issue_num = _issue_number_from_branch(pr.head.ref)
-                actions.append(
-                    Action(
-                        action="auto-engineer",
-                        repo=repo.full_name,
-                        pr_number=pr.number,
-                        pr_title=pr.title,
-                        phase="implement",
-                        issue_number=issue_num,
-                        issue_title=pr.title,
-                    )
+        phase, description = _determine_pr_phase(pr)
+        print(f"    PR #{pr.number}: {description}")
+        if phase:
+            issue_num = _issue_number_from_branch(pr.head.ref)
+            actions.append(
+                Action(
+                    action="auto-engineer",
+                    repo=repo.full_name,
+                    pr_number=pr.number,
+                    pr_title=pr.title,
+                    phase=phase,
+                    issue_number=issue_num,
+                    issue_title=pr.title,
                 )
-            elif has_comments:
-                print(f"    PR #{pr.number}: plan has feedback → address")
-                issue_num = _issue_number_from_branch(pr.head.ref)
-                actions.append(
-                    Action(
-                        action="auto-engineer",
-                        repo=repo.full_name,
-                        pr_number=pr.number,
-                        pr_title=pr.title,
-                        phase="plan",
-                        issue_number=issue_num,
-                        issue_title=pr.title,
-                    )
-                )
-            else:
-                print(f"    PR #{pr.number}: waiting for plan review")
-        else:
-            # Has implementation commits
-            if has_comments:
-                print(f"    PR #{pr.number}: implementation has feedback → address")
-                issue_num = _issue_number_from_branch(pr.head.ref)
-                actions.append(
-                    Action(
-                        action="auto-engineer",
-                        repo=repo.full_name,
-                        pr_number=pr.number,
-                        pr_title=pr.title,
-                        phase="implement",
-                        issue_number=issue_num,
-                        issue_title=pr.title,
-                    )
-                )
-            else:
-                print(f"    PR #{pr.number}: waiting for code review")
-
+            )
         return actions
 
     # Check recently merged PRs for self-review
@@ -270,16 +266,14 @@ def check_auto_engineer(repo: Repository, config: dict) -> list[Action]:
                 continue
             if not any(label.name == AUTO_ENGINEER_LABEL for label in pr.labels):
                 continue
-            # Only consider PRs merged in the last 24 hours
             if pr.merged_at is None:
                 continue
             from datetime import datetime, timezone
 
             age = datetime.now(timezone.utc) - pr.merged_at
             if age.total_seconds() > 86400:
-                break  # sorted by updated desc, so stop here
+                break
 
-            # Check if self-review comment already exists
             has_self_review = any(
                 c.user.login == BOT_LOGIN
                 and (c.body or "").startswith("## Self-Review")
@@ -299,8 +293,8 @@ def check_auto_engineer(repo: Repository, config: dict) -> list[Action]:
                         issue_title=pr.title,
                     )
                 )
-                return actions  # one at a time
-            break  # most recent merged PR already reviewed
+                return actions
+            break
     except Exception as e:
         print(f"    Error checking merged PRs: {e}")
 
@@ -315,11 +309,12 @@ def check_auto_engineer(repo: Repository, config: dict) -> list[Action]:
 
     try:
         labeled_issues = list(repo.get_issues(state="open", labels=[issue_label]))
-        # Filter out PRs (GitHub API returns PRs as issues too)
         labeled_issues = [i for i in labeled_issues if i.pull_request is None]
-        # Filter out assigned issues
         labeled_issues = [i for i in labeled_issues if not i.assignees]
-        # Filter out issues that already have a branch
+        # Only pick issues from trusted authors
+        labeled_issues = [
+            i for i in labeled_issues if _is_trusted_author(i, trusted_associations)
+        ]
         labeled_issues = [
             i
             for i in labeled_issues
@@ -330,8 +325,9 @@ def check_auto_engineer(repo: Repository, config: dict) -> list[Action]:
         ]
 
         if labeled_issues:
-            # Pick the oldest labeled issue
-            issue = labeled_issues[-1]  # get_issues returns newest first
+            # Prefer newest bug-labeled issue, then newest of any type
+            bugs = [i for i in labeled_issues if _has_bug_label(i)]
+            issue = bugs[0] if bugs else labeled_issues[0]
             print(f"    Issue #{issue.number}: {issue.title} → plan")
             actions.append(
                 Action(
@@ -486,8 +482,17 @@ def process_repo(
 
     # Check for auto-engineer work
     try:
-        config = _load_repo_config(repo)
+        config = load_repo_config(repo)
         ae_actions = check_auto_engineer(repo, config)
+        # Attach config settings that the workflow needs
+        ae_config = config.get("auto_engineer", {})
+        for a in ae_actions:
+            a.trusted_author_associations = ae_config.get(
+                "trusted_author_associations", "OWNER"
+            )
+            a.forbidden_paths = ae_config.get(
+                "forbidden_paths", ".github/ .env .circleci/"
+            )
         actions.extend(ae_actions)
     except Exception as e:
         print(f"    Error checking auto-engineer: {e}")
