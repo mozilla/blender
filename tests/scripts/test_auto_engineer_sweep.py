@@ -193,12 +193,19 @@ class TestTrustedAuthorFiltering:
 
 class TestNoLabeledIssues:
     def test_fallback_emits_plan_with_zero(self):
-        """No labeled issues but open issues exist → plan with issue_number=0."""
-        issue = make_issue(10, "Some random issue")
+        """No labeled issues but trusted open issues exist → plan with issue_number=0."""
+        issue = make_issue(10, "Some random issue", author_association="OWNER")
         repo = _make_repo(labeled_issues=[], all_issues=[issue])
         actions = check_auto_engineer(repo, ENABLED_CONFIG)
         assert len(actions) == 1
         assert actions[0].issue_number == 0
+
+    def test_fallback_skips_untrusted_issues(self):
+        """Fallback path filters out untrusted authors."""
+        issue = make_issue(10, "Untrusted issue", author_association="NONE")
+        repo = _make_repo(labeled_issues=[], all_issues=[issue])
+        actions = check_auto_engineer(repo, ENABLED_CONFIG)
+        assert actions == []
 
 
 class TestPlanPR:

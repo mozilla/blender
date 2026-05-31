@@ -3,6 +3,9 @@
 #
 # This script has GH_TOKEN but does NOT have ANTHROPIC_API_KEY.
 # It writes the final prompt to .blender-prompt for run-claude.sh.
+# All context comes from trusted sources: the plan file (BLEnder-authored,
+# reviewed and approved by trusted authors) and the issue body (fetched
+# directly, not user-supplied comments).
 #
 # Environment variables:
 #   ISSUE_NUMBER       -- Issue number (required)
@@ -10,7 +13,6 @@
 #   GH_TOKEN           -- GitHub token for API calls (required)
 #   PROMPT_TEMPLATE    -- Path to prompt template file (required)
 #   ISSUE_TITLE        -- Issue title (optional)
-#   TRUSTED_AUTHOR_ASSOCIATIONS -- Comma-separated list of trusted associations (default: OWNER)
 
 set -euo pipefail
 

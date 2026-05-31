@@ -341,9 +341,12 @@ def check_auto_engineer(repo: Repository, config: dict) -> list[Action]:
                 )
             )
         else:
-            # No labeled issues — let Claude pick from all open issues
+            # No labeled issues — let Claude pick from trusted open issues
             all_issues = list(repo.get_issues(state="open"))
             all_issues = [i for i in all_issues if i.pull_request is None]
+            all_issues = [
+                i for i in all_issues if _is_trusted_author(i, trusted_associations)
+            ]
             if all_issues:
                 print("    No labeled issues — Claude will pick from open issues")
                 actions.append(

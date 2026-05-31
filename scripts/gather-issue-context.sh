@@ -3,6 +3,7 @@
 #
 # This script has GH_TOKEN but does NOT have ANTHROPIC_API_KEY.
 # It writes the final prompt to .blender-prompt for run-claude.sh.
+# Only includes comments from trusted author associations.
 #
 # Environment variables:
 #   ISSUE_NUMBER       -- Issue number (0 = let Claude pick) (required)
