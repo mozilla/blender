@@ -40,15 +40,11 @@ def _make_ae_pr(
     label.name = "blender:auto-engineer"
     pr.labels = [label]
 
-    if plan_only:
-        pr.get_commits.return_value = [
-            make_commit(f"BLEnder plan(#{issue_number}): initial plan", T_EARLY)
-        ]
-    else:
-        pr.get_commits.return_value = [
-            make_commit(f"BLEnder plan(#{issue_number}): initial plan", T_EARLY),
-            make_commit("feat: implement the thing", T_LATE),
-        ]
+    initial_plan_commit = make_commit(f"BLEnder plan(#{issue_number}): initial plan", T_EARLY)
+    pr_commits = [initial_plan_commit]
+    if not plan_only:
+        pr_commits += [make_commit("feat: implement the thing", T_LATE)]
+    pr.get_commits.return_value = pr_commits
 
     reviews = []
     if approved:
@@ -125,7 +121,11 @@ class TestLabeledIssue:
         assert actions[0].issue_number == 42
 
     def test_issue_with_existing_branch_skipped(self):
-        """Issue already has a branch → skip."""
+        """Issue already has a branch → skip new plan.
+
+        Follow-up work (implement, feedback) routes through the open PR
+        check above, not the issue/branch check.
+        """
         issue = make_issue(42, "Fix the widget", labels=["auto-engineer"])
         branch = make_branch("blender/auto-engineer/42-fix-the-widget")
         repo = _make_repo(labeled_issues=[issue], branches=[branch], all_issues=[])
@@ -153,7 +153,7 @@ class TestBugLabelPriority:
         assert len(actions) == 1
         assert actions[0].issue_number == 20
 
-    def test_no_bug_picks_first(self):
+    def test_no_bug_picks_newest(self):
         """No bug label → picks first (newest) issue."""
         old = make_issue(10, "Old issue", labels=["auto-engineer"])
         new = make_issue(20, "New issue", labels=["auto-engineer"])
