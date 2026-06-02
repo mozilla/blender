@@ -12,6 +12,7 @@ fix:
   dry_run: false
   max_claude_turns: 30
   max_budget_usd: 2.00
+  max_fix_attempts: 3
 
 investigate:
   enabled: true

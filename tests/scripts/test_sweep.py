@@ -55,7 +55,15 @@ def _make_pr(
     return pr, ci_status
 
 
-def _run_sweep(prs: list[tuple[MagicMock, str]]) -> list:
+DEFAULT_CONFIG = {
+    "fix": {"max_fix_attempts": 3},
+    "auto_engineer": {},
+}
+
+
+def _run_sweep(
+    prs: list[tuple[MagicMock, str]], config: dict | None = None
+) -> list:
     """Build a mock repo, patch check_pr_status, and run process_repo."""
     repo = MagicMock()
     repo.full_name = "owner/repo"
@@ -72,7 +80,13 @@ def _run_sweep(prs: list[tuple[MagicMock, str]]) -> list:
             return "fix"
         return None
 
-    with patch("scripts.sweep.check_pr_status", side_effect=mock_check_pr_status):
+    with (
+        patch("scripts.sweep.check_pr_status", side_effect=mock_check_pr_status),
+        patch(
+            "scripts.sweep.load_repo_config",
+            return_value=config or DEFAULT_CONFIG,
+        ),
+    ):
         return process_repo(repo)
 
 
@@ -133,8 +147,8 @@ class TestFixDispatch:
         )
         assert _run_sweep([(pr, status)]) == []
 
-    def test_stale_could_not_fix_dispatches(self):
-        """Stale 'could not fix' comment -> dispatch fix."""
+    def test_stale_could_not_fix_still_blocks(self):
+        """Stale 'could not fix' comment -> still blocks (permanent guard)."""
         pr, status = _make_pr(
             6,
             "failing",
@@ -147,9 +161,7 @@ class TestFixDispatch:
                 )
             ],
         )
-        actions = _run_sweep([(pr, status)])
-        assert len(actions) == 1
-        assert actions[0].action == "fix"
+        assert _run_sweep([(pr, status)]) == []
 
     def test_automerge_comment_does_not_block_fix(self):
         """'will not auto-merge' comment only -> dispatch fix."""
@@ -197,6 +209,70 @@ class TestFixDispatch:
             ],
         )
         assert _run_sweep([(pr, status)]) == []
+
+
+# --- Hard cap on fix attempts ---
+
+
+def _could_not_fix_comments(n: int) -> list:
+    """Build *n* 'could not fix' bot comments, alternating timestamps."""
+    timestamps = [T_EARLY, T_LATE]
+    return [
+        make_comment(
+            "BLEnder could not fix this PR automatically.",
+            "blender[bot]",
+            timestamps[i % len(timestamps)],
+        )
+        for i in range(n)
+    ]
+
+
+class TestFixAttemptCap:
+    def test_under_cap_dispatches(self):
+        """One 'could not fix' comment with max=3 -> still dispatches."""
+        pr, status = _make_pr(
+            40,
+            "failing",
+            comments=_could_not_fix_comments(1),
+        )
+        # One could-not-fix comment blocks due to permanent guard,
+        # but code-owner approval overrides it.  With cap=3 and only
+        # 1 attempt, the cap itself does not block.
+        pr.get_reviews.return_value = [make_review("some-codeowner")]
+        actions = _run_sweep([(pr, status)])
+        assert len(actions) == 1
+
+    def test_at_cap_blocks(self):
+        """Three 'could not fix' comments with max=3 -> blocked even with approval."""
+        pr, status = _make_pr(
+            41,
+            "failing",
+            comments=_could_not_fix_comments(3),
+            reviews=[make_review("some-codeowner")],
+        )
+        assert _run_sweep([(pr, status)]) == []
+
+    def test_fix_commits_count_toward_cap(self):
+        """BLEnder fix commit + 2 'could not fix' comments = 3 attempts -> blocked."""
+        pr, status = _make_pr(
+            42,
+            "failing",
+            blender_commit=True,
+            comments=_could_not_fix_comments(2),
+            reviews=[make_review("some-codeowner")],
+        )
+        assert _run_sweep([(pr, status)]) == []
+
+    def test_custom_cap_from_config(self):
+        """Repo can set a custom max_fix_attempts."""
+        pr, status = _make_pr(
+            43,
+            "failing",
+            comments=_could_not_fix_comments(1),
+            reviews=[make_review("some-codeowner")],
+        )
+        config = {"fix": {"max_fix_attempts": 1}, "auto_engineer": {}}
+        assert _run_sweep([(pr, status)], config=config) == []
 
 
 # --- CI-passing PRs (result == "automerge") ---
@@ -450,8 +526,8 @@ class TestCodeownerApprovalResetsFix:
         assert len(actions) == 1
         assert actions[0].action == "fix"
 
-    def test_codeowner_approval_overrides_fresh_fix_comment(self):
-        """Code owner approved + fresh 'could not fix' comment -> dispatch fix."""
+    def test_codeowner_approval_overrides_could_not_fix(self):
+        """Code owner approved + 'could not fix' comment -> dispatch fix."""
         pr, status = _make_pr(
             31,
             "failing",

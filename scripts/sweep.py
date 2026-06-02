@@ -390,6 +390,7 @@ def process_repo(
         print("    No .blender/blender.yml, skipping")
         return actions
 
+    repo_config = load_repo_config(repo)
     print("    Config found. Checking Dependabot PRs...")
     open_prs = list(repo.get_pulls(state="open"))
     dependabot_prs = [pr for pr in open_prs if pr.user.login == "dependabot[bot]"]
@@ -442,28 +443,59 @@ def process_repo(
                 print(f"    PR #{pr.number}: BLEnder already committed a fix, skipping")
                 continue
 
-            # Only skip if a bot fix-related comment was posted AFTER the
-            # latest commit.  Non-bot comments are ignored (login must
-            # end with "[bot]").  Stale comments (before a force-push) are
-            # also ignored so the fix can be retried on new code.
+            # "Could not fix" is a permanent block — once posted, the PR
+            # will not be retried unless a code owner approves.  Freshness
+            # no longer matters; Dependabot rebases don't clear this guard.
+            all_comments = list(pr.get_issue_comments())
+            could_not_fix = any(
+                c.user.login.endswith("[bot]")
+                and (c.body or "").startswith("BLEnder could not fix")
+                for c in all_comments
+            )
+            if could_not_fix and not codeowner_approved:
+                print(
+                    f"    PR #{pr.number}: BLEnder could not fix (permanent), skipping"
+                )
+                continue
+
+            # Hard cap: count total fix attempts (BLEnder fix commits +
+            # "could not fix" comments).  Prevents runaway LLM spend on
+            # PRs that keep failing.
+            fix_commit_count = sum(
+                1
+                for c in commits
+                if (c.commit.message or "").startswith("BLEnder fix(")
+            )
+            could_not_fix_count = sum(
+                1
+                for c in all_comments
+                if c.user.login.endswith("[bot]")
+                and (c.body or "").startswith("BLEnder could not fix")
+            )
+            total_fix_attempts = fix_commit_count + could_not_fix_count
+            max_attempts = repo_config.get("fix", {}).get("max_fix_attempts", 3)
+            if total_fix_attempts >= max_attempts:
+                print(
+                    f"    PR #{pr.number}: hit max fix attempts "
+                    f"({total_fix_attempts}/{max_attempts}), skipping"
+                )
+                continue
+
+            # Fresh "picked up" comment means a fix is already in progress.
             latest_commit_date = max(
                 (c.commit.committer.date for c in commits), default=None
             )
             if latest_commit_date is not None and not codeowner_approved:
-                fix_comments = [
-                    c
-                    for c in pr.get_issue_comments()
-                    if c.user.login.endswith("[bot]")
-                    and (
-                        (c.body or "").startswith("BLEnder picked up")
-                        or (c.body or "").startswith("BLEnder could not fix")
-                    )
-                ]
-                fresh_fix_comment = any(
-                    c.created_at >= latest_commit_date for c in fix_comments
+                picked_up = any(
+                    c.user.login.endswith("[bot]")
+                    and (c.body or "").startswith("BLEnder picked up")
+                    and c.created_at >= latest_commit_date
+                    for c in all_comments
                 )
-                if fresh_fix_comment:
-                    print(f"    PR #{pr.number}: fresh BLEnder fix comment, skipping")
+                if picked_up:
+                    print(
+                        f"    PR #{pr.number}: fresh BLEnder picked-up comment, skipping"
+                    )
                     continue
 
         print(f"    PR #{pr.number}: {result}")
@@ -485,10 +517,9 @@ def process_repo(
 
     # Check for auto-engineer work
     try:
-        config = load_repo_config(repo)
-        ae_actions = check_auto_engineer(repo, config)
+        ae_actions = check_auto_engineer(repo, repo_config)
         # Attach config settings that the workflow needs
-        ae_config = config.get("auto_engineer", {})
+        ae_config = repo_config.get("auto_engineer", {})
         for a in ae_actions:
             a.trusted_author_associations = ae_config.get(
                 "trusted_author_associations", "OWNER"
