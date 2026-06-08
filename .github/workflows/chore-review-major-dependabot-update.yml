@@ -166,7 +166,7 @@ jobs:
 
       - name: Gather PR context
         working-directory: target
-        run: ${{ github.workspace }}/scripts/gather-context.sh
+        run: python3 ${{ github.workspace }}/scripts/gather_context.py
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_NUMBER: ${{ inputs.pr_number }}
