@@ -123,6 +123,9 @@ def parse_job_log(raw_log: str) -> str:
     if not raw_log.strip():
         return ""
 
+    # GitHub Actions logs start with a UTF-8 BOM — strip it.
+    raw_log = raw_log.lstrip("\ufeff")
+
     # Split on group markers to get sections
     sections = re.split(r"^.*##\[group\]", raw_log, flags=re.MULTILINE)
 

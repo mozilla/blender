@@ -1,0 +1,754 @@
+﻿2026-05-27T03:49:28.5961994Z Current runner version: '2.334.0'
+2026-05-27T03:49:28.5986379Z ##[group]Runner Image Provisioner
+2026-05-27T03:49:28.5987282Z Hosted Compute Agent
+2026-05-27T03:49:28.5987985Z Version: 20260213.493
+2026-05-27T03:49:28.5988651Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+2026-05-27T03:49:28.5989368Z Build Date: 2026-02-13T00:28:41Z
+2026-05-27T03:49:28.5990140Z Worker ID: {669a7cd0-1799-4845-8367-0cf65229c509}
+2026-05-27T03:49:28.5990880Z Azure Region: westus
+2026-05-27T03:49:28.5991522Z ##[endgroup]
+2026-05-27T03:49:28.5993097Z ##[group]Operating System
+2026-05-27T03:49:28.5993762Z Ubuntu
+2026-05-27T03:49:28.5994304Z 24.04.4
+2026-05-27T03:49:28.5995208Z LTS
+2026-05-27T03:49:28.5995790Z ##[endgroup]
+2026-05-27T03:49:28.5996330Z ##[group]Runner Image
+2026-05-27T03:49:28.5997021Z Image: ubuntu-24.04
+2026-05-27T03:49:28.5997585Z Version: 20260518.149.1
+2026-05-27T03:49:28.5998829Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260518.149/images/ubuntu/Ubuntu2404-Readme.md
+2026-05-27T03:49:28.6000358Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260518.149
+2026-05-27T03:49:28.6001344Z ##[endgroup]
+2026-05-27T03:49:28.6004193Z ##[group]GITHUB_TOKEN Permissions
+2026-05-27T03:49:28.6006572Z Actions: read
+2026-05-27T03:49:28.6007164Z ArtifactMetadata: read
+2026-05-27T03:49:28.6007898Z Attestations: read
+2026-05-27T03:49:28.6008521Z Checks: read
+2026-05-27T03:49:28.6009030Z CodeQuality: read
+2026-05-27T03:49:28.6009667Z Contents: read
+2026-05-27T03:49:28.6010332Z Deployments: read
+2026-05-27T03:49:28.6010926Z Discussions: read
+2026-05-27T03:49:28.6011519Z Issues: read
+2026-05-27T03:49:28.6012115Z Metadata: read
+2026-05-27T03:49:28.6012633Z Models: read
+2026-05-27T03:49:28.6013227Z Packages: read
+2026-05-27T03:49:28.6013894Z Pages: read
+2026-05-27T03:49:28.6014415Z PullRequests: read
+2026-05-27T03:49:28.6015317Z RepositoryProjects: read
+2026-05-27T03:49:28.6015924Z SecurityEvents: read
+2026-05-27T03:49:28.6016562Z Statuses: read
+2026-05-27T03:49:28.6017144Z VulnerabilityAlerts: read
+2026-05-27T03:49:28.6017789Z ##[endgroup]
+2026-05-27T03:49:28.6020068Z Secret source: Dependabot
+2026-05-27T03:49:28.6020960Z Prepare workflow directory
+2026-05-27T03:49:28.6629405Z The service 'postgres' will not be started because the container definition has an empty image.
+2026-05-27T03:49:28.6659074Z Prepare all required actions
+2026-05-27T03:49:28.6697306Z Getting action download info
+2026-05-27T03:49:29.2076683Z Download action repository 'actions/checkout@v6' (SHA:de0fac2e4500dabe0009e67214ff5f5447ce83dd)
+2026-05-27T03:49:29.3932305Z Download action repository 'actions/setup-python@v6' (SHA:a309ff8b426b58ec0e2a45f0f869d46889d02405)
+2026-05-27T03:49:29.4671206Z Download action repository 'actions/upload-artifact@v7' (SHA:043fb46d1a93c77aae656e7c1c64a875d1fc6a0a)
+2026-05-27T03:49:29.7111393Z Complete job name: Glean parser check
+2026-05-27T03:49:29.7967307Z ##[group]Run actions/checkout@v6
+2026-05-27T03:49:29.7968433Z with:
+2026-05-27T03:49:29.7969060Z   submodules: recursive
+2026-05-27T03:49:29.7969808Z   repository: mozilla/fx-private-relay
+2026-05-27T03:49:29.7970844Z   token: ***
+2026-05-27T03:49:29.7971453Z   ssh-strict: true
+2026-05-27T03:49:29.7972069Z   ssh-user: git
+2026-05-27T03:49:29.7972695Z   persist-credentials: true
+2026-05-27T03:49:29.7973396Z   clean: true
+2026-05-27T03:49:29.7974027Z   sparse-checkout-cone-mode: true
+2026-05-27T03:49:29.7974977Z   fetch-depth: 1
+2026-05-27T03:49:29.7975616Z   fetch-tags: false
+2026-05-27T03:49:29.7976243Z   show-progress: true
+2026-05-27T03:49:29.7976891Z   lfs: false
+2026-05-27T03:49:29.7977503Z   set-safe-directory: true
+2026-05-27T03:49:29.7978844Z ##[endgroup]
+2026-05-27T03:49:29.9038378Z Syncing repository: mozilla/fx-private-relay
+2026-05-27T03:49:29.9041222Z ##[group]Getting Git version info
+2026-05-27T03:49:29.9042496Z Working directory is '/home/runner/work/fx-private-relay/fx-private-relay'
+2026-05-27T03:49:29.9044030Z [command]/usr/bin/git version
+2026-05-27T03:49:29.9111772Z git version 2.54.0
+2026-05-27T03:49:29.9138322Z ##[endgroup]
+2026-05-27T03:49:29.9155129Z Temporarily overriding HOME='/home/runner/work/_temp/b47fdf02-9447-4f97-936f-0dbe2523eac1' before making global git config changes
+2026-05-27T03:49:29.9158382Z Adding repository directory to the temporary git global config as a safe directory
+2026-05-27T03:49:29.9161535Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/fx-private-relay/fx-private-relay
+2026-05-27T03:49:29.9215363Z Deleting the contents of '/home/runner/work/fx-private-relay/fx-private-relay'
+2026-05-27T03:49:29.9219340Z ##[group]Initializing the repository
+2026-05-27T03:49:29.9225305Z [command]/usr/bin/git init /home/runner/work/fx-private-relay/fx-private-relay
+2026-05-27T03:49:29.9345282Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-05-27T03:49:29.9347002Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-05-27T03:49:29.9348292Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-05-27T03:49:29.9349351Z hint: call:
+2026-05-27T03:49:29.9350039Z hint:
+2026-05-27T03:49:29.9350773Z hint: 	git config --global init.defaultBranch <name>
+2026-05-27T03:49:29.9351934Z hint:
+2026-05-27T03:49:29.9353107Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-05-27T03:49:29.9355296Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-05-27T03:49:29.9357136Z hint:
+2026-05-27T03:49:29.9358191Z hint: 	git branch -m <name>
+2026-05-27T03:49:29.9359365Z hint:
+2026-05-27T03:49:29.9360853Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-05-27T03:49:29.9363396Z Initialized empty Git repository in /home/runner/work/fx-private-relay/fx-private-relay/.git/
+2026-05-27T03:49:29.9368088Z [command]/usr/bin/git remote add origin https://github.com/mozilla/fx-private-relay
+2026-05-27T03:49:29.9415027Z ##[endgroup]
+2026-05-27T03:49:29.9416839Z ##[group]Disabling automatic garbage collection
+2026-05-27T03:49:29.9418711Z [command]/usr/bin/git config --local gc.auto 0
+2026-05-27T03:49:29.9450365Z ##[endgroup]
+2026-05-27T03:49:29.9452120Z ##[group]Setting up auth
+2026-05-27T03:49:29.9453429Z Removing SSH command configuration
+2026-05-27T03:49:29.9458894Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-05-27T03:49:29.9495206Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-05-27T03:49:29.9858228Z Removing HTTP extra header
+2026-05-27T03:49:29.9864491Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-05-27T03:49:29.9896098Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-05-27T03:49:30.0112124Z Removing includeIf entries pointing to credentials config files
+2026-05-27T03:49:30.0117772Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-27T03:49:30.0149263Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-05-27T03:49:30.0378008Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-05-27T03:49:30.0419460Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git.path /home/runner/work/_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:49:30.0452509Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:49:30.0489115Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:49:30.0521802Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:49:30.0559132Z ##[endgroup]
+2026-05-27T03:49:30.0560978Z ##[group]Fetching the repository
+2026-05-27T03:49:30.0570069Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +2cfc36fa8f72c9656c7dad55efd99221b7c34c5c:refs/remotes/pull/6590/merge
+2026-05-27T03:49:31.1134279Z From https://github.com/mozilla/fx-private-relay
+2026-05-27T03:49:31.1136365Z  * [new ref]         2cfc36fa8f72c9656c7dad55efd99221b7c34c5c -> pull/6590/merge
+2026-05-27T03:49:31.1178134Z ##[endgroup]
+2026-05-27T03:49:31.1179342Z ##[group]Determining the checkout info
+2026-05-27T03:49:31.1180706Z ##[endgroup]
+2026-05-27T03:49:31.1184847Z [command]/usr/bin/git sparse-checkout disable
+2026-05-27T03:49:31.1231808Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-05-27T03:49:31.1260549Z ##[group]Checking out the ref
+2026-05-27T03:49:31.1264124Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/6590/merge
+2026-05-27T03:49:31.2676652Z Note: switching to 'refs/remotes/pull/6590/merge'.
+2026-05-27T03:49:31.2678026Z 
+2026-05-27T03:49:31.2678977Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-05-27T03:49:31.2681220Z changes and commit them, and you can discard any commits you make in this
+2026-05-27T03:49:31.2683567Z state without impacting any branches by switching back to a branch.
+2026-05-27T03:49:31.2685113Z 
+2026-05-27T03:49:31.2685904Z If you want to create a new branch to retain commits you create, you may
+2026-05-27T03:49:31.2687870Z do so (now or later) by using -c with the switch command. Example:
+2026-05-27T03:49:31.2689139Z 
+2026-05-27T03:49:31.2689538Z   git switch -c <new-branch-name>
+2026-05-27T03:49:31.2690349Z 
+2026-05-27T03:49:31.2690684Z Or undo this operation with:
+2026-05-27T03:49:31.2691291Z 
+2026-05-27T03:49:31.2691486Z   git switch -
+2026-05-27T03:49:31.2691851Z 
+2026-05-27T03:49:31.2692528Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-05-27T03:49:31.2693611Z 
+2026-05-27T03:49:31.2695479Z HEAD is now at 2cfc36f Merge 0c2f52c437d832f7b1ad031d6a7885ef7aded366 into fa25bc5aa7a1914059e11889bffcbe344ef7bf96
+2026-05-27T03:49:31.2699089Z ##[endgroup]
+2026-05-27T03:49:31.2700080Z ##[group]Setting up auth for fetching submodules
+2026-05-27T03:49:31.2704315Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-05-27T03:49:31.2745876Z [command]/usr/bin/git config --global include.path /home/runner/work/_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:49:31.2777292Z [command]/usr/bin/git config --global --unset-all url.https://github.com/.insteadOf
+2026-05-27T03:49:31.2808869Z [command]/usr/bin/git config --global --add url.https://github.com/.insteadOf git@github.com:
+2026-05-27T03:49:31.2842236Z [command]/usr/bin/git config --global --add url.https://github.com/.insteadOf org-131524@github.com:
+2026-05-27T03:49:31.2871427Z ##[endgroup]
+2026-05-27T03:49:31.2872822Z ##[group]Fetching submodules
+2026-05-27T03:49:31.2876152Z [command]/usr/bin/git submodule sync --recursive
+2026-05-27T03:49:31.3110183Z [command]/usr/bin/git -c protocol.version=2 submodule update --init --force --depth=1 --recursive
+2026-05-27T03:49:31.3334118Z Submodule 'privaterelay/locales' (https://github.com/mozilla-l10n/fx-private-relay-l10n.git) registered for path 'privaterelay/locales'
+2026-05-27T03:49:31.3359384Z Cloning into '/home/runner/work/fx-private-relay/fx-private-relay/privaterelay/locales'...
+2026-05-27T03:49:33.4071987Z From https://github.com/mozilla-l10n/fx-private-relay-l10n
+2026-05-27T03:49:33.4073617Z  * branch            3bcea0b185a0a418fc165a39dd03b2e6620b2ccb -> FETCH_HEAD
+2026-05-27T03:49:33.4338721Z Submodule path 'privaterelay/locales': checked out '3bcea0b185a0a418fc165a39dd03b2e6620b2ccb'
+2026-05-27T03:49:33.4371872Z [command]/usr/bin/git submodule foreach --recursive git config --local gc.auto 0
+2026-05-27T03:49:33.4587130Z Entering 'privaterelay/locales'
+2026-05-27T03:49:33.4638710Z ##[endgroup]
+2026-05-27T03:49:33.4639142Z ##[group]Persisting credentials for submodules
+2026-05-27T03:49:33.4646385Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'url\.https\:\/\/github\.com\/\.insteadOf' && git config --local --unset-all 'url.https://github.com/.insteadOf' || :"
+2026-05-27T03:49:33.4861217Z Entering 'privaterelay/locales'
+2026-05-27T03:49:33.4920509Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-05-27T03:49:33.5135787Z Entering 'privaterelay/locales'
+2026-05-27T03:49:33.5156559Z file:/home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales/config	remote.origin.url
+2026-05-27T03:49:33.5189655Z [command]/usr/bin/git config --file /home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales/config includeIf.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales.path /home/runner/work/_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:49:33.5223282Z [command]/usr/bin/git config --file /home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales/config includeIf.gitdir:/github/workspace/.git/modules/privaterelay/locales.path /github/runner_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:49:33.5255362Z [command]/usr/bin/git submodule foreach --recursive git config --local --add 'url.https://github.com/.insteadOf' 'git@github.com:'
+2026-05-27T03:49:33.5469463Z Entering 'privaterelay/locales'
+2026-05-27T03:49:33.5519768Z [command]/usr/bin/git submodule foreach --recursive git config --local --add 'url.https://github.com/.insteadOf' 'org-131524@github.com:'
+2026-05-27T03:49:33.5738516Z Entering 'privaterelay/locales'
+2026-05-27T03:49:33.5785529Z ##[endgroup]
+2026-05-27T03:49:33.5833066Z [command]/usr/bin/git log -1 --format=%H
+2026-05-27T03:49:33.5858009Z 2cfc36fa8f72c9656c7dad55efd99221b7c34c5c
+2026-05-27T03:49:33.6097181Z ##[group]Run actions/setup-python@v6
+2026-05-27T03:49:33.6097477Z with:
+2026-05-27T03:49:33.6097662Z   python-version: 3.11.8
+2026-05-27T03:49:33.6097873Z   cache: pip
+2026-05-27T03:49:33.6098070Z   check-latest: false
+2026-05-27T03:49:33.6098405Z   token: ***
+2026-05-27T03:49:33.6098601Z   update-environment: true
+2026-05-27T03:49:33.6098843Z   allow-prereleases: false
+2026-05-27T03:49:33.6099084Z   freethreaded: false
+2026-05-27T03:49:33.6099319Z ##[endgroup]
+2026-05-27T03:49:33.7383983Z ##[group]Installed versions
+2026-05-27T03:49:33.7407911Z Version 3.11.8 was not found in the local cache
+2026-05-27T03:49:34.4738665Z Version 3.11.8 is available for downloading
+2026-05-27T03:49:34.4740305Z Download from "https://github.com/actions/python-versions/releases/download/3.11.8-11113201752/python-3.11.8-linux-24.04-x64.tar.gz"
+2026-05-27T03:49:35.2395396Z Extract downloaded archive
+2026-05-27T03:49:35.2524509Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/9067b1ee-4c5d-4692-bae0-1b48c7f7489f -f /home/runner/work/_temp/8859d5c8-9000-4ed8-92f0-46bd10160d2c
+2026-05-27T03:49:37.2449940Z Execute installation script
+2026-05-27T03:49:37.2556609Z Check if Python hostedtoolcache folder exist...
+2026-05-27T03:49:37.2557444Z Create Python 3.11.8 folder
+2026-05-27T03:49:37.2569586Z Copy Python binaries to hostedtoolcache folder
+2026-05-27T03:49:37.7558431Z Create additional symlinks (Required for the UsePythonVersion Azure Pipelines task and the setup-python GitHub Action)
+2026-05-27T03:49:37.7599602Z Upgrading pip...
+2026-05-27T03:49:40.0340253Z Looking in links: /tmp/tmpxeo82adn
+2026-05-27T03:49:40.0351347Z Requirement already satisfied: setuptools in /opt/hostedtoolcache/Python/3.11.8/x64/lib/python3.11/site-packages (65.5.0)
+2026-05-27T03:49:40.0360515Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.11.8/x64/lib/python3.11/site-packages (24.0)
+2026-05-27T03:49:41.2287364Z Collecting pip
+2026-05-27T03:49:41.3164285Z Downloading pip-26.1.1-py3-none-any.whl.metadata (4.6 kB)
+2026-05-27T03:49:41.3427524Z Downloading pip-26.1.1-py3-none-any.whl (1.8 MB)
+2026-05-27T03:49:41.4881080Z ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 12.8 MB/s eta 0:00:00
+2026-05-27T03:49:41.4881437Z 
+2026-05-27T03:49:41.5315329Z Installing collected packages: pip
+2026-05-27T03:49:41.5316437Z Attempting uninstall: pip
+2026-05-27T03:49:41.5338240Z Found existing installation: pip 24.0
+2026-05-27T03:49:41.5746432Z Uninstalling pip-24.0:
+2026-05-27T03:49:41.5807090Z Successfully uninstalled pip-24.0
+2026-05-27T03:49:42.4218922Z Successfully installed pip-26.1.1
+2026-05-27T03:49:42.4867939Z Create complete file
+2026-05-27T03:49:42.4907416Z Successfully set up CPython (3.11.8)
+2026-05-27T03:49:42.4910180Z ##[endgroup]
+2026-05-27T03:49:42.6786703Z [command]/opt/hostedtoolcache/Python/3.11.8/x64/bin/pip cache dir
+2026-05-27T03:49:42.8448474Z /home/runner/.cache/pip
+2026-05-27T03:49:43.1156156Z Cache hit for restore-key: setup-python-Linux-x64-24.04-Ubuntu-python-3.11.8-pip-d2e1c5628385bf3e7c2cbd6362923a1e81bb64fbbe49234cc9b5ea3febb6d314
+2026-05-27T03:49:44.4108272Z Received 0 of 210470103 (0.0%), 0.0 MBs/sec
+2026-05-27T03:49:45.4136078Z Received 121634816 of 210470103 (57.8%), 57.9 MBs/sec
+2026-05-27T03:49:46.1595905Z Received 210470103 of 210470103 (100.0%), 73.0 MBs/sec
+2026-05-27T03:49:46.1597795Z Cache Size: ~201 MB (210470103 B)
+2026-05-27T03:49:46.1641602Z [command]/usr/bin/tar -xf /home/runner/work/_temp/c0cb6fe3-e11d-4730-a44d-ce2374e97d28/cache.tzst -P -C /home/runner/work/fx-private-relay/fx-private-relay --use-compress-program unzstd
+2026-05-27T03:49:46.5400316Z Cache restored successfully
+2026-05-27T03:49:46.5498155Z Cache restored from key: setup-python-Linux-x64-24.04-Ubuntu-python-3.11.8-pip-d2e1c5628385bf3e7c2cbd6362923a1e81bb64fbbe49234cc9b5ea3febb6d314
+2026-05-27T03:49:46.5684038Z ##[group]Run python -m pip install --upgrade pip
+2026-05-27T03:49:46.5684495Z [36;1mpython -m pip install --upgrade pip[0m
+2026-05-27T03:49:46.5685123Z [36;1mpip install -r requirements.txt[0m
+2026-05-27T03:49:46.5731611Z shell: /usr/bin/bash -e {0}
+2026-05-27T03:49:46.5731855Z env:
+2026-05-27T03:49:46.5732108Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:49:46.5732526Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.8/x64/lib/pkgconfig
+2026-05-27T03:49:46.5732943Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:49:46.5733311Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:49:46.5733674Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:49:46.5734063Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.8/x64/lib
+2026-05-27T03:49:46.5734355Z ##[endgroup]
+2026-05-27T03:49:46.8783207Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.11.8/x64/lib/python3.11/site-packages (26.1.1)
+2026-05-27T03:49:47.6554873Z Collecting boto3==1.43.6 (from -r requirements.txt (line 1))
+2026-05-27T03:49:47.6573210Z   Using cached boto3-1.43.6-py3-none-any.whl.metadata (6.5 kB)
+2026-05-27T03:49:47.6687940Z Collecting codetiming==1.4.0 (from -r requirements.txt (line 2))
+2026-05-27T03:49:47.6703371Z   Using cached codetiming-1.4.0-py3-none-any.whl.metadata (7.7 kB)
+2026-05-27T03:49:47.8190749Z Collecting cryptography==48.0.0 (from -r requirements.txt (line 3))
+2026-05-27T03:49:47.8207281Z   Using cached cryptography-48.0.0-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (4.3 kB)
+2026-05-27T03:49:47.8568322Z Collecting Django==5.2.14 (from -r requirements.txt (line 4))
+2026-05-27T03:49:47.8773526Z   Using cached django-5.2.14-py3-none-any.whl.metadata (4.1 kB)
+2026-05-27T03:49:47.8878489Z Collecting dj-database-url==3.1.2 (from -r requirements.txt (line 5))
+2026-05-27T03:49:47.8892786Z   Using cached dj_database_url-3.1.2-py3-none-any.whl.metadata (13 kB)
+2026-05-27T03:49:47.9030401Z Collecting django-allauth==65.16.1 (from django-allauth[socialaccount]==65.16.1->-r requirements.txt (line 6))
+2026-05-27T03:49:47.9046713Z   Using cached django_allauth-65.16.1-py3-none-any.whl.metadata (9.2 kB)
+2026-05-27T03:49:47.9190499Z Collecting django-cors-headers==4.9.0 (from -r requirements.txt (line 7))
+2026-05-27T03:49:47.9204757Z   Using cached django_cors_headers-4.9.0-py3-none-any.whl.metadata (16 kB)
+2026-05-27T03:49:47.9307242Z Collecting django-csp==4.0 (from -r requirements.txt (line 8))
+2026-05-27T03:49:47.9321556Z   Using cached django_csp-4.0-py3-none-any.whl.metadata (3.6 kB)
+2026-05-27T03:49:47.9473634Z Collecting django-debug-toolbar==6.3.0 (from -r requirements.txt (line 9))
+2026-05-27T03:49:47.9489821Z   Using cached django_debug_toolbar-6.3.0-py3-none-any.whl.metadata (4.5 kB)
+2026-05-27T03:49:47.9601203Z Collecting django-filter==25.2 (from -r requirements.txt (line 10))
+2026-05-27T03:49:47.9615390Z   Using cached django_filter-25.2-py3-none-any.whl.metadata (5.1 kB)
+2026-05-27T03:49:47.9721015Z Collecting django-ipware==7.0.1 (from -r requirements.txt (line 11))
+2026-05-27T03:49:47.9735271Z   Using cached django_ipware-7.0.1-py2.py3-none-any.whl.metadata (9.1 kB)
+2026-05-27T03:49:47.9815857Z Collecting python-ipware==3.0.0 (from -r requirements.txt (line 12))
+2026-05-27T03:49:47.9830780Z   Using cached python_ipware-3.0.0-py3-none-any.whl.metadata (15 kB)
+2026-05-27T03:49:47.9956514Z Collecting django-redis==6.0.0 (from -r requirements.txt (line 13))
+2026-05-27T03:49:47.9971806Z   Using cached django_redis-6.0.0-py3-none-any.whl.metadata (32 kB)
+2026-05-27T03:49:48.0071341Z Collecting django-ftl==0.14 (from -r requirements.txt (line 14))
+2026-05-27T03:49:48.0085339Z   Using cached django_ftl-0.14-py3-none-any.whl.metadata (6.0 kB)
+2026-05-27T03:49:48.0167327Z Collecting django-referrer-policy==1.0 (from -r requirements.txt (line 15))
+2026-05-27T03:49:48.0168496Z   Using cached django_referrer_policy-1.0-py2.py3-none-any.whl
+2026-05-27T03:49:48.0341624Z Collecting djangorestframework==3.17.1 (from -r requirements.txt (line 16))
+2026-05-27T03:49:48.0355636Z   Using cached djangorestframework-3.17.1-py3-none-any.whl.metadata (7.9 kB)
+2026-05-27T03:49:48.0472785Z Collecting django-waffle==5.0.0 (from -r requirements.txt (line 17))
+2026-05-27T03:49:48.0486753Z   Using cached django_waffle-5.0.0-py3-none-any.whl.metadata (2.4 kB)
+2026-05-27T03:49:48.0589134Z Collecting dockerflow==2026.3.4 (from -r requirements.txt (line 18))
+2026-05-27T03:49:48.0604355Z   Using cached dockerflow-2026.3.4-py2.py3-none-any.whl.metadata (3.4 kB)
+2026-05-27T03:49:48.0749393Z Collecting drf-spectacular==0.29.0 (from -r requirements.txt (line 19))
+2026-05-27T03:49:48.0763273Z   Using cached drf_spectacular-0.29.0-py3-none-any.whl.metadata (14 kB)
+2026-05-27T03:49:48.0896752Z Collecting drf-spectacular-sidecar==2026.5.1 (from -r requirements.txt (line 20))
+2026-05-27T03:49:48.0910888Z   Using cached drf_spectacular_sidecar-2026.5.1-py3-none-any.whl.metadata (3.6 kB)
+2026-05-27T03:49:48.1143998Z Collecting glean_parser==19.1.0 (from -r requirements.txt (line 21))
+2026-05-27T03:49:48.2199055Z   Downloading glean_parser-19.1.0-py3-none-any.whl.metadata (3.2 kB)
+2026-05-27T03:49:48.2313330Z Collecting google-cloud-profiler==4.1.0 (from -r requirements.txt (line 22))
+2026-05-27T03:49:48.2314365Z   Using cached google_cloud_profiler-4.1.0-cp311-cp311-linux_x86_64.whl
+2026-05-27T03:49:48.2430655Z Collecting gunicorn==26.0.0 (from -r requirements.txt (line 23))
+2026-05-27T03:49:48.2446912Z   Using cached gunicorn-26.0.0-py3-none-any.whl.metadata (5.4 kB)
+2026-05-27T03:49:48.2563020Z Collecting jwcrypto==1.5.7 (from -r requirements.txt (line 24))
+2026-05-27T03:49:48.2576830Z   Using cached jwcrypto-1.5.7-py3-none-any.whl.metadata (3.3 kB)
+2026-05-27T03:49:48.2680368Z Collecting kinto-http==11.9.0 (from -r requirements.txt (line 25))
+2026-05-27T03:49:48.2694293Z   Using cached kinto_http-11.9.0-py3-none-any.whl.metadata (19 kB)
+2026-05-27T03:49:48.3464158Z Collecting markus==5.2.0 (from markus[datadog]==5.2.0->-r requirements.txt (line 26))
+2026-05-27T03:49:48.3478879Z   Using cached markus-5.2.0-py3-none-any.whl.metadata (5.2 kB)
+2026-05-27T03:49:48.3602164Z Collecting psycopg==3.3.4 (from psycopg[c]==3.3.4->-r requirements.txt (line 27))
+2026-05-27T03:49:48.3616379Z   Using cached psycopg-3.3.4-py3-none-any.whl.metadata (4.3 kB)
+2026-05-27T03:49:48.3762144Z Collecting PyJWT==2.12.1 (from -r requirements.txt (line 28))
+2026-05-27T03:49:48.3776068Z   Using cached pyjwt-2.12.1-py3-none-any.whl.metadata (4.1 kB)
+2026-05-27T03:49:48.3871783Z Collecting python-decouple==3.8 (from -r requirements.txt (line 29))
+2026-05-27T03:49:48.3885275Z   Using cached python_decouple-3.8-py3-none-any.whl.metadata (14 kB)
+2026-05-27T03:49:48.4046158Z Collecting requests==2.34.0 (from -r requirements.txt (line 30))
+2026-05-27T03:49:48.4060556Z   Using cached requests-2.34.0-py3-none-any.whl.metadata (4.8 kB)
+2026-05-27T03:49:48.4152125Z Collecting requests-oauthlib==2.0.0 (from -r requirements.txt (line 31))
+2026-05-27T03:49:48.4165474Z   Using cached requests_oauthlib-2.0.0-py2.py3-none-any.whl.metadata (11 kB)
+2026-05-27T03:49:48.4501701Z Collecting sentry-sdk==2.59.0 (from -r requirements.txt (line 32))
+2026-05-27T03:49:48.4517655Z   Using cached sentry_sdk-2.59.0-py2.py3-none-any.whl.metadata (10 kB)
+2026-05-27T03:49:48.4745834Z Collecting whitenoise==6.12.0 (from -r requirements.txt (line 33))
+2026-05-27T03:49:48.4761456Z   Using cached whitenoise-6.12.0-py3-none-any.whl.metadata (3.7 kB)
+2026-05-27T03:49:48.5055577Z Collecting phonenumbers==9.0.30 (from -r requirements.txt (line 36))
+2026-05-27T03:49:48.5071474Z   Using cached phonenumbers-9.0.30-py2.py3-none-any.whl.metadata (10 kB)
+2026-05-27T03:49:48.5375986Z Collecting twilio==9.10.9 (from -r requirements.txt (line 37))
+2026-05-27T03:49:48.5395971Z   Using cached twilio-9.10.9-py2.py3-none-any.whl.metadata (13 kB)
+2026-05-27T03:49:48.5483463Z Collecting vobject==0.9.9 (from -r requirements.txt (line 38))
+2026-05-27T03:49:48.5498339Z   Using cached vobject-0.9.9-py2.py3-none-any.whl.metadata (1.8 kB)
+2026-05-27T03:49:48.9162063Z Collecting coverage==7.14.0 (from -r requirements.txt (line 41))
+2026-05-27T03:49:48.9177570Z   Using cached coverage-7.14.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (8.5 kB)
+2026-05-27T03:49:48.9299700Z Collecting model-bakery==1.23.4 (from -r requirements.txt (line 42))
+2026-05-27T03:49:48.9313471Z   Using cached model_bakery-1.23.4-py3-none-any.whl.metadata (4.5 kB)
+2026-05-27T03:49:48.9453832Z Collecting pytest-cov==7.1.0 (from -r requirements.txt (line 43))
+2026-05-27T03:49:48.9467921Z   Using cached pytest_cov-7.1.0-py3-none-any.whl.metadata (32 kB)
+2026-05-27T03:49:48.9591391Z Collecting pytest-django==4.12.0 (from -r requirements.txt (line 44))
+2026-05-27T03:49:48.9605002Z   Using cached pytest_django-4.12.0-py3-none-any.whl.metadata (8.0 kB)
+2026-05-27T03:49:48.9732676Z Collecting responses==0.26.0 (from -r requirements.txt (line 45))
+2026-05-27T03:49:48.9746788Z   Using cached responses-0.26.0-py3-none-any.whl.metadata (48 kB)
+2026-05-27T03:49:49.0228322Z Collecting black==26.3.1 (from -r requirements.txt (line 48))
+2026-05-27T03:49:49.0243637Z   Using cached black-26.3.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (91 kB)
+2026-05-27T03:49:49.3536483Z Collecting ruff==0.15.12 (from -r requirements.txt (line 49))
+2026-05-27T03:49:49.3551995Z   Using cached ruff-0.15.12-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (26 kB)
+2026-05-27T03:49:49.4889125Z Collecting boto3-stubs==1.43.6 (from -r requirements.txt (line 52))
+2026-05-27T03:49:49.4904582Z   Using cached boto3_stubs-1.43.6-py3-none-any.whl.metadata (155 kB)
+2026-05-27T03:49:50.0526309Z Collecting botocore-stubs==1.42.41 (from -r requirements.txt (line 53))
+2026-05-27T03:49:50.0543561Z   Using cached botocore_stubs-1.42.41-py3-none-any.whl.metadata (3.4 kB)
+2026-05-27T03:49:50.1115153Z Collecting mypy-boto3-s3==1.43.5 (from -r requirements.txt (line 54))
+2026-05-27T03:49:50.1130173Z   Using cached mypy_boto3_s3-1.43.5-py3-none-any.whl.metadata (19 kB)
+2026-05-27T03:49:50.1291165Z Collecting django-stubs==6.0.4 (from -r requirements.txt (line 55))
+2026-05-27T03:49:50.1305315Z   Using cached django_stubs-6.0.4-py3-none-any.whl.metadata (22 kB)
+2026-05-27T03:49:50.1436010Z Collecting djangorestframework-stubs==3.16.9 (from -r requirements.txt (line 56))
+2026-05-27T03:49:50.1450212Z   Using cached djangorestframework_stubs-3.16.9-py3-none-any.whl.metadata (3.9 kB)
+2026-05-27T03:49:50.1938188Z Collecting mypy-boto3-ses==1.43.0 (from -r requirements.txt (line 57))
+2026-05-27T03:49:50.1953352Z   Using cached mypy_boto3_ses-1.43.0-py3-none-any.whl.metadata (15 kB)
+2026-05-27T03:49:50.2457803Z Collecting mypy-boto3-sns==1.43.0 (from -r requirements.txt (line 58))
+2026-05-27T03:49:50.2473172Z   Using cached mypy_boto3_sns-1.43.0-py3-none-any.whl.metadata (17 kB)
+2026-05-27T03:49:50.2978201Z Collecting mypy-boto3-sqs==1.43.0 (from -r requirements.txt (line 59))
+2026-05-27T03:49:50.2993082Z   Using cached mypy_boto3_sqs-1.43.0-py3-none-any.whl.metadata (16 kB)
+2026-05-27T03:49:50.4568034Z Collecting mypy==2.1.0 (from -r requirements.txt (line 60))
+2026-05-27T03:49:50.4583755Z   Using cached mypy-2.1.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.3 kB)
+2026-05-27T03:49:50.4762891Z Collecting types-requests==2.33.0.20260508 (from -r requirements.txt (line 61))
+2026-05-27T03:49:50.4776703Z   Using cached types_requests-2.33.0.20260508-py3-none-any.whl.metadata (2.0 kB)
+2026-05-27T03:49:50.6726496Z Collecting botocore<1.44.0,>=1.43.6 (from boto3==1.43.6->-r requirements.txt (line 1))
+2026-05-27T03:49:50.6941566Z   Downloading botocore-1.43.15-py3-none-any.whl.metadata (5.6 kB)
+2026-05-27T03:49:50.7060577Z Collecting jmespath<2.0.0,>=0.7.1 (from boto3==1.43.6->-r requirements.txt (line 1))
+2026-05-27T03:49:50.7074669Z   Using cached jmespath-1.1.0-py3-none-any.whl.metadata (7.6 kB)
+2026-05-27T03:49:50.7207700Z Collecting s3transfer<0.18.0,>=0.17.0 (from boto3==1.43.6->-r requirements.txt (line 1))
+2026-05-27T03:49:50.7429634Z   Downloading s3transfer-0.17.1-py3-none-any.whl.metadata (1.7 kB)
+2026-05-27T03:49:50.9121266Z Collecting cffi>=2.0.0 (from cryptography==48.0.0->-r requirements.txt (line 3))
+2026-05-27T03:49:50.9137526Z   Using cached cffi-2.0.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.6 kB)
+2026-05-27T03:49:50.9264546Z Collecting asgiref>=3.8.1 (from Django==5.2.14->-r requirements.txt (line 4))
+2026-05-27T03:49:50.9279972Z   Using cached asgiref-3.11.1-py3-none-any.whl.metadata (9.3 kB)
+2026-05-27T03:49:50.9372699Z Collecting sqlparse>=0.3.1 (from Django==5.2.14->-r requirements.txt (line 4))
+2026-05-27T03:49:50.9388165Z   Using cached sqlparse-0.5.5-py3-none-any.whl.metadata (4.7 kB)
+2026-05-27T03:49:50.9589483Z Collecting packaging (from django-csp==4.0->-r requirements.txt (line 8))
+2026-05-27T03:49:50.9605067Z   Using cached packaging-26.2-py3-none-any.whl.metadata (3.5 kB)
+2026-05-27T03:49:50.9899418Z Collecting redis>=4.0.2 (from django-redis==6.0.0->-r requirements.txt (line 13))
+2026-05-27T03:49:50.9914517Z   Using cached redis-7.4.0-py3-none-any.whl.metadata (12 kB)
+2026-05-27T03:49:51.0029393Z Collecting fluent-compiler>=0.4 (from django-ftl==0.14->-r requirements.txt (line 14))
+2026-05-27T03:49:51.0042631Z   Using cached fluent_compiler-1.1-py3-none-any.whl.metadata (5.6 kB)
+2026-05-27T03:49:51.0217533Z Collecting uritemplate>=2.0.0 (from drf-spectacular==0.29.0->-r requirements.txt (line 19))
+2026-05-27T03:49:51.0231536Z   Using cached uritemplate-4.2.0-py3-none-any.whl.metadata (2.6 kB)
+2026-05-27T03:49:51.0535088Z Collecting PyYAML>=5.1 (from drf-spectacular==0.29.0->-r requirements.txt (line 19))
+2026-05-27T03:49:51.0551711Z   Using cached pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2026-05-27T03:49:51.0735445Z Collecting jsonschema>=2.6.0 (from drf-spectacular==0.29.0->-r requirements.txt (line 19))
+2026-05-27T03:49:51.0750268Z   Using cached jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+2026-05-27T03:49:51.0836532Z Collecting inflection>=0.3.1 (from drf-spectacular==0.29.0->-r requirements.txt (line 19))
+2026-05-27T03:49:51.0850885Z   Using cached inflection-0.5.1-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-05-27T03:49:51.0998046Z Collecting click>=7 (from glean_parser==19.1.0->-r requirements.txt (line 21))
+2026-05-27T03:49:51.1209922Z   Downloading click-8.4.1-py3-none-any.whl.metadata (2.6 kB)
+2026-05-27T03:49:51.1356661Z Collecting diskcache>=4 (from glean_parser==19.1.0->-r requirements.txt (line 21))
+2026-05-27T03:49:51.1370997Z   Using cached diskcache-5.6.3-py3-none-any.whl.metadata (20 kB)
+2026-05-27T03:49:51.1481361Z Collecting jinja2>=2.10.1 (from glean_parser==19.1.0->-r requirements.txt (line 21))
+2026-05-27T03:49:51.1494764Z   Using cached jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+2026-05-27T03:49:51.1663989Z Collecting platformdirs>=2.4.0 (from glean_parser==19.1.0->-r requirements.txt (line 21))
+2026-05-27T03:49:51.1679871Z   Using cached platformdirs-4.9.6-py3-none-any.whl.metadata (4.7 kB)
+2026-05-27T03:49:51.2078206Z Collecting google-api-python-client!=1.12.0,!=2.0.2 (from google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T03:49:51.2093245Z   Using cached google_api_python_client-2.196.0-py3-none-any.whl.metadata (7.0 kB)
+2026-05-27T03:49:51.2388692Z Collecting google-auth>=1.0.0 (from google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T03:49:51.2403807Z   Using cached google_auth-2.53.0-py3-none-any.whl.metadata (5.5 kB)
+2026-05-27T03:49:51.2508845Z Collecting google-auth-httplib2 (from google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T03:49:51.2523189Z   Using cached google_auth_httplib2-0.4.0-py3-none-any.whl.metadata (3.0 kB)
+2026-05-27T03:49:51.3858051Z Collecting protobuf>=3.20 (from google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T03:49:51.3874187Z   Using cached protobuf-7.35.0-cp310-abi3-manylinux2014_x86_64.whl.metadata (595 bytes)
+2026-05-27T03:49:51.4023335Z Collecting typing_extensions>=4.5.0 (from jwcrypto==1.5.7->-r requirements.txt (line 24))
+2026-05-27T03:49:51.4037034Z   Using cached typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2026-05-27T03:49:51.4137034Z Collecting Unidecode (from kinto-http==11.9.0->-r requirements.txt (line 25))
+2026-05-27T03:49:51.4152229Z   Using cached Unidecode-1.4.0-py3-none-any.whl.metadata (13 kB)
+2026-05-27T03:49:51.4249473Z Collecting backoff (from kinto-http==11.9.0->-r requirements.txt (line 25))
+2026-05-27T03:49:51.4263260Z   Using cached backoff-2.2.1-py3-none-any.whl.metadata (14 kB)
+2026-05-27T03:49:51.5121950Z Collecting charset_normalizer<4,>=2 (from requests==2.34.0->-r requirements.txt (line 30))
+2026-05-27T03:49:51.5137684Z   Using cached charset_normalizer-3.4.7-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+2026-05-27T03:49:51.5269547Z Collecting idna<4,>=2.5 (from requests==2.34.0->-r requirements.txt (line 30))
+2026-05-27T03:49:51.5483349Z   Downloading idna-3.16-py3-none-any.whl.metadata (6.4 kB)
+2026-05-27T03:49:51.5682437Z Collecting urllib3<3,>=1.26 (from requests==2.34.0->-r requirements.txt (line 30))
+2026-05-27T03:49:51.5697217Z   Using cached urllib3-2.7.0-py3-none-any.whl.metadata (6.9 kB)
+2026-05-27T03:49:51.5826820Z Collecting certifi>=2023.5.7 (from requests==2.34.0->-r requirements.txt (line 30))
+2026-05-27T03:49:51.5840758Z   Using cached certifi-2026.5.20-py3-none-any.whl.metadata (2.5 kB)
+2026-05-27T03:49:51.5939168Z Collecting oauthlib>=3.0.0 (from requests-oauthlib==2.0.0->-r requirements.txt (line 31))
+2026-05-27T03:49:51.5952784Z   Using cached oauthlib-3.3.1-py3-none-any.whl.metadata (7.9 kB)
+2026-05-27T03:49:52.1464240Z Collecting aiohttp>=3.8.4 (from twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T03:49:52.1481104Z   Using cached aiohttp-3.13.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.1 kB)
+2026-05-27T03:49:52.1859277Z Collecting aiohttp-retry>=2.8.3 (from twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T03:49:52.1874127Z   Using cached aiohttp_retry-2.9.1-py3-none-any.whl.metadata (8.8 kB)
+2026-05-27T03:49:52.2526321Z Collecting pytz (from vobject==0.9.9->-r requirements.txt (line 38))
+2026-05-27T03:49:52.2541731Z   Using cached pytz-2026.2-py2.py3-none-any.whl.metadata (22 kB)
+2026-05-27T03:49:52.2953772Z Collecting six (from vobject==0.9.9->-r requirements.txt (line 38))
+2026-05-27T03:49:52.2971787Z   Using cached six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-05-27T03:49:52.3447709Z Collecting python-dateutil>=2.7.0 (from vobject==0.9.9->-r requirements.txt (line 38))
+2026-05-27T03:49:52.3469168Z   Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+2026-05-27T03:49:52.3842829Z Collecting pluggy>=1.2 (from pytest-cov==7.1.0->-r requirements.txt (line 43))
+2026-05-27T03:49:52.3866199Z   Using cached pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2026-05-27T03:49:52.4468255Z Collecting pytest>=7 (from pytest-cov==7.1.0->-r requirements.txt (line 43))
+2026-05-27T03:49:52.4485241Z   Using cached pytest-9.0.3-py3-none-any.whl.metadata (7.6 kB)
+2026-05-27T03:49:52.4770745Z Collecting mypy-extensions>=0.4.3 (from black==26.3.1->-r requirements.txt (line 48))
+2026-05-27T03:49:52.4786662Z   Using cached mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+2026-05-27T03:49:52.4891981Z Collecting pathspec>=1.0.0 (from black==26.3.1->-r requirements.txt (line 48))
+2026-05-27T03:49:52.4907041Z   Using cached pathspec-1.1.1-py3-none-any.whl.metadata (14 kB)
+2026-05-27T03:49:52.7358030Z Collecting pytokens~=0.4.0 (from black==26.3.1->-r requirements.txt (line 48))
+2026-05-27T03:49:52.7372834Z   Using cached pytokens-0.4.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (3.8 kB)
+2026-05-27T03:49:52.7523759Z Collecting types-s3transfer (from boto3-stubs==1.43.6->-r requirements.txt (line 52))
+2026-05-27T03:49:52.7539086Z   Using cached types_s3transfer-0.16.0-py3-none-any.whl.metadata (3.7 kB)
+2026-05-27T03:49:52.7810000Z Collecting types-awscrt (from botocore-stubs==1.42.41->-r requirements.txt (line 53))
+2026-05-27T03:49:52.8058495Z   Downloading types_awscrt-0.33.0-py3-none-any.whl.metadata (4.9 kB)
+2026-05-27T03:49:52.8224905Z Collecting django-stubs-ext>=6.0.2 (from django-stubs==6.0.4->-r requirements.txt (line 55))
+2026-05-27T03:49:52.8454930Z   Downloading django_stubs_ext-6.0.5-py3-none-any.whl.metadata (3.7 kB)
+2026-05-27T03:49:52.8605428Z Collecting types-pyyaml (from django-stubs==6.0.4->-r requirements.txt (line 55))
+2026-05-27T03:49:52.8619841Z   Using cached types_pyyaml-6.0.12.20260518-py3-none-any.whl.metadata (1.7 kB)
+2026-05-27T03:49:52.9633441Z Collecting librt>=0.11.0 (from mypy==2.1.0->-r requirements.txt (line 60))
+2026-05-27T03:49:52.9648486Z   Using cached librt-0.11.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (1.3 kB)
+2026-05-27T03:49:52.9842670Z Collecting ast-serialize<1.0.0,>=0.3.0 (from mypy==2.1.0->-r requirements.txt (line 60))
+2026-05-27T03:49:52.9857349Z   Using cached ast_serialize-0.5.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (1.3 kB)
+2026-05-27T03:49:53.0042959Z Collecting datadog>=0.45.0 (from markus[datadog]==5.2.0->-r requirements.txt (line 26))
+2026-05-27T03:49:53.0057484Z   Using cached datadog-0.52.1-py2.py3-none-any.whl.metadata (10 kB)
+2026-05-27T03:49:53.0172185Z Collecting psycopg-c==3.3.4 (from psycopg[c]==3.3.4->-r requirements.txt (line 27))
+2026-05-27T03:49:53.0173374Z   Using cached psycopg_c-3.3.4-cp311-cp311-linux_x86_64.whl
+2026-05-27T03:49:53.0593531Z Collecting aiohappyeyeballs>=2.5.0 (from aiohttp>=3.8.4->twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T03:49:53.0607805Z   Using cached aiohappyeyeballs-2.6.2-py3-none-any.whl.metadata (5.9 kB)
+2026-05-27T03:49:53.0677250Z Collecting aiosignal>=1.4.0 (from aiohttp>=3.8.4->twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T03:49:53.0691184Z   Using cached aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+2026-05-27T03:49:53.0797602Z Collecting attrs>=17.3.0 (from aiohttp>=3.8.4->twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T03:49:53.0811320Z   Using cached attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+2026-05-27T03:49:53.1394944Z Collecting frozenlist>=1.1.1 (from aiohttp>=3.8.4->twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T03:49:53.1410460Z   Using cached frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (20 kB)
+2026-05-27T03:49:53.4429697Z Collecting multidict<7.0,>=4.5 (from aiohttp>=3.8.4->twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T03:49:53.4445792Z   Using cached multidict-6.7.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+2026-05-27T03:49:53.4934043Z Collecting propcache>=0.2.0 (from aiohttp>=3.8.4->twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T03:49:53.4950520Z   Using cached propcache-0.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (16 kB)
+2026-05-27T03:49:53.7113729Z Collecting yarl<2.0,>=1.17.0 (from aiohttp>=3.8.4->twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T03:49:53.7129853Z   Using cached yarl-1.24.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (94 kB)
+2026-05-27T03:49:53.7411501Z Collecting pycparser (from cffi>=2.0.0->cryptography==48.0.0->-r requirements.txt (line 3))
+2026-05-27T03:49:53.7425203Z   Using cached pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+2026-05-27T03:49:53.7581523Z Collecting fluent.syntax>=0.14 (from fluent-compiler>=0.4->django-ftl==0.14->-r requirements.txt (line 14))
+2026-05-27T03:49:53.7596342Z   Using cached fluent.syntax-0.19.0-py2.py3-none-any.whl.metadata (1.6 kB)
+2026-05-27T03:49:53.7709223Z Collecting babel>=2.8.0 (from fluent-compiler>=0.4->django-ftl==0.14->-r requirements.txt (line 14))
+2026-05-27T03:49:53.7724069Z   Using cached babel-2.18.0-py3-none-any.whl.metadata (2.2 kB)
+2026-05-27T03:49:53.7895195Z Collecting httplib2<1.0.0,>=0.19.0 (from google-api-python-client!=1.12.0,!=2.0.2->google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T03:49:53.7910289Z   Using cached httplib2-0.31.2-py3-none-any.whl.metadata (2.2 kB)
+2026-05-27T03:49:53.8224115Z Collecting google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0,>=1.31.5 (from google-api-python-client!=1.12.0,!=2.0.2->google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T03:49:53.8241710Z   Using cached google_api_core-2.30.3-py3-none-any.whl.metadata (3.1 kB)
+2026-05-27T03:49:53.8406100Z Collecting googleapis-common-protos<2.0.0,>=1.63.2 (from google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0,>=1.31.5->google-api-python-client!=1.12.0,!=2.0.2->google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T03:49:53.8420772Z   Using cached googleapis_common_protos-1.75.0-py3-none-any.whl.metadata (8.6 kB)
+2026-05-27T03:49:53.8595976Z Collecting proto-plus<2.0.0,>=1.22.3 (from google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0,>=1.31.5->google-api-python-client!=1.12.0,!=2.0.2->google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T03:49:53.8609786Z   Using cached proto_plus-1.28.0-py3-none-any.whl.metadata (2.2 kB)
+2026-05-27T03:49:53.8818200Z Collecting pyasn1-modules>=0.2.1 (from google-auth>=1.0.0->google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T03:49:53.8832888Z   Using cached pyasn1_modules-0.4.2-py3-none-any.whl.metadata (3.5 kB)
+2026-05-27T03:49:53.9066471Z Collecting pyparsing<4,>=3.1 (from httplib2<1.0.0,>=0.19.0->google-api-python-client!=1.12.0,!=2.0.2->google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T03:49:53.9081918Z   Using cached pyparsing-3.3.2-py3-none-any.whl.metadata (5.8 kB)
+2026-05-27T03:49:53.9568089Z Collecting MarkupSafe>=2.0 (from jinja2>=2.10.1->glean_parser==19.1.0->-r requirements.txt (line 21))
+2026-05-27T03:49:53.9584166Z   Using cached markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+2026-05-27T03:49:53.9690425Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema>=2.6.0->drf-spectacular==0.29.0->-r requirements.txt (line 19))
+2026-05-27T03:49:53.9705447Z   Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+2026-05-27T03:49:53.9867073Z Collecting referencing>=0.28.4 (from jsonschema>=2.6.0->drf-spectacular==0.29.0->-r requirements.txt (line 19))
+2026-05-27T03:49:53.9881411Z   Using cached referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+2026-05-27T03:49:54.2059913Z Collecting rpds-py>=0.25.0 (from jsonschema>=2.6.0->drf-spectacular==0.29.0->-r requirements.txt (line 19))
+2026-05-27T03:49:54.2075419Z   Using cached rpds_py-0.30.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+2026-05-27T03:49:54.2338562Z Collecting pyasn1<0.7.0,>=0.6.1 (from pyasn1-modules>=0.2.1->google-auth>=1.0.0->google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T03:49:54.2352754Z   Using cached pyasn1-0.6.3-py3-none-any.whl.metadata (8.4 kB)
+2026-05-27T03:49:54.2445572Z Collecting iniconfig>=1.0.1 (from pytest>=7->pytest-cov==7.1.0->-r requirements.txt (line 43))
+2026-05-27T03:49:54.2459544Z   Using cached iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+2026-05-27T03:49:54.2604761Z Collecting pygments>=2.7.2 (from pytest>=7->pytest-cov==7.1.0->-r requirements.txt (line 43))
+2026-05-27T03:49:54.2620018Z   Using cached pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+2026-05-27T03:49:54.2832831Z Using cached boto3-1.43.6-py3-none-any.whl (140 kB)
+2026-05-27T03:49:54.2847158Z Using cached codetiming-1.4.0-py3-none-any.whl (7.2 kB)
+2026-05-27T03:49:54.2861109Z Using cached cryptography-48.0.0-cp311-abi3-manylinux_2_34_x86_64.whl (4.7 MB)
+2026-05-27T03:49:54.2891437Z Using cached django-5.2.14-py3-none-any.whl (8.3 MB)
+2026-05-27T03:49:54.2935571Z Using cached dj_database_url-3.1.2-py3-none-any.whl (9.0 kB)
+2026-05-27T03:49:54.2950249Z Using cached django_allauth-65.16.1-py3-none-any.whl (2.1 MB)
+2026-05-27T03:49:54.2970475Z Using cached django_cors_headers-4.9.0-py3-none-any.whl (12 kB)
+2026-05-27T03:49:54.2983912Z Using cached django_csp-4.0-py3-none-any.whl (25 kB)
+2026-05-27T03:49:54.2997783Z Using cached django_debug_toolbar-6.3.0-py3-none-any.whl (298 kB)
+2026-05-27T03:49:54.3011951Z Using cached django_filter-25.2-py3-none-any.whl (94 kB)
+2026-05-27T03:49:54.3025468Z Using cached django_ipware-7.0.1-py2.py3-none-any.whl (6.4 kB)
+2026-05-27T03:49:54.3038872Z Using cached python_ipware-3.0.0-py3-none-any.whl (10 kB)
+2026-05-27T03:49:54.3052165Z Using cached django_redis-6.0.0-py3-none-any.whl (33 kB)
+2026-05-27T03:49:54.3065862Z Using cached django_ftl-0.14-py3-none-any.whl (12 kB)
+2026-05-27T03:49:54.3079437Z Using cached djangorestframework-3.17.1-py3-none-any.whl (898 kB)
+2026-05-27T03:49:54.3095936Z Using cached django_waffle-5.0.0-py3-none-any.whl (48 kB)
+2026-05-27T03:49:54.3109566Z Using cached dockerflow-2026.3.4-py2.py3-none-any.whl (36 kB)
+2026-05-27T03:49:54.3123098Z Using cached drf_spectacular-0.29.0-py3-none-any.whl (105 kB)
+2026-05-27T03:49:54.3136850Z Using cached drf_spectacular_sidecar-2026.5.1-py3-none-any.whl (2.5 MB)
+2026-05-27T03:49:54.3367185Z Downloading glean_parser-19.1.0-py3-none-any.whl (119 kB)
+2026-05-27T03:49:54.3782791Z Using cached gunicorn-26.0.0-py3-none-any.whl (212 kB)
+2026-05-27T03:49:54.3796594Z Using cached jwcrypto-1.5.7-py3-none-any.whl (94 kB)
+2026-05-27T03:49:54.3810234Z Using cached kinto_http-11.9.0-py3-none-any.whl (27 kB)
+2026-05-27T03:49:54.3823365Z Using cached markus-5.2.0-py3-none-any.whl (26 kB)
+2026-05-27T03:49:54.3837012Z Using cached psycopg-3.3.4-py3-none-any.whl (213 kB)
+2026-05-27T03:49:54.3850976Z Using cached pyjwt-2.12.1-py3-none-any.whl (29 kB)
+2026-05-27T03:49:54.3864486Z Using cached python_decouple-3.8-py3-none-any.whl (9.9 kB)
+2026-05-27T03:49:54.3878651Z Using cached requests-2.34.0-py3-none-any.whl (73 kB)
+2026-05-27T03:49:54.3892519Z Using cached requests_oauthlib-2.0.0-py2.py3-none-any.whl (24 kB)
+2026-05-27T03:49:54.3906189Z Using cached sentry_sdk-2.59.0-py2.py3-none-any.whl (468 kB)
+2026-05-27T03:49:54.3921024Z Using cached whitenoise-6.12.0-py3-none-any.whl (20 kB)
+2026-05-27T03:49:54.3934386Z Using cached phonenumbers-9.0.30-py2.py3-none-any.whl (2.6 MB)
+2026-05-27T03:49:54.3957806Z Using cached twilio-9.10.9-py2.py3-none-any.whl (2.5 MB)
+2026-05-27T03:49:54.3980065Z Using cached vobject-0.9.9-py2.py3-none-any.whl (47 kB)
+2026-05-27T03:49:54.3994150Z Using cached coverage-7.14.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (252 kB)
+2026-05-27T03:49:54.4008263Z Using cached model_bakery-1.23.4-py3-none-any.whl (25 kB)
+2026-05-27T03:49:54.4021614Z Using cached pytest_cov-7.1.0-py3-none-any.whl (22 kB)
+2026-05-27T03:49:54.4035264Z Using cached pytest_django-4.12.0-py3-none-any.whl (26 kB)
+2026-05-27T03:49:54.4048796Z Using cached responses-0.26.0-py3-none-any.whl (35 kB)
+2026-05-27T03:49:54.4062632Z Using cached black-26.3.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.8 MB)
+2026-05-27T03:49:54.4082423Z Using cached ruff-0.15.12-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (11.3 MB)
+2026-05-27T03:49:54.4138646Z Using cached boto3_stubs-1.43.6-py3-none-any.whl (70 kB)
+2026-05-27T03:49:54.4152410Z Using cached botocore_stubs-1.42.41-py3-none-any.whl (66 kB)
+2026-05-27T03:49:54.4166123Z Using cached mypy_boto3_s3-1.43.5-py3-none-any.whl (84 kB)
+2026-05-27T03:49:54.4179649Z Using cached django_stubs-6.0.4-py3-none-any.whl (543 kB)
+2026-05-27T03:49:54.4195113Z Using cached djangorestframework_stubs-3.16.9-py3-none-any.whl (57 kB)
+2026-05-27T03:49:54.4208917Z Using cached mypy_boto3_ses-1.43.0-py3-none-any.whl (39 kB)
+2026-05-27T03:49:54.4222215Z Using cached mypy_boto3_sns-1.43.0-py3-none-any.whl (40 kB)
+2026-05-27T03:49:54.4235543Z Using cached mypy_boto3_sqs-1.43.0-py3-none-any.whl (33 kB)
+2026-05-27T03:49:54.4249804Z Using cached mypy-2.1.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (14.9 MB)
+2026-05-27T03:49:54.4316666Z Using cached types_requests-2.33.0.20260508-py3-none-any.whl (20 kB)
+2026-05-27T03:49:54.4330936Z Using cached ast_serialize-0.5.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.3 MB)
+2026-05-27T03:49:54.4570457Z Downloading botocore-1.43.15-py3-none-any.whl (15.1 MB)
+2026-05-27T03:49:54.7399707Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.1/15.1 MB 61.3 MB/s  0:00:00
+2026-05-27T03:49:54.7417330Z Using cached charset_normalizer-3.4.7-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (214 kB)
+2026-05-27T03:49:54.7635055Z Downloading idna-3.16-py3-none-any.whl (74 kB)
+2026-05-27T03:49:54.7673847Z Using cached jmespath-1.1.0-py3-none-any.whl (20 kB)
+2026-05-27T03:49:54.7688732Z Using cached oauthlib-3.3.1-py3-none-any.whl (160 kB)
+2026-05-27T03:49:54.7703645Z Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+2026-05-27T03:49:54.7719101Z Using cached pytokens-0.4.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (260 kB)
+2026-05-27T03:49:54.7935199Z Downloading s3transfer-0.17.1-py3-none-any.whl (88 kB)
+2026-05-27T03:49:54.7976293Z Using cached urllib3-2.7.0-py3-none-any.whl (131 kB)
+2026-05-27T03:49:54.7990752Z Using cached aiohttp-3.13.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.8 MB)
+2026-05-27T03:49:54.8010966Z Using cached multidict-6.7.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (246 kB)
+2026-05-27T03:49:54.8025392Z Using cached yarl-1.24.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (106 kB)
+2026-05-27T03:49:54.8039671Z Using cached aiohappyeyeballs-2.6.2-py3-none-any.whl (15 kB)
+2026-05-27T03:49:54.8053271Z Using cached aiohttp_retry-2.9.1-py3-none-any.whl (10.0 kB)
+2026-05-27T03:49:54.8067456Z Using cached aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+2026-05-27T03:49:54.8081607Z Using cached asgiref-3.11.1-py3-none-any.whl (24 kB)
+2026-05-27T03:49:54.8095629Z Using cached attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-05-27T03:49:54.8109656Z Using cached certifi-2026.5.20-py3-none-any.whl (134 kB)
+2026-05-27T03:49:54.8124152Z Using cached cffi-2.0.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (215 kB)
+2026-05-27T03:49:54.8341834Z Downloading click-8.4.1-py3-none-any.whl (116 kB)
+2026-05-27T03:49:54.8382792Z Using cached datadog-0.52.1-py2.py3-none-any.whl (129 kB)
+2026-05-27T03:49:54.8396813Z Using cached diskcache-5.6.3-py3-none-any.whl (45 kB)
+2026-05-27T03:49:54.8617707Z Downloading django_stubs_ext-6.0.5-py3-none-any.whl (10 kB)
+2026-05-27T03:49:54.8652515Z Using cached fluent_compiler-1.1-py3-none-any.whl (37 kB)
+2026-05-27T03:49:54.8666354Z Using cached babel-2.18.0-py3-none-any.whl (10.2 MB)
+2026-05-27T03:49:54.8718906Z Using cached fluent.syntax-0.19.0-py2.py3-none-any.whl (16 kB)
+2026-05-27T03:49:54.8732389Z Using cached typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2026-05-27T03:49:54.8747094Z Using cached frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (231 kB)
+2026-05-27T03:49:54.8761303Z Using cached google_api_python_client-2.196.0-py3-none-any.whl (15.2 MB)
+2026-05-27T03:49:54.8830526Z Using cached google_api_core-2.30.3-py3-none-any.whl (173 kB)
+2026-05-27T03:49:54.8844513Z Using cached google_auth-2.53.0-py3-none-any.whl (246 kB)
+2026-05-27T03:49:54.8859500Z Using cached google_auth_httplib2-0.4.0-py3-none-any.whl (9.5 kB)
+2026-05-27T03:49:54.8873169Z Using cached googleapis_common_protos-1.75.0-py3-none-any.whl (300 kB)
+2026-05-27T03:49:54.8888027Z Using cached httplib2-0.31.2-py3-none-any.whl (91 kB)
+2026-05-27T03:49:54.8902002Z Using cached proto_plus-1.28.0-py3-none-any.whl (50 kB)
+2026-05-27T03:49:54.8916022Z Using cached protobuf-7.35.0-cp310-abi3-manylinux2014_x86_64.whl (327 kB)
+2026-05-27T03:49:54.8930576Z Using cached pyparsing-3.3.2-py3-none-any.whl (122 kB)
+2026-05-27T03:49:54.8944477Z Using cached uritemplate-4.2.0-py3-none-any.whl (11 kB)
+2026-05-27T03:49:54.8958713Z Using cached inflection-0.5.1-py2.py3-none-any.whl (9.5 kB)
+2026-05-27T03:49:54.8972115Z Using cached jinja2-3.1.6-py3-none-any.whl (134 kB)
+2026-05-27T03:49:54.8986418Z Using cached jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-05-27T03:49:54.9000545Z Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-05-27T03:49:54.9015723Z Using cached librt-0.11.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (497 kB)
+2026-05-27T03:49:54.9031428Z Using cached markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+2026-05-27T03:49:54.9045077Z Using cached mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+2026-05-27T03:49:54.9059343Z Using cached packaging-26.2-py3-none-any.whl (100 kB)
+2026-05-27T03:49:54.9073272Z Using cached pathspec-1.1.1-py3-none-any.whl (57 kB)
+2026-05-27T03:49:54.9087280Z Using cached platformdirs-4.9.6-py3-none-any.whl (21 kB)
+2026-05-27T03:49:54.9101072Z Using cached pluggy-1.6.0-py3-none-any.whl (20 kB)
+2026-05-27T03:49:54.9115894Z Using cached propcache-0.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (58 kB)
+2026-05-27T03:49:54.9128880Z Using cached pyasn1_modules-0.4.2-py3-none-any.whl (181 kB)
+2026-05-27T03:49:54.9142555Z Using cached pyasn1-0.6.3-py3-none-any.whl (83 kB)
+2026-05-27T03:49:54.9156339Z Using cached pytest-9.0.3-py3-none-any.whl (375 kB)
+2026-05-27T03:49:54.9171050Z Using cached iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2026-05-27T03:49:54.9184199Z Using cached pygments-2.20.0-py3-none-any.whl (1.2 MB)
+2026-05-27T03:49:54.9202735Z Using cached pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+2026-05-27T03:49:54.9218903Z Using cached redis-7.4.0-py3-none-any.whl (409 kB)
+2026-05-27T03:49:54.9233541Z Using cached referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-05-27T03:49:54.9247058Z Using cached rpds_py-0.30.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (390 kB)
+2026-05-27T03:49:54.9261412Z Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-05-27T03:49:54.9274411Z Using cached sqlparse-0.5.5-py3-none-any.whl (46 kB)
+2026-05-27T03:49:54.9288009Z Using cached backoff-2.2.1-py3-none-any.whl (15 kB)
+2026-05-27T03:49:54.9301186Z Using cached pycparser-3.0-py3-none-any.whl (48 kB)
+2026-05-27T03:49:54.9314670Z Using cached pytz-2026.2-py2.py3-none-any.whl (510 kB)
+2026-05-27T03:49:54.9530084Z Downloading types_awscrt-0.33.0-py3-none-any.whl (45 kB)
+2026-05-27T03:49:54.9569910Z Using cached types_pyyaml-6.0.12.20260518-py3-none-any.whl (20 kB)
+2026-05-27T03:49:54.9583901Z Using cached types_s3transfer-0.16.0-py3-none-any.whl (19 kB)
+2026-05-27T03:49:54.9597786Z Using cached Unidecode-1.4.0-py3-none-any.whl (235 kB)
+2026-05-27T03:49:55.4950506Z Installing collected packages: pytz, python-decouple, whitenoise, urllib3, uritemplate, Unidecode, typing_extensions, types-s3transfer, types-pyyaml, types-awscrt, sqlparse, six, ruff, rpds-py, redis, PyYAML, pytokens, python-ipware, pyparsing, PyJWT, pygments, pycparser, pyasn1, psycopg-c, protobuf, propcache, pluggy, platformdirs, phonenumbers, pathspec, packaging, oauthlib, mypy-extensions, multidict, markus, MarkupSafe, librt, jmespath, iniconfig, inflection, idna, frozenlist, dockerflow, diskcache, coverage, codetiming, click, charset_normalizer, certifi, backoff, babel, attrs, ast-serialize, asgiref, aiohappyeyeballs, yarl, types-requests, sentry-sdk, requests, referencing, python-dateutil, pytest, pyasn1-modules, psycopg, proto-plus, mypy-boto3-sqs, mypy-boto3-sns, mypy-boto3-ses, mypy-boto3-s3, mypy, jinja2, httplib2, gunicorn, googleapis-common-protos, fluent.syntax, django-ipware, Django, cffi, botocore-stubs, black, aiosignal, vobject, responses, requests-oauthlib, pytest-django, pytest-cov, model-bakery, kinto-http, jsonschema-specifications, fluent-compiler, drf-spectacular-sidecar, djangorestframework, django-waffle, django-stubs-ext, django-referrer-policy, django-redis, django-filter, django-debug-toolbar, django-csp, django-cors-headers, django-allauth, dj-database-url, datadog, cryptography, botocore, boto3-stubs, aiohttp, s3transfer, jwcrypto, jsonschema, google-auth, django-stubs, django-ftl, aiohttp-retry, twilio, google-auth-httplib2, google-api-core, glean_parser, drf-spectacular, djangorestframework-stubs, boto3, google-api-python-client, google-cloud-profiler
+2026-05-27T03:50:12.7382043Z 
+2026-05-27T03:50:12.7435478Z Successfully installed Django-5.2.14 MarkupSafe-3.0.3 PyJWT-2.12.1 PyYAML-6.0.3 Unidecode-1.4.0 aiohappyeyeballs-2.6.2 aiohttp-3.13.5 aiohttp-retry-2.9.1 aiosignal-1.4.0 asgiref-3.11.1 ast-serialize-0.5.0 attrs-26.1.0 babel-2.18.0 backoff-2.2.1 black-26.3.1 boto3-1.43.6 boto3-stubs-1.43.6 botocore-1.43.15 botocore-stubs-1.42.41 certifi-2026.5.20 cffi-2.0.0 charset_normalizer-3.4.7 click-8.4.1 codetiming-1.4.0 coverage-7.14.0 cryptography-48.0.0 datadog-0.52.1 diskcache-5.6.3 dj-database-url-3.1.2 django-allauth-65.16.1 django-cors-headers-4.9.0 django-csp-4.0 django-debug-toolbar-6.3.0 django-filter-25.2 django-ftl-0.14 django-ipware-7.0.1 django-redis-6.0.0 django-referrer-policy-1.0 django-stubs-6.0.4 django-stubs-ext-6.0.5 django-waffle-5.0.0 djangorestframework-3.17.1 djangorestframework-stubs-3.16.9 dockerflow-2026.3.4 drf-spectacular-0.29.0 drf-spectacular-sidecar-2026.5.1 fluent-compiler-1.1 fluent.syntax-0.19.0 frozenlist-1.8.0 glean_parser-19.1.0 google-api-core-2.30.3 google-api-python-client-2.196.0 google-auth-2.53.0 google-auth-httplib2-0.4.0 google-cloud-profiler-4.1.0 googleapis-common-protos-1.75.0 gunicorn-26.0.0 httplib2-0.31.2 idna-3.16 inflection-0.5.1 iniconfig-2.3.0 jinja2-3.1.6 jmespath-1.1.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 jwcrypto-1.5.7 kinto-http-11.9.0 librt-0.11.0 markus-5.2.0 model-bakery-1.23.4 multidict-6.7.1 mypy-2.1.0 mypy-boto3-s3-1.43.5 mypy-boto3-ses-1.43.0 mypy-boto3-sns-1.43.0 mypy-boto3-sqs-1.43.0 mypy-extensions-1.1.0 oauthlib-3.3.1 packaging-26.2 pathspec-1.1.1 phonenumbers-9.0.30 platformdirs-4.9.6 pluggy-1.6.0 propcache-0.5.2 proto-plus-1.28.0 protobuf-7.35.0 psycopg-3.3.4 psycopg-c-3.3.4 pyasn1-0.6.3 pyasn1-modules-0.4.2 pycparser-3.0 pygments-2.20.0 pyparsing-3.3.2 pytest-9.0.3 pytest-cov-7.1.0 pytest-django-4.12.0 python-dateutil-2.9.0.post0 python-decouple-3.8 python-ipware-3.0.0 pytokens-0.4.1 pytz-2026.2 redis-7.4.0 referencing-0.37.0 requests-2.34.0 requests-oauthlib-2.0.0 responses-0.26.0 rpds-py-0.30.0 ruff-0.15.12 s3transfer-0.17.1 sentry-sdk-2.59.0 six-1.17.0 sqlparse-0.5.5 twilio-9.10.9 types-awscrt-0.33.0 types-pyyaml-6.0.12.20260518 types-requests-2.33.0.20260508 types-s3transfer-0.16.0 typing_extensions-4.15.0 uritemplate-4.2.0 urllib3-2.7.0 vobject-0.9.9 whitenoise-6.12.0 yarl-1.24.2
+2026-05-27T03:50:13.4195315Z ##[group]Run cp .env-dist .env
+2026-05-27T03:50:13.4195629Z [36;1mcp .env-dist .env[0m
+2026-05-27T03:50:13.4195880Z [36;1mmkdir -p job-results[0m
+2026-05-27T03:50:13.4196148Z [36;1mmkdir -p staticfiles/accounts/profile[0m
+2026-05-27T03:50:13.4196456Z [36;1mmkdir -p frontend/out/accounts/profile[0m
+2026-05-27T03:50:13.4196791Z [36;1mtouch frontend/out/accounts/profile/index.html[0m
+2026-05-27T03:50:13.4197146Z [36;1mtouch staticfiles/accounts/profile/index.html[0m
+2026-05-27T03:50:13.4231348Z shell: /usr/bin/bash -e {0}
+2026-05-27T03:50:13.4231581Z env:
+2026-05-27T03:50:13.4231823Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:50:13.4232241Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.8/x64/lib/pkgconfig
+2026-05-27T03:50:13.4232651Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:50:13.4233020Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:50:13.4233445Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:50:13.4233799Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.8/x64/lib
+2026-05-27T03:50:13.4234112Z ##[endgroup]
+2026-05-27T03:50:13.4426613Z ##[group]Run if [ -f .github/workflows/python/python_job.bash ]; then
+2026-05-27T03:50:13.4427152Z [36;1mif [ -f .github/workflows/python/python_job.bash ]; then[0m
+2026-05-27T03:50:13.4427554Z [36;1m  source .github/workflows/python/python_job.bash[0m
+2026-05-27T03:50:13.4427861Z [36;1melse[0m
+2026-05-27T03:50:13.4428077Z [36;1m  source .circleci/python_job.bash[0m
+2026-05-27T03:50:13.4428334Z [36;1mfi[0m
+2026-05-27T03:50:13.4428497Z [36;1m[0m
+2026-05-27T03:50:13.4428684Z [36;1mif [ "check_glean" = "pytest" ]; then[0m
+2026-05-27T03:50:13.4428952Z [36;1m  pytest \[0m
+2026-05-27T03:50:13.4429140Z [36;1m     \[0m
+2026-05-27T03:50:13.4429367Z [36;1m    --junitxml=job-results/check_glean.xml \[0m
+2026-05-27T03:50:13.4429644Z [36;1m    .[0m
+2026-05-27T03:50:13.4429809Z [36;1melse[0m
+2026-05-27T03:50:13.4429987Z [36;1m  run_command check_glean[0m
+2026-05-27T03:50:13.4430217Z [36;1mfi[0m
+2026-05-27T03:50:13.4465013Z shell: /usr/bin/bash -e {0}
+2026-05-27T03:50:13.4465323Z env:
+2026-05-27T03:50:13.4465569Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:50:13.4465987Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.8/x64/lib/pkgconfig
+2026-05-27T03:50:13.4466404Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:50:13.4466763Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:50:13.4467111Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:50:13.4467467Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.8/x64/lib
+2026-05-27T03:50:13.4467810Z   DJANGO_SETTINGS_MODULE: privaterelay.settings
+2026-05-27T03:50:13.4468096Z   DATABASE_URL: sqlite:///db.sqlite3
+2026-05-27T03:50:13.4468339Z   DATABASE_ENGINE: sqlite
+2026-05-27T03:50:13.4468539Z   PHONES_ENABLED: 1
+2026-05-27T03:50:13.4468720Z   MYPY_STRICT: 0
+2026-05-27T03:50:13.4468904Z   TEST_RESULTS_DIR: job-results
+2026-05-27T03:50:13.4469137Z   TEST_RESULTS_FILENAME: check_glean.xml
+2026-05-27T03:50:13.4469587Z ##[endgroup]
+2026-05-27T03:50:13.4547456Z Created temporary folder /tmp/tmp.xPTcetIir5
+2026-05-27T03:50:13.4547887Z Re-running glean_parser...
+2026-05-27T03:50:13.4548044Z 
+2026-05-27T03:50:13.4548431Z + glean_parser translate --format python_server --output /tmp/tmp.xPTcetIir5 telemetry/glean/relay-server-metrics.yaml
+2026-05-27T03:50:13.7085030Z ✨ Your metrics are Glean! ✨
+2026-05-27T03:50:13.7698550Z + black /tmp/tmp.xPTcetIir5
+2026-05-27T03:50:14.2060001Z reformatted /tmp/tmp.xPTcetIir5/server_events.py
+2026-05-27T03:50:14.2115964Z 
+2026-05-27T03:50:14.2116813Z All done! ✨ 🍰 ✨
+2026-05-27T03:50:14.2117250Z 1 file reformatted, 1 file left unchanged.
+2026-05-27T03:50:14.2360655Z + ruff check --fix --ignore E501 /tmp/tmp.xPTcetIir5
+2026-05-27T03:50:14.2480306Z Found 4 errors (4 fixed, 0 remaining).
+2026-05-27T03:50:14.2489803Z + sed -i -e 's/^AUTOGENERATED BY glean_parser \(.* DO NOT EDIT.\) DO NOT COMMIT.$/AUTOGENERATED BY glean_parser \1 To recreate, run:\n\nbash .github\/workflows\/python_job.bash run build_glean/' /tmp/tmp.xPTcetIir5/server_events.py
+2026-05-27T03:50:14.2491121Z Using GNU sed
+2026-05-27T03:50:14.2511013Z 
+2026-05-27T03:50:14.2513184Z Checking new files against checked-in files...
+2026-05-27T03:50:14.2569387Z *** Differences detected - need to re-run glean_parser ***
+2026-05-27T03:50:14.2660871Z diff --exclude __pycache__ privaterelay/glean/server_events.py /tmp/tmp.xPTcetIir5/server_events.py
+2026-05-27T03:50:14.2661754Z 6c6
+2026-05-27T03:50:14.2662276Z < AUTOGENERATED BY glean_parser v19.0.0. DO NOT EDIT. To recreate, run:
+2026-05-27T03:50:14.2662905Z ---
+2026-05-27T03:50:14.2663451Z > AUTOGENERATED BY glean_parser v19.1.0. DO NOT EDIT. To recreate, run:
+2026-05-27T03:50:14.2664086Z 60c60
+2026-05-27T03:50:14.2664484Z <                 "telemetry_sdk_build": "glean_parser v19.0.0",
+2026-05-27T03:50:14.2665291Z ---
+2026-05-27T03:50:14.2665692Z >                 "telemetry_sdk_build": "glean_parser v19.1.0",
+2026-05-27T03:50:14.2666260Z *** End of differences***
+2026-05-27T03:50:14.2667113Z Removing temporary folder /tmp/tmp.xPTcetIir5
+2026-05-27T03:50:14.2675484Z 
+2026-05-27T03:50:14.2675755Z To fix, run:
+2026-05-27T03:50:14.2675990Z 
+2026-05-27T03:50:14.2676359Z   bash .github/workflows/python/python_job.bash run build_glean
+2026-05-27T03:50:14.2676873Z 
+2026-05-27T03:50:14.2677079Z and add as a commit to this pull request.
+2026-05-27T03:50:14.2690244Z ##[error]Process completed with exit code 1.
+2026-05-27T03:50:14.2775520Z ##[group]Run actions/upload-artifact@v7
+2026-05-27T03:50:14.2775813Z with:
+2026-05-27T03:50:14.2776007Z   name: check_glean.xml-results
+2026-05-27T03:50:14.2776247Z   path: job-results/*.xml
+2026-05-27T03:50:14.2776457Z   retention-days: 7
+2026-05-27T03:50:14.2776659Z   if-no-files-found: warn
+2026-05-27T03:50:14.2776867Z   compression-level: 6
+2026-05-27T03:50:14.2777063Z   overwrite: false
+2026-05-27T03:50:14.2777253Z   include-hidden-files: false
+2026-05-27T03:50:14.2777473Z   archive: true
+2026-05-27T03:50:14.2777644Z env:
+2026-05-27T03:50:14.2777871Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:50:14.2778293Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.8/x64/lib/pkgconfig
+2026-05-27T03:50:14.2778691Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:50:14.2779042Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:50:14.2779394Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.8/x64
+2026-05-27T03:50:14.2779793Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.8/x64/lib
+2026-05-27T03:50:14.2780086Z ##[endgroup]
+2026-05-27T03:50:14.4247114Z ##[warning]No files were found with the provided path: job-results/*.xml. No artifacts will be uploaded.
+2026-05-27T03:50:14.4395748Z Post job cleanup.
+2026-05-27T03:50:14.5237949Z [command]/usr/bin/git version
+2026-05-27T03:50:14.5277391Z git version 2.54.0
+2026-05-27T03:50:14.5319862Z Temporarily overriding HOME='/home/runner/work/_temp/439c41f1-c2fd-48b5-9844-cb99b6a19446' before making global git config changes
+2026-05-27T03:50:14.5321369Z Adding repository directory to the temporary git global config as a safe directory
+2026-05-27T03:50:14.5327202Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/fx-private-relay/fx-private-relay
+2026-05-27T03:50:14.5360016Z Removing SSH command configuration
+2026-05-27T03:50:14.5367372Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-05-27T03:50:14.5425634Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-05-27T03:50:14.5644501Z Entering 'privaterelay/locales'
+2026-05-27T03:50:14.5712820Z Removing HTTP extra header
+2026-05-27T03:50:14.5713821Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-05-27T03:50:14.5743008Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-05-27T03:50:14.5961312Z Entering 'privaterelay/locales'
+2026-05-27T03:50:14.6016259Z Removing includeIf entries pointing to credentials config files
+2026-05-27T03:50:14.6023995Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-27T03:50:14.6053560Z includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git.path
+2026-05-27T03:50:14.6054925Z includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git/worktrees/*.path
+2026-05-27T03:50:14.6055840Z includeif.gitdir:/github/workspace/.git.path
+2026-05-27T03:50:14.6056494Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-05-27T03:50:14.6063663Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git.path
+2026-05-27T03:50:14.6086573Z /home/runner/work/_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:50:14.6099312Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git.path /home/runner/work/_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:50:14.6139388Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git/worktrees/*.path
+2026-05-27T03:50:14.6163376Z /home/runner/work/_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:50:14.6173417Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:50:14.6207275Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-05-27T03:50:14.6229282Z /github/runner_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:50:14.6241231Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:50:14.6278848Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-05-27T03:50:14.6302774Z /github/runner_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:50:14.6314406Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:50:14.6353531Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-05-27T03:50:14.6598269Z Entering 'privaterelay/locales'
+2026-05-27T03:50:14.6618404Z file:/home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales/config	remote.origin.url
+2026-05-27T03:50:14.6654858Z [command]/usr/bin/git config --file /home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-27T03:50:14.6678828Z includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales.path
+2026-05-27T03:50:14.6680045Z includeif.gitdir:/github/workspace/.git/modules/privaterelay/locales.path
+2026-05-27T03:50:14.6690321Z [command]/usr/bin/git config --file /home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales/config --get-all includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales.path
+2026-05-27T03:50:14.6712780Z /home/runner/work/_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:50:14.6723423Z [command]/usr/bin/git config --file /home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales/config --unset includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales.path /home/runner/work/_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:50:14.6756522Z [command]/usr/bin/git config --file /home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales/config --get-all includeif.gitdir:/github/workspace/.git/modules/privaterelay/locales.path
+2026-05-27T03:50:14.6779821Z /github/runner_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:50:14.6790732Z [command]/usr/bin/git config --file /home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales/config --unset includeif.gitdir:/github/workspace/.git/modules/privaterelay/locales.path /github/runner_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config
+2026-05-27T03:50:14.6821352Z Removing credentials config '/home/runner/work/_temp/git-credentials-1b5edbe9-da58-4c0f-a972-d9b11ab2254f.config'
+2026-05-27T03:50:14.6976504Z Cleaning up orphan processes

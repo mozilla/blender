@@ -1,0 +1,1696 @@
+﻿2026-05-27T20:45:28.6369842Z Current runner version: '2.334.0'
+2026-05-27T20:45:28.6393363Z ##[group]Runner Image Provisioner
+2026-05-27T20:45:28.6394120Z Hosted Compute Agent
+2026-05-27T20:45:28.6394879Z Version: 20260213.493
+2026-05-27T20:45:28.6395537Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+2026-05-27T20:45:28.6396270Z Build Date: 2026-02-13T00:28:41Z
+2026-05-27T20:45:28.6396901Z Worker ID: {5147bcd4-5589-40aa-a785-3699a00b69e8}
+2026-05-27T20:45:28.6397629Z Azure Region: westus3
+2026-05-27T20:45:28.6398176Z ##[endgroup]
+2026-05-27T20:45:28.6399554Z ##[group]Operating System
+2026-05-27T20:45:28.6400265Z Ubuntu
+2026-05-27T20:45:28.6400692Z 24.04.4
+2026-05-27T20:45:28.6401147Z LTS
+2026-05-27T20:45:28.6401600Z ##[endgroup]
+2026-05-27T20:45:28.6402106Z ##[group]Runner Image
+2026-05-27T20:45:28.6402636Z Image: ubuntu-24.04
+2026-05-27T20:45:28.6403138Z Version: 20260518.149.1
+2026-05-27T20:45:28.6404554Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260518.149/images/ubuntu/Ubuntu2404-Readme.md
+2026-05-27T20:45:28.6406083Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260518.149
+2026-05-27T20:45:28.6406923Z ##[endgroup]
+2026-05-27T20:45:28.6407868Z ##[group]GITHUB_TOKEN Permissions
+2026-05-27T20:45:28.6409850Z Contents: write
+2026-05-27T20:45:28.6410402Z Metadata: read
+2026-05-27T20:45:28.6410846Z ##[endgroup]
+2026-05-27T20:45:28.6412980Z Secret source: Dependabot
+2026-05-27T20:45:28.6413782Z Prepare workflow directory
+2026-05-27T20:45:28.6751127Z Prepare all required actions
+2026-05-27T20:45:28.6790659Z Getting action download info
+2026-05-27T20:45:29.3382291Z Download action repository 'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd' (SHA:de0fac2e4500dabe0009e67214ff5f5447ce83dd)
+2026-05-27T20:45:29.4949272Z Download action repository 'actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405' (SHA:a309ff8b426b58ec0e2a45f0f869d46889d02405)
+2026-05-27T20:45:29.5906670Z Download action repository 'dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98' (SHA:25dd0e34f4fe68f24cc83900b1fe3fe149efef98)
+2026-05-27T20:45:30.2774944Z Complete job name: regen-with-new-glean-parser
+2026-05-27T20:45:30.3711191Z ##[group]Run actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+2026-05-27T20:45:30.3712922Z with:
+2026-05-27T20:45:30.3713667Z   submodules: recursive
+2026-05-27T20:45:30.3714775Z   persist-credentials: false
+2026-05-27T20:45:30.3715790Z   repository: mozilla/fx-private-relay
+2026-05-27T20:45:30.3717074Z   token: ***
+2026-05-27T20:45:30.3717831Z   ssh-strict: true
+2026-05-27T20:45:30.3718617Z   ssh-user: git
+2026-05-27T20:45:30.3719369Z   clean: true
+2026-05-27T20:45:30.3720167Z   sparse-checkout-cone-mode: true
+2026-05-27T20:45:30.3721144Z   fetch-depth: 1
+2026-05-27T20:45:30.3721919Z   fetch-tags: false
+2026-05-27T20:45:30.3722718Z   show-progress: true
+2026-05-27T20:45:30.3723532Z   lfs: false
+2026-05-27T20:45:30.3724568Z   set-safe-directory: true
+2026-05-27T20:45:30.3725941Z ##[endgroup]
+2026-05-27T20:45:30.4702228Z Syncing repository: mozilla/fx-private-relay
+2026-05-27T20:45:30.4705476Z ##[group]Getting Git version info
+2026-05-27T20:45:30.4707230Z Working directory is '/home/runner/work/fx-private-relay/fx-private-relay'
+2026-05-27T20:45:30.4709322Z [command]/usr/bin/git version
+2026-05-27T20:45:30.4778839Z git version 2.54.0
+2026-05-27T20:45:30.4803279Z ##[endgroup]
+2026-05-27T20:45:30.4817285Z Temporarily overriding HOME='/home/runner/work/_temp/2e5fde5f-a9eb-4327-8225-1225b8c56435' before making global git config changes
+2026-05-27T20:45:30.4821257Z Adding repository directory to the temporary git global config as a safe directory
+2026-05-27T20:45:30.4825200Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/fx-private-relay/fx-private-relay
+2026-05-27T20:45:30.4868555Z Deleting the contents of '/home/runner/work/fx-private-relay/fx-private-relay'
+2026-05-27T20:45:30.4872376Z ##[group]Initializing the repository
+2026-05-27T20:45:30.4877456Z [command]/usr/bin/git init /home/runner/work/fx-private-relay/fx-private-relay
+2026-05-27T20:45:30.4985314Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-05-27T20:45:30.4987585Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-05-27T20:45:30.4990299Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-05-27T20:45:30.4992852Z hint: call:
+2026-05-27T20:45:30.4994588Z hint:
+2026-05-27T20:45:30.4996392Z hint: 	git config --global init.defaultBranch <name>
+2026-05-27T20:45:30.4998824Z hint:
+2026-05-27T20:45:30.5000692Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-05-27T20:45:30.5003948Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-05-27T20:45:30.5006844Z hint:
+2026-05-27T20:45:30.5008069Z hint: 	git branch -m <name>
+2026-05-27T20:45:30.5009777Z hint:
+2026-05-27T20:45:30.5011177Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-05-27T20:45:30.5013369Z Initialized empty Git repository in /home/runner/work/fx-private-relay/fx-private-relay/.git/
+2026-05-27T20:45:30.5018382Z [command]/usr/bin/git remote add origin https://github.com/mozilla/fx-private-relay
+2026-05-27T20:45:30.5078661Z ##[endgroup]
+2026-05-27T20:45:30.5081138Z ##[group]Disabling automatic garbage collection
+2026-05-27T20:45:30.5083363Z [command]/usr/bin/git config --local gc.auto 0
+2026-05-27T20:45:30.5112059Z ##[endgroup]
+2026-05-27T20:45:30.5114645Z ##[group]Setting up auth
+2026-05-27T20:45:30.5116326Z Removing SSH command configuration
+2026-05-27T20:45:30.5119610Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-05-27T20:45:30.5155843Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-05-27T20:45:30.5477530Z Removing HTTP extra header
+2026-05-27T20:45:30.5482972Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-05-27T20:45:30.5515745Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-05-27T20:45:30.5722484Z Removing includeIf entries pointing to credentials config files
+2026-05-27T20:45:30.5727747Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-27T20:45:30.5757303Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-05-27T20:45:30.5971339Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-05-27T20:45:30.6009639Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git.path /home/runner/work/_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config
+2026-05-27T20:45:30.6039017Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config
+2026-05-27T20:45:30.6071506Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config
+2026-05-27T20:45:30.6103914Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config
+2026-05-27T20:45:30.6135451Z ##[endgroup]
+2026-05-27T20:45:30.6136830Z ##[group]Fetching the repository
+2026-05-27T20:45:30.6148752Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +2cfc36fa8f72c9656c7dad55efd99221b7c34c5c:refs/remotes/pull/6590/merge
+2026-05-27T20:45:32.2861820Z From https://github.com/mozilla/fx-private-relay
+2026-05-27T20:45:32.2863092Z  * [new ref]         2cfc36fa8f72c9656c7dad55efd99221b7c34c5c -> pull/6590/merge
+2026-05-27T20:45:32.2899663Z ##[endgroup]
+2026-05-27T20:45:32.2900150Z ##[group]Determining the checkout info
+2026-05-27T20:45:32.2901005Z ##[endgroup]
+2026-05-27T20:45:32.2906336Z [command]/usr/bin/git sparse-checkout disable
+2026-05-27T20:45:32.2949584Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-05-27T20:45:32.2979187Z ##[group]Checking out the ref
+2026-05-27T20:45:32.2979814Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/6590/merge
+2026-05-27T20:45:32.4358795Z Note: switching to 'refs/remotes/pull/6590/merge'.
+2026-05-27T20:45:32.4359406Z 
+2026-05-27T20:45:32.4359755Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-05-27T20:45:32.4360663Z changes and commit them, and you can discard any commits you make in this
+2026-05-27T20:45:32.4361549Z state without impacting any branches by switching back to a branch.
+2026-05-27T20:45:32.4362171Z 
+2026-05-27T20:45:32.4362796Z If you want to create a new branch to retain commits you create, you may
+2026-05-27T20:45:32.4363612Z do so (now or later) by using -c with the switch command. Example:
+2026-05-27T20:45:32.4364085Z 
+2026-05-27T20:45:32.4364578Z   git switch -c <new-branch-name>
+2026-05-27T20:45:32.4364923Z 
+2026-05-27T20:45:32.4365128Z Or undo this operation with:
+2026-05-27T20:45:32.4365427Z 
+2026-05-27T20:45:32.4365589Z   git switch -
+2026-05-27T20:45:32.4365869Z 
+2026-05-27T20:45:32.4366276Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-05-27T20:45:32.4366837Z 
+2026-05-27T20:45:32.4367355Z HEAD is now at 2cfc36f Merge 0c2f52c437d832f7b1ad031d6a7885ef7aded366 into fa25bc5aa7a1914059e11889bffcbe344ef7bf96
+2026-05-27T20:45:32.4375204Z ##[endgroup]
+2026-05-27T20:45:32.4375955Z ##[group]Setting up auth for fetching submodules
+2026-05-27T20:45:32.4382242Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-05-27T20:45:32.4419420Z [command]/usr/bin/git config --global include.path /home/runner/work/_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config
+2026-05-27T20:45:32.4447190Z [command]/usr/bin/git config --global --unset-all url.https://github.com/.insteadOf
+2026-05-27T20:45:32.4475529Z [command]/usr/bin/git config --global --add url.https://github.com/.insteadOf git@github.com:
+2026-05-27T20:45:32.4505237Z [command]/usr/bin/git config --global --add url.https://github.com/.insteadOf org-131524@github.com:
+2026-05-27T20:45:32.4532883Z ##[endgroup]
+2026-05-27T20:45:32.4533571Z ##[group]Fetching submodules
+2026-05-27T20:45:32.4537588Z [command]/usr/bin/git submodule sync --recursive
+2026-05-27T20:45:32.4765482Z [command]/usr/bin/git -c protocol.version=2 submodule update --init --force --depth=1 --recursive
+2026-05-27T20:45:32.4985213Z Submodule 'privaterelay/locales' (https://github.com/mozilla-l10n/fx-private-relay-l10n.git) registered for path 'privaterelay/locales'
+2026-05-27T20:45:32.5011247Z Cloning into '/home/runner/work/fx-private-relay/fx-private-relay/privaterelay/locales'...
+2026-05-27T20:45:34.8362842Z From https://github.com/mozilla-l10n/fx-private-relay-l10n
+2026-05-27T20:45:34.8363476Z  * branch            3bcea0b185a0a418fc165a39dd03b2e6620b2ccb -> FETCH_HEAD
+2026-05-27T20:45:34.8691687Z Submodule path 'privaterelay/locales': checked out '3bcea0b185a0a418fc165a39dd03b2e6620b2ccb'
+2026-05-27T20:45:34.8725429Z [command]/usr/bin/git submodule foreach --recursive git config --local gc.auto 0
+2026-05-27T20:45:34.8950428Z Entering 'privaterelay/locales'
+2026-05-27T20:45:34.9065507Z ##[endgroup]
+2026-05-27T20:45:34.9106471Z [command]/usr/bin/git log -1 --format=%H
+2026-05-27T20:45:34.9130392Z 2cfc36fa8f72c9656c7dad55efd99221b7c34c5c
+2026-05-27T20:45:34.9140065Z ##[group]Removing auth
+2026-05-27T20:45:34.9140503Z Removing SSH command configuration
+2026-05-27T20:45:34.9144966Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-05-27T20:45:34.9175399Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-05-27T20:45:34.9387707Z Entering 'privaterelay/locales'
+2026-05-27T20:45:34.9440719Z Removing HTTP extra header
+2026-05-27T20:45:34.9445893Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-05-27T20:45:34.9476748Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-05-27T20:45:34.9694528Z Entering 'privaterelay/locales'
+2026-05-27T20:45:34.9746785Z Removing includeIf entries pointing to credentials config files
+2026-05-27T20:45:34.9752667Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-27T20:45:34.9780615Z includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git.path
+2026-05-27T20:45:34.9781349Z includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git/worktrees/*.path
+2026-05-27T20:45:34.9781827Z includeif.gitdir:/github/workspace/.git.path
+2026-05-27T20:45:34.9782175Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-05-27T20:45:34.9788938Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git.path
+2026-05-27T20:45:34.9810834Z /home/runner/work/_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config
+2026-05-27T20:45:34.9820202Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git.path /home/runner/work/_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config
+2026-05-27T20:45:34.9853486Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git/worktrees/*.path
+2026-05-27T20:45:34.9876119Z /home/runner/work/_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config
+2026-05-27T20:45:34.9884884Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/fx-private-relay/fx-private-relay/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config
+2026-05-27T20:45:34.9917353Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-05-27T20:45:34.9939294Z /github/runner_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config
+2026-05-27T20:45:34.9947490Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config
+2026-05-27T20:45:34.9979169Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-05-27T20:45:34.9999503Z /github/runner_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config
+2026-05-27T20:45:35.0007773Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config
+2026-05-27T20:45:35.0041365Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-05-27T20:45:35.0254985Z Entering 'privaterelay/locales'
+2026-05-27T20:45:35.0275859Z file:/home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales/config	remote.origin.url
+2026-05-27T20:45:35.0306799Z [command]/usr/bin/git config --file /home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-27T20:45:35.0331001Z Removing credentials config '/home/runner/work/_temp/git-credentials-c92a376c-d39a-4fa5-845f-868fd95438ff.config'
+2026-05-27T20:45:35.0339589Z ##[endgroup]
+2026-05-27T20:45:35.0617182Z ##[group]Run gh pr checkout --recurse-submodules 6590
+2026-05-27T20:45:35.0617618Z [36;1mgh pr checkout --recurse-submodules 6590[0m
+2026-05-27T20:45:35.0656174Z shell: /usr/bin/bash -e {0}
+2026-05-27T20:45:35.0656445Z env:
+2026-05-27T20:45:35.0656849Z   GH_TOKEN: ***
+2026-05-27T20:45:35.0657045Z ##[endgroup]
+2026-05-27T20:45:46.0472091Z From https://github.com/mozilla/fx-private-relay
+2026-05-27T20:45:46.0472666Z  * [new branch]          dependabot/pip/glean-parser-19.1.0 -> origin/dependabot/pip/glean-parser-19.1.0
+2026-05-27T20:45:46.8317206Z Fetching submodule privaterelay/locales
+2026-05-27T20:45:49.0827394Z From https://github.com/mozilla-l10n/fx-private-relay-l10n
+2026-05-27T20:45:49.0828321Z  * branch              00275ca786e1f6ad80e3eba15ba5823c614ced90 -> FETCH_HEAD
+2026-05-27T20:45:49.0829101Z  * branch              0050d9a18a48992f72c62a8c01e2d75f8c6436a3 -> FETCH_HEAD
+2026-05-27T20:45:49.0829944Z  * branch              008802605afc3a6db6777c81cfafcb8775c56f62 -> FETCH_HEAD
+2026-05-27T20:45:49.0830676Z  * branch              00b387c899df50b2ba357ac77393de46986847cc -> FETCH_HEAD
+2026-05-27T20:45:49.0831374Z  * branch              0125de2196e84b3f2e19a766a92361ca83bc9a21 -> FETCH_HEAD
+2026-05-27T20:45:49.0832058Z  * branch              018f2669d938381d8edc7341eec2a3c72f255d08 -> FETCH_HEAD
+2026-05-27T20:45:49.0832751Z  * branch              01e63a6d30ec89d784b616f3902cbfa4df7856f1 -> FETCH_HEAD
+2026-05-27T20:45:49.0833447Z  * branch              0241858d1b453d84c347c6a769dbaa4882f9ff92 -> FETCH_HEAD
+2026-05-27T20:45:49.0834137Z  * branch              0249def4098f5f11bf2774383284b922448fa4d8 -> FETCH_HEAD
+2026-05-27T20:45:49.0835108Z  * branch              02a54985c13a16de443e52297aeabd3d3f949d31 -> FETCH_HEAD
+2026-05-27T20:45:49.0835865Z  * branch              03292ed4348800024286b15fd067be4c076bf2b5 -> FETCH_HEAD
+2026-05-27T20:45:49.0836613Z  * branch              034aeba33c5da920f1fee2fb153db5476a298a2a -> FETCH_HEAD
+2026-05-27T20:45:49.0837330Z  * branch              039080e298e4ed44efd5cea7a7170166adc35b85 -> FETCH_HEAD
+2026-05-27T20:45:49.0838082Z  * branch              03da6fc1df8bdc0ca8e9a0fb91e94291266ed1c0 -> FETCH_HEAD
+2026-05-27T20:45:49.0838775Z  * branch              044ff08a182c6421644930b38b3256287b435880 -> FETCH_HEAD
+2026-05-27T20:45:49.0839466Z  * branch              049fbdc1d6862f5fef0dc0fb38ddc475d73c2d60 -> FETCH_HEAD
+2026-05-27T20:45:49.0840179Z  * branch              04a3936f980f7e9ca0ea556b0d03f7132d8c8a10 -> FETCH_HEAD
+2026-05-27T20:45:49.0840884Z  * branch              04efecac6fb2f65958365f49b668680537ff8a6f -> FETCH_HEAD
+2026-05-27T20:45:49.0841591Z  * branch              060761cfcc78d76b05167d409b38c8f5ce4c1ab9 -> FETCH_HEAD
+2026-05-27T20:45:49.0842317Z  * branch              0657804400bc504d63c511fc57c0916e18c6dd29 -> FETCH_HEAD
+2026-05-27T20:45:49.0843029Z  * branch              0687f47fa0347bc57ded4e382ba4fc2e92152784 -> FETCH_HEAD
+2026-05-27T20:45:49.0843505Z  * branch              06bc35e3be5acc4117f6be32ba64b2399dddcf56 -> FETCH_HEAD
+2026-05-27T20:45:49.0843918Z  * branch              06fa1a4b7a87badbe8f90563aab59f2d875e1b5c -> FETCH_HEAD
+2026-05-27T20:45:49.0844573Z  * branch              075ea37a495d79c433ef5cbcb984ac949ae0b5fa -> FETCH_HEAD
+2026-05-27T20:45:49.0844982Z  * branch              075f7bcdba1c5f2799d0482343db4ff9de8afdbb -> FETCH_HEAD
+2026-05-27T20:45:49.0845400Z  * branch              079b1c53514a08549c8df941e39bf8a5edd79495 -> FETCH_HEAD
+2026-05-27T20:45:49.0845840Z  * branch              07ea9ec367911387d31a84fad20970293b48d6e3 -> FETCH_HEAD
+2026-05-27T20:45:49.0846227Z  * branch              085d208548e80dd91b133d717dc9291bae0d754a -> FETCH_HEAD
+2026-05-27T20:45:49.0846616Z  * branch              0894cf629ddcca514f49d7657cbb243a0fd7a1b5 -> FETCH_HEAD
+2026-05-27T20:45:49.0847007Z  * branch              08acb7f6cd21034ce22f54f2bb9773efb8945d83 -> FETCH_HEAD
+2026-05-27T20:45:49.0847407Z  * branch              09571f99742ff9f6ccc3e9dd01480d398f835027 -> FETCH_HEAD
+2026-05-27T20:45:49.0848255Z  * branch              09677b6597bef04b61cc3ddc725fd8055eca7076 -> FETCH_HEAD
+2026-05-27T20:45:49.0848665Z  * branch              09cc2a6c85b58fad17dacd8cc145d8b39f75ba38 -> FETCH_HEAD
+2026-05-27T20:45:49.0849066Z  * branch              0ad846e1602aa5830909ebeae16a8cb51babbd55 -> FETCH_HEAD
+2026-05-27T20:45:49.0849456Z  * branch              0ae04b3503bbc648bcab2f015a7c94c9a3e18ad7 -> FETCH_HEAD
+2026-05-27T20:45:49.0849848Z  * branch              0b07da3e69d7456811b497284df466770807b13f -> FETCH_HEAD
+2026-05-27T20:45:49.0850226Z  * branch              0b1be6b6eca495cd806018656df04d1344ece95f -> FETCH_HEAD
+2026-05-27T20:45:49.0850616Z  * branch              0b42264820b9a76b200c2b3799565adf5dd765cc -> FETCH_HEAD
+2026-05-27T20:45:49.0850992Z  * branch              0bbd0b7799faac57358ad2197820268304149a65 -> FETCH_HEAD
+2026-05-27T20:45:49.0851380Z  * branch              0bd06e7ef2e4ab34bb83e3381e1fe07974466c08 -> FETCH_HEAD
+2026-05-27T20:45:49.0851774Z  * branch              0c6715fea7b24d9ab867caa89b6269b664186290 -> FETCH_HEAD
+2026-05-27T20:45:49.0852167Z  * branch              0c848199c434e4e6b76397d133ec96109f5b5b66 -> FETCH_HEAD
+2026-05-27T20:45:49.0852556Z  * branch              0d2130efb3f6191c2fcdfbba761df2b3b569d331 -> FETCH_HEAD
+2026-05-27T20:45:49.0852941Z  * branch              0d5c08be3435c694381f7d9bd533b30fff9b5b4d -> FETCH_HEAD
+2026-05-27T20:45:49.0853329Z  * branch              0db0b0b7f95744be17fdb58e62009b8499865c26 -> FETCH_HEAD
+2026-05-27T20:45:49.0853709Z  * branch              0dbfd9789899bb5149a15b2ead38ae63b77c7b32 -> FETCH_HEAD
+2026-05-27T20:45:49.0854101Z  * branch              0dc0eb958e6a215e76ccf730d323052fe8b8d81a -> FETCH_HEAD
+2026-05-27T20:45:49.0854892Z  * branch              0df443f1ec0fd0feebfddacc2669f51193270300 -> FETCH_HEAD
+2026-05-27T20:45:49.0855298Z  * branch              0eeaa808f5fd54dcb835fc4615e6cc69077a9c0d -> FETCH_HEAD
+2026-05-27T20:45:49.0855708Z  * branch              0f298548ff38054f42b77bcec0814c70456bb0be -> FETCH_HEAD
+2026-05-27T20:45:49.0856110Z  * branch              0f4e5506bd13206881f319830adefdbec63af078 -> FETCH_HEAD
+2026-05-27T20:45:49.0856501Z  * branch              100097adcf80455dad22f9815518cf8b5017b0e2 -> FETCH_HEAD
+2026-05-27T20:45:49.0856892Z  * branch              1006bdc531d81df064445ca9d4e7e798df6a83a6 -> FETCH_HEAD
+2026-05-27T20:45:49.0857277Z  * branch              100bcb96ea0316204cb733d6287cc17642ff7763 -> FETCH_HEAD
+2026-05-27T20:45:49.0857668Z  * branch              1031e1588c5ebdc137bdf2818a68a05db18f3544 -> FETCH_HEAD
+2026-05-27T20:45:49.0858073Z  * branch              10787193a90f4a3f50a37d864f0e76f329aa839b -> FETCH_HEAD
+2026-05-27T20:45:49.0858460Z  * branch              110c985291b0ae917ac990fd7f61fc5984e6d9bf -> FETCH_HEAD
+2026-05-27T20:45:49.0858844Z  * branch              11b39378cd33efee392bf9c47ee7600bc51f30ee -> FETCH_HEAD
+2026-05-27T20:45:49.0859237Z  * branch              11fd32bcaedd4ac297e0c48139d80c525146661a -> FETCH_HEAD
+2026-05-27T20:45:49.0859629Z  * branch              12f3c790ab051edbaf8afa6404715c9cc60996b3 -> FETCH_HEAD
+2026-05-27T20:45:49.0860039Z  * branch              12fbeffa9de5ed1ab6c18d58e7cbb2aebeb65a84 -> FETCH_HEAD
+2026-05-27T20:45:49.0860441Z  * branch              133e2259584ac30b53eae93c060dadb4f4252223 -> FETCH_HEAD
+2026-05-27T20:45:49.0860823Z  * branch              139047d5373c41d2ed272b8d135d71cf5deb6b2c -> FETCH_HEAD
+2026-05-27T20:45:49.0861208Z  * branch              139e570b51702670548e1dcfdc7683de1005d7e0 -> FETCH_HEAD
+2026-05-27T20:45:49.0861687Z  * branch              13b36a5dbd3960016b74255d63040a66954ddf92 -> FETCH_HEAD
+2026-05-27T20:45:49.0862094Z  * branch              142cd802fc2e20eb60828e92df89f70a4fef807b -> FETCH_HEAD
+2026-05-27T20:45:49.0862481Z  * branch              14a0f7b7a92e674161b99a3323982706995c7592 -> FETCH_HEAD
+2026-05-27T20:45:49.0862863Z  * branch              14ae5fbb7d65424da260f41f8e9d5e315930bb71 -> FETCH_HEAD
+2026-05-27T20:45:49.0863258Z  * branch              14ef2f8708ab38e83a02166efcd682be41e5b57f -> FETCH_HEAD
+2026-05-27T20:45:49.0863810Z  * branch              159326c422d62841f05612b08b9bae29c9c4cd39 -> FETCH_HEAD
+2026-05-27T20:45:49.0864545Z  * branch              15d0aa2b2340482e2d4e75f77e819cab7c8a0e43 -> FETCH_HEAD
+2026-05-27T20:45:49.0865047Z  * branch              15f5f48eb43774630eca9f94ee11832cc781d54a -> FETCH_HEAD
+2026-05-27T20:45:49.0865477Z  * branch              1602ca4e4e30508b73b93b49a3ea838797b6412a -> FETCH_HEAD
+2026-05-27T20:45:49.0866175Z  * branch              165502f3db3643c9396a8d2182949e779919d4cd -> FETCH_HEAD
+2026-05-27T20:45:49.0866873Z  * branch              165f0e792d365177b4475d5fd5d7ebc62d1d2fb5 -> FETCH_HEAD
+2026-05-27T20:45:49.0867586Z  * branch              167ec6e9e605bca8f95d68bc2e5953a0dd9de3c7 -> FETCH_HEAD
+2026-05-27T20:45:49.0868318Z  * branch              16c4a339d26194aaa6cf8e727f92e26c8fe1b19f -> FETCH_HEAD
+2026-05-27T20:45:49.0869064Z  * branch              16d8a017b52e6080898c3ce7d680a2c9f62d524c -> FETCH_HEAD
+2026-05-27T20:45:49.0869772Z  * branch              16e1e3ad72f1b2837f6d4df41af815cecbdefb01 -> FETCH_HEAD
+2026-05-27T20:45:49.0870605Z  * branch              174228b95264c31f85dddfd13f5a7d0b4cfb7017 -> FETCH_HEAD
+2026-05-27T20:45:49.0871130Z  * branch              17bfe2eaa15c60c230f1815961da419c3f6790f0 -> FETCH_HEAD
+2026-05-27T20:45:49.0871525Z  * branch              17dbca7a2b9a1e74a17127d25b218899c55f8dc9 -> FETCH_HEAD
+2026-05-27T20:45:49.0871912Z  * branch              1813aeac3ad89982d454ec2481c1f12ef4b78015 -> FETCH_HEAD
+2026-05-27T20:45:49.0872299Z  * branch              1855f2037b20845321897eb1a9e0b9af1a265cc0 -> FETCH_HEAD
+2026-05-27T20:45:49.0872678Z  * branch              185a2035e1fd0f625d34749d2d5253880520bbf4 -> FETCH_HEAD
+2026-05-27T20:45:49.0873069Z  * branch              186133eaffe4dfb13d8794d8286d38bd32ebb5a7 -> FETCH_HEAD
+2026-05-27T20:45:49.0873464Z  * branch              190ac920263dddf4f7138a6ae28aa9a250e8ff27 -> FETCH_HEAD
+2026-05-27T20:45:49.0873852Z  * branch              193cc52f57d4418fb53e3b31921984aaac28fb4b -> FETCH_HEAD
+2026-05-27T20:45:49.0874472Z  * branch              194407632666f38a8177be208fdbbe42ab833391 -> FETCH_HEAD
+2026-05-27T20:45:49.0875032Z  * branch              196167bf605f58c64fc1d4ece723c009a6f3a1af -> FETCH_HEAD
+2026-05-27T20:45:49.0875437Z  * branch              19c7c7f8a84bc9d15f294843f0a17a666a7530ed -> FETCH_HEAD
+2026-05-27T20:45:49.0875819Z  * branch              19d1310232e5fb03cc32bc316a064550986c3be4 -> FETCH_HEAD
+2026-05-27T20:45:49.0876206Z  * branch              1a8f7eb59b01f98886cd72b0384d0840e8453b79 -> FETCH_HEAD
+2026-05-27T20:45:49.0876593Z  * branch              1b2ff43693a204c8e757ac70d53900b6c9bd97ba -> FETCH_HEAD
+2026-05-27T20:45:49.0876976Z  * branch              1b5579064cd13734b7dee5f691488c31dea92b95 -> FETCH_HEAD
+2026-05-27T20:45:49.0877356Z  * branch              1b7987b93f63732cf6716ab8709b2cc85810e8de -> FETCH_HEAD
+2026-05-27T20:45:49.0877731Z  * branch              1c03d6720e1110a8fb2095f6d7f08461eadd0808 -> FETCH_HEAD
+2026-05-27T20:45:49.0878129Z  * branch              1c2b072be47c5318ffcd55fc24042f1c0f64e71a -> FETCH_HEAD
+2026-05-27T20:45:49.0878555Z  * branch              1cc9be93aea4fe3165bec902fb0ed228eaf4cb44 -> FETCH_HEAD
+2026-05-27T20:45:49.0878947Z  * branch              1d26831c6172033122b67d50de8594f1b9adf503 -> FETCH_HEAD
+2026-05-27T20:45:49.0879328Z  * branch              1d4b2e015816cf118f3b5c5869b8c23dd0ddf245 -> FETCH_HEAD
+2026-05-27T20:45:49.0879707Z  * branch              1da68c861d831da18346021c0982b6cba26598ed -> FETCH_HEAD
+2026-05-27T20:45:49.0880092Z  * branch              1dc08900bb954f47fbb5229b55a3a5d95e6b817f -> FETCH_HEAD
+2026-05-27T20:45:49.0880478Z  * branch              1e2dc7fa08e31d0d47f7aa10b02ed04a04a23ccf -> FETCH_HEAD
+2026-05-27T20:45:49.0880868Z  * branch              1e613929d91a6c934a34f1651fb3a4cd60853414 -> FETCH_HEAD
+2026-05-27T20:45:49.0881256Z  * branch              1e7940ca2afa73410a7ecb8770e18e972c1ddab0 -> FETCH_HEAD
+2026-05-27T20:45:49.0881642Z  * branch              1e960f8aa157b4dee87f4716b8fd0f6feb2cd812 -> FETCH_HEAD
+2026-05-27T20:45:49.0882028Z  * branch              1ea02931d2425d6d51a66a9a83b44af3f0e48f85 -> FETCH_HEAD
+2026-05-27T20:45:49.0882683Z  * branch              1ffce975651a3553b6f2129c97cbdab708c13f02 -> FETCH_HEAD
+2026-05-27T20:45:49.0883074Z  * branch              20561a55102fffee5a07eb78438bdd567941bb95 -> FETCH_HEAD
+2026-05-27T20:45:49.0883454Z  * branch              205abb0de45831f5035c4fe5ed290707832e917f -> FETCH_HEAD
+2026-05-27T20:45:49.0883859Z  * branch              2060d5608699e7d71ad96fb8556ee359a7b9242d -> FETCH_HEAD
+2026-05-27T20:45:49.0884454Z  * branch              20d4d8d11727463116b61608a9083d68b3ed8115 -> FETCH_HEAD
+2026-05-27T20:45:49.0884907Z  * branch              20e53d74fc6b16f20b6219ece23434f84b6fc3b4 -> FETCH_HEAD
+2026-05-27T20:45:49.0885307Z  * branch              20e6558f5d1f58687737a99bad5a38a4f893dc94 -> FETCH_HEAD
+2026-05-27T20:45:49.0885691Z  * branch              215e0fc823545b5ac405f80e18e44cf940cff2cc -> FETCH_HEAD
+2026-05-27T20:45:49.0886078Z  * branch              21a87f26ea59775296350b75cbf505afe4917247 -> FETCH_HEAD
+2026-05-27T20:45:49.0886470Z  * branch              21c77d33960493548f0b2fcb86aea88e7449cc14 -> FETCH_HEAD
+2026-05-27T20:45:49.0886864Z  * branch              21d0a9fbb13eac33369824f83aa9eefb3d5a7ac3 -> FETCH_HEAD
+2026-05-27T20:45:49.0887251Z  * branch              220377fc8e9555d8b83fd16fe317935cea0f0f5f -> FETCH_HEAD
+2026-05-27T20:45:49.0887644Z  * branch              2299a08fd3a8b5ccab1e3b7a812cad696f491950 -> FETCH_HEAD
+2026-05-27T20:45:49.0888072Z  * branch              22d85189874259c7c385753715f5cb34c5bb8aed -> FETCH_HEAD
+2026-05-27T20:45:49.0888458Z  * branch              230cbb5508c0d1ff3e4c01065427fe01306bbee9 -> FETCH_HEAD
+2026-05-27T20:45:49.0888982Z  * branch              233b33f48e4e0bd3c56710d1e1aa22ca9cc90cf1 -> FETCH_HEAD
+2026-05-27T20:45:49.0889410Z  * branch              2355671eee645149d188e906164c55ebb9d861ef -> FETCH_HEAD
+2026-05-27T20:45:49.0889792Z  * branch              237fa20e8d926c45f59573479767e04cd93b51da -> FETCH_HEAD
+2026-05-27T20:45:49.0890177Z  * branch              239450fc2fa48d9402c90af1585ecf1917b36d5e -> FETCH_HEAD
+2026-05-27T20:45:49.0890564Z  * branch              24060980748489f65bc67cc013855793c26e8ef4 -> FETCH_HEAD
+2026-05-27T20:45:49.0890949Z  * branch              246dcdaff384111a5edbc09af0f874e99a1b8352 -> FETCH_HEAD
+2026-05-27T20:45:49.0891336Z  * branch              24a569db21ca39e8619d96d1ae584cd8cd7f39fc -> FETCH_HEAD
+2026-05-27T20:45:49.0891726Z  * branch              24cca3a27b72a2287afd218bece296609792bf0b -> FETCH_HEAD
+2026-05-27T20:45:49.0892115Z  * branch              24ee1dfa487cfdd4f0fc220e95b98c4acdeb5c58 -> FETCH_HEAD
+2026-05-27T20:45:49.0892505Z  * branch              25676cf063567e3c4f799fae778cfac434bc33c4 -> FETCH_HEAD
+2026-05-27T20:45:49.0892893Z  * branch              25dbe8b98ea37802f99c738e62a385a9d854b6e4 -> FETCH_HEAD
+2026-05-27T20:45:49.0893276Z  * branch              25ee411e05256a54583e5a5af1ac89012ac432f2 -> FETCH_HEAD
+2026-05-27T20:45:49.0893656Z  * branch              2618735261e70b1f10a3698d32d5f6e2ec8e1c4d -> FETCH_HEAD
+2026-05-27T20:45:49.0894041Z  * branch              26e8500a386566ed09876eabe170ea846c62da43 -> FETCH_HEAD
+2026-05-27T20:45:49.0894717Z  * branch              2707732b6e85cceff6286388e80a7f3cc34db5b5 -> FETCH_HEAD
+2026-05-27T20:45:49.0895104Z  * branch              2759cf4e463117230028fd27561b0fb2805c574c -> FETCH_HEAD
+2026-05-27T20:45:49.0895482Z  * branch              276b0b78d34a2b0fe6a60f92af5b6627735551b2 -> FETCH_HEAD
+2026-05-27T20:45:49.0895915Z  * branch              27bea483e355e9467f9ab75395ad498934adce4d -> FETCH_HEAD
+2026-05-27T20:45:49.0896355Z  * branch              28f15a9c38bbec7b481f4710a841b500738b937e -> FETCH_HEAD
+2026-05-27T20:45:49.0896744Z  * branch              28f6cacfd183620623ed787ab734f6b9e359f2bc -> FETCH_HEAD
+2026-05-27T20:45:49.0897127Z  * branch              292a71d3e9069e1c9bf29fd074ebde98ea6d3777 -> FETCH_HEAD
+2026-05-27T20:45:49.0897515Z  * branch              29375b86068a9cf0e0a9a41869e93a00c81dbd45 -> FETCH_HEAD
+2026-05-27T20:45:49.0897910Z  * branch              2941a97f5f93b55130fce51186eeae4d576ca0de -> FETCH_HEAD
+2026-05-27T20:45:49.0898542Z  * branch              29cd199280418eef163c447c5b57800cb3b26284 -> FETCH_HEAD
+2026-05-27T20:45:49.0898928Z  * branch              29d3e8439c79beb82c08170c834e538662be5d50 -> FETCH_HEAD
+2026-05-27T20:45:49.0899307Z  * branch              2a3d876b00e7239a99000aae95fc1f1a2d91ca76 -> FETCH_HEAD
+2026-05-27T20:45:49.0899693Z  * branch              2a4a04956750205929ed0e7b42d4d67c1eb64c88 -> FETCH_HEAD
+2026-05-27T20:45:49.0900071Z  * branch              2ac170ce7b9e12c01f742538185e98c888b3c7bf -> FETCH_HEAD
+2026-05-27T20:45:49.0900463Z  * branch              2ad2f8747ff8b9e8905c72045dabd1aef7a35b0f -> FETCH_HEAD
+2026-05-27T20:45:49.0900853Z  * branch              2b381084e50bc6554d4b39fa350cd63ae31c8f0a -> FETCH_HEAD
+2026-05-27T20:45:49.0901231Z  * branch              2b7b6d9a324558d779aea5543219816d1170f838 -> FETCH_HEAD
+2026-05-27T20:45:49.0901620Z  * branch              2bf38eaed6828027d9da52de82d14b4f7199e0f9 -> FETCH_HEAD
+2026-05-27T20:45:49.0902006Z  * branch              2c0e9aa8a799b1e92ce5fe6812988e7612a7cc6f -> FETCH_HEAD
+2026-05-27T20:45:49.0902410Z  * branch              2c22a695abb70b0f50daa12de73b851e35f2c3c1 -> FETCH_HEAD
+2026-05-27T20:45:49.0902805Z  * branch              2c6d9cf5c156e998942c9686b53d63bbe0204838 -> FETCH_HEAD
+2026-05-27T20:45:49.0903186Z  * branch              2d0daea1076537429f0fbd8472bdf83fd816ecdb -> FETCH_HEAD
+2026-05-27T20:45:49.0903575Z  * branch              2d50ca1503c64316bb002a09b3026102d0cf6063 -> FETCH_HEAD
+2026-05-27T20:45:49.0903953Z  * branch              2db246b60b2d62c10272eb574cf1b0b804358cf8 -> FETCH_HEAD
+2026-05-27T20:45:49.0904612Z  * branch              2de134fb849e7f2f2e49fc7ddf495811eed1a251 -> FETCH_HEAD
+2026-05-27T20:45:49.0905062Z  * branch              2de1e776c9fdf36c47233d451483991ff5cfc6cb -> FETCH_HEAD
+2026-05-27T20:45:49.0905456Z  * branch              2e0de71186628f411953a76249c60265972a1f6a -> FETCH_HEAD
+2026-05-27T20:45:49.0905843Z  * branch              2e13a4847db8ad2a853a227ca90bbb8619d8859a -> FETCH_HEAD
+2026-05-27T20:45:49.0906240Z  * branch              2e7e82a5405456ac4fe45ad73600f07cf7246057 -> FETCH_HEAD
+2026-05-27T20:45:49.0906631Z  * branch              2ee1da5ee3a32b613d6159d30d5f4d5651d9a14a -> FETCH_HEAD
+2026-05-27T20:45:49.0907012Z  * branch              2f8430873cc3186d92e75e9312f5034472466dd3 -> FETCH_HEAD
+2026-05-27T20:45:49.0907398Z  * branch              2f9c18c21684bc271fee021f860cee6c0aca46be -> FETCH_HEAD
+2026-05-27T20:45:49.0907794Z  * branch              2fbfb679ab9887bc54bbb39db02fdc82b92dd42a -> FETCH_HEAD
+2026-05-27T20:45:49.0908200Z  * branch              2fc6acd288a533054df73f3eb5f2451aaf3a8330 -> FETCH_HEAD
+2026-05-27T20:45:49.0908589Z  * branch              2feab2259532cbee0269b995916d1ae088c13b07 -> FETCH_HEAD
+2026-05-27T20:45:49.0908966Z  * branch              306bd95091f6e329f46685e54a1b05b39e5c8e9d -> FETCH_HEAD
+2026-05-27T20:45:49.0909348Z  * branch              3139d8a52e1025baac4e327ad461b45d956c7c44 -> FETCH_HEAD
+2026-05-27T20:45:49.0909725Z  * branch              3170226b24a59dd784122811ea6d899e70a47524 -> FETCH_HEAD
+2026-05-27T20:45:49.0910113Z  * branch              32437a47f05c8d476d02f8aab1ea5885bf15f012 -> FETCH_HEAD
+2026-05-27T20:45:49.0910489Z  * branch              3271070d55b4803600b29716b68926c6472080c5 -> FETCH_HEAD
+2026-05-27T20:45:49.0910861Z  * branch              3281af099533224af41c1cee96a4a8df64f02502 -> FETCH_HEAD
+2026-05-27T20:45:49.0911246Z  * branch              32821ddf6059e64a487a9bb482b63283a0aeb7af -> FETCH_HEAD
+2026-05-27T20:45:49.0911630Z  * branch              329a6c638abe301b1ef4a252e12b1f8b79d865d3 -> FETCH_HEAD
+2026-05-27T20:45:49.0912018Z  * branch              33137c7648238fb0ec782f9eef86f80ca8ed62b4 -> FETCH_HEAD
+2026-05-27T20:45:49.0912399Z  * branch              331bf7bb90e949ec691a111003dee513726626bb -> FETCH_HEAD
+2026-05-27T20:45:49.0912788Z  * branch              332dfc8a53bcb3f19e253d36ccf0146b2e745ce9 -> FETCH_HEAD
+2026-05-27T20:45:49.0913200Z  * branch              333534431f6da9b4f1640396e764577415e52c4d -> FETCH_HEAD
+2026-05-27T20:45:49.0913806Z  * branch              3362100d41cc40bd4e377757f88f5634bc0c4e89 -> FETCH_HEAD
+2026-05-27T20:45:49.0914198Z  * branch              33dcd3cd90335b0fe4d48ad19ca02b7c182aab72 -> FETCH_HEAD
+2026-05-27T20:45:49.0914815Z  * branch              34216d324ae25439ed9c82f71d4a89f3d554a48d -> FETCH_HEAD
+2026-05-27T20:45:49.0915204Z  * branch              3462fda625277820a9bdf951cce00c90ff9b866d -> FETCH_HEAD
+2026-05-27T20:45:49.0915594Z  * branch              34b142f8edd6d18c7aac339f2beea5ed935998d6 -> FETCH_HEAD
+2026-05-27T20:45:49.0915983Z  * branch              35bbca11c03ebd11c28a71b4743b3f5ee057308d -> FETCH_HEAD
+2026-05-27T20:45:49.0916373Z  * branch              36412ff75386e1e4ce5e603fe6463bce758d89dd -> FETCH_HEAD
+2026-05-27T20:45:49.0916753Z  * branch              36a377fb9210885382f802e39ee38c5a0461f99f -> FETCH_HEAD
+2026-05-27T20:45:49.0917155Z  * branch              36b9ed261a35843fad334e993ab4eb9637672488 -> FETCH_HEAD
+2026-05-27T20:45:49.0917540Z  * branch              371d2f5744fac52febd24062dc3560989b4046c6 -> FETCH_HEAD
+2026-05-27T20:45:49.0917945Z  * branch              377061dac5fe323a4c432d96cf03de48591a3471 -> FETCH_HEAD
+2026-05-27T20:45:49.0918330Z  * branch              38681d1faa6bd6faaf9c1fc62556f58ec878818d -> FETCH_HEAD
+2026-05-27T20:45:49.0918717Z  * branch              38d117c083ec24350fa825659757f65cf9f7841f -> FETCH_HEAD
+2026-05-27T20:45:49.0919099Z  * branch              38dde8228586cfbc8c302d455eee48f268d0ba31 -> FETCH_HEAD
+2026-05-27T20:45:49.0919670Z  * branch              3935c96945823a5a416214a4e3e5ac91736824a3 -> FETCH_HEAD
+2026-05-27T20:45:49.0920346Z  * branch              3945c03b4291ae635e7371cfa841db0707b7682f -> FETCH_HEAD
+2026-05-27T20:45:49.0921032Z  * branch              396013512e3438778bd01ad65f056f23e11320bc -> FETCH_HEAD
+2026-05-27T20:45:49.0921738Z  * branch              3983f4658f2c12be3f80c94cdb8c5fe95c3b2db1 -> FETCH_HEAD
+2026-05-27T20:45:49.0922448Z  * branch              3a0f5874d8a66d770dbc49beda3c585313c62c60 -> FETCH_HEAD
+2026-05-27T20:45:49.0923170Z  * branch              3b2bd40315045e5ef69cf24ae3ff174961304960 -> FETCH_HEAD
+2026-05-27T20:45:49.0923877Z  * branch              3b59c07a853f933572dbcce5ae64562515799032 -> FETCH_HEAD
+2026-05-27T20:45:49.0924776Z  * branch              3b93905956b929c962bd23a8ac2e7fa40444b5a2 -> FETCH_HEAD
+2026-05-27T20:45:49.0925481Z  * branch              3bc331a7f04ff5780cb42b10de051b6f871f5c39 -> FETCH_HEAD
+2026-05-27T20:45:49.0926199Z  * branch              3bde9c4489345972cdc89f8ef2789d1cb9ec9bbd -> FETCH_HEAD
+2026-05-27T20:45:49.0926918Z  * branch              3c5bd485afcf9623b03948819f245a5bd55e8c0e -> FETCH_HEAD
+2026-05-27T20:45:49.0927620Z  * branch              3c77d6667f5af81475265031c5fbadff5d81f429 -> FETCH_HEAD
+2026-05-27T20:45:49.0928335Z  * branch              3cd544b4a0673440626ee49f1d9713346fff43e6 -> FETCH_HEAD
+2026-05-27T20:45:49.0929031Z  * branch              3d930063f43ad435b095627a9e61dbda8f99a850 -> FETCH_HEAD
+2026-05-27T20:45:49.0929740Z  * branch              3e1df8b7ce03e0752792a58ad1f5ac5b89acb034 -> FETCH_HEAD
+2026-05-27T20:45:49.0930473Z  * branch              3e66bc48f2651dfb22d4d44f48f903f87df289de -> FETCH_HEAD
+2026-05-27T20:45:49.0931201Z  * branch              3e8b1eada5fcdca2cad274472bc2a385451fa778 -> FETCH_HEAD
+2026-05-27T20:45:49.0931930Z  * branch              3fa0b7f1ae38a2e6d4931b45e67aa107a6b65b7e -> FETCH_HEAD
+2026-05-27T20:45:49.0932671Z  * branch              404c70722c3982a805422cfd17cd1cd540df2e19 -> FETCH_HEAD
+2026-05-27T20:45:49.0933360Z  * branch              406d2e6c9f0414143de4ac9aed3849d090fcd118 -> FETCH_HEAD
+2026-05-27T20:45:49.0934048Z  * branch              408cf43212688ae4ef42b62fafa83638e078b16c -> FETCH_HEAD
+2026-05-27T20:45:49.0934995Z  * branch              40a82f61bf01b4840a8755a8eaa320d4c1571d80 -> FETCH_HEAD
+2026-05-27T20:45:49.0935687Z  * branch              40ffd79228b2d77b3b4a7022046e66d118abef2f -> FETCH_HEAD
+2026-05-27T20:45:49.0936410Z  * branch              410124739139e62837a6e34b651b3bbe73444448 -> FETCH_HEAD
+2026-05-27T20:45:49.0937117Z  * branch              414866ffdcb8d20e5d0add2156b0aef851282ff1 -> FETCH_HEAD
+2026-05-27T20:45:49.0938248Z  * branch              41925eee2c7b3c658def7a19fdafc67ce2b947f9 -> FETCH_HEAD
+2026-05-27T20:45:49.0938965Z  * branch              419ba5dc81acfa6635c139f00232fb3f6a669344 -> FETCH_HEAD
+2026-05-27T20:45:49.0939670Z  * branch              41c99a2537bfebc82951ed6bbddf3fa47baf949d -> FETCH_HEAD
+2026-05-27T20:45:49.0940377Z  * branch              41e667cea952857d1dc9214afdd350c987d05ed8 -> FETCH_HEAD
+2026-05-27T20:45:49.0941072Z  * branch              42219c5e590a613f17b356540302f8b58e12d74b -> FETCH_HEAD
+2026-05-27T20:45:49.0941703Z  * branch              423db588aa0b935270812bf4900d915e092688a4 -> FETCH_HEAD
+2026-05-27T20:45:49.0942363Z  * branch              426216f199ff561b974bd0c15c37b2b94630b876 -> FETCH_HEAD
+2026-05-27T20:45:49.0943042Z  * branch              427bc949616b07767fde69df294865f4985ad239 -> FETCH_HEAD
+2026-05-27T20:45:49.0943748Z  * branch              42a900bf645e586c13e5ada755c1a8c196788a79 -> FETCH_HEAD
+2026-05-27T20:45:49.0944660Z  * branch              42fdf9a2d8afb3657577c8d8353c307bca09aef5 -> FETCH_HEAD
+2026-05-27T20:45:49.0945366Z  * branch              430acfc61bdcce5057e6d34264a8149da3210457 -> FETCH_HEAD
+2026-05-27T20:45:49.0946068Z  * branch              430af4c17750cde61733d938b4966b5205d01f25 -> FETCH_HEAD
+2026-05-27T20:45:49.0946751Z  * branch              4328acd2d3a4735942c4e4797a714dfda82083b8 -> FETCH_HEAD
+2026-05-27T20:45:49.0947441Z  * branch              4438c81374e08db06d75c7d796921dd5fd8993d5 -> FETCH_HEAD
+2026-05-27T20:45:49.0948138Z  * branch              44a7493dc858afc4fa0ffd4da03cc000fdbe9637 -> FETCH_HEAD
+2026-05-27T20:45:49.0948846Z  * branch              44c2d7c03b76b0f70665f20f198d6ed45279ecb5 -> FETCH_HEAD
+2026-05-27T20:45:49.0949543Z  * branch              44f8870343ab2713fd7d5303a9a53f194ee4097a -> FETCH_HEAD
+2026-05-27T20:45:49.0950236Z  * branch              450f412dc08a10f5d8b26dbc5055fce5138c1ebf -> FETCH_HEAD
+2026-05-27T20:45:49.0950941Z  * branch              45211e767563a6f4d2ef59bd83a0ea78cab54c9f -> FETCH_HEAD
+2026-05-27T20:45:49.0951647Z  * branch              4551cd3ca85d2bb80c8216ec41e442c9d3f42216 -> FETCH_HEAD
+2026-05-27T20:45:49.0952354Z  * branch              45afb61ed0b9e8433fdd6880e7e016529f3ba6b1 -> FETCH_HEAD
+2026-05-27T20:45:49.0953053Z  * branch              45cc7250997c6b8d78d23c8612fd1b5871f2e50f -> FETCH_HEAD
+2026-05-27T20:45:49.0953639Z  * branch              464a0c77bde1614bffc758d626adc794c65a5025 -> FETCH_HEAD
+2026-05-27T20:45:49.0954040Z  * branch              4689f2de04145b9a8a2dcf739f24f3cc86fa8e9e -> FETCH_HEAD
+2026-05-27T20:45:49.0954801Z  * branch              46d72db4c69511aa5bdf6c6b6a5a4d718538d3cb -> FETCH_HEAD
+2026-05-27T20:45:49.0955220Z  * branch              46fd9693231be6636960f2e3b4704e41e4e86128 -> FETCH_HEAD
+2026-05-27T20:45:49.0955606Z  * branch              48c8f6f3e2bceb513c750b1c1f7b5af1c9813097 -> FETCH_HEAD
+2026-05-27T20:45:49.0956005Z  * branch              48eb8323cc7ece6a89be0cd9d9cefc317e5f07d6 -> FETCH_HEAD
+2026-05-27T20:45:49.0956410Z  * branch              4960e3812deb4e2aef9237ed42cd171145815f60 -> FETCH_HEAD
+2026-05-27T20:45:49.0956798Z  * branch              4a23e3e05bf412a3c2e991e5d74dfc8dfcc0e9e0 -> FETCH_HEAD
+2026-05-27T20:45:49.0957190Z  * branch              4a562ddb2625334b57b39c7ef746af08a03b39e4 -> FETCH_HEAD
+2026-05-27T20:45:49.0957576Z  * branch              4a5d098c7f3b11098ffd48dee8a9e02253d29627 -> FETCH_HEAD
+2026-05-27T20:45:49.0957974Z  * branch              4acf14ddea821bdcb758ce764a1303cd77ccfab4 -> FETCH_HEAD
+2026-05-27T20:45:49.0958366Z  * branch              4ad16ce42ab075f25cf595151fd3c56d41ab887a -> FETCH_HEAD
+2026-05-27T20:45:49.0958760Z  * branch              4b285d8b84021f57cfc3fb49e03c87e68dcd05e5 -> FETCH_HEAD
+2026-05-27T20:45:49.0959153Z  * branch              4b56dc8d06339146ee9b40a5959a9ed19c2954a1 -> FETCH_HEAD
+2026-05-27T20:45:49.0959534Z  * branch              4b5bc28224d34be0286a73332b01e14a8308a9a3 -> FETCH_HEAD
+2026-05-27T20:45:49.0959924Z  * branch              4b6d01fd5ccd8882cf2d6ffbf00643ac9a20d722 -> FETCH_HEAD
+2026-05-27T20:45:49.0960571Z  * branch              4b883695cb6b7ab2ec09ebe6ef563d0e7e87a3c4 -> FETCH_HEAD
+2026-05-27T20:45:49.0960976Z  * branch              4b9e5add36860cbc11d311e53c470bac8f297db8 -> FETCH_HEAD
+2026-05-27T20:45:49.0961374Z  * branch              4bbd387988df9102f3e3c0464de4c9cbc1010e51 -> FETCH_HEAD
+2026-05-27T20:45:49.0961758Z  * branch              4be56fc7f96681f3d685a7da638c19e1a678692e -> FETCH_HEAD
+2026-05-27T20:45:49.0962145Z  * branch              4bf4204b52b0e549037c74123f529abdd17070af -> FETCH_HEAD
+2026-05-27T20:45:49.0962525Z  * branch              4ce37e5f74e04a62678923382ee3fe821e4355bb -> FETCH_HEAD
+2026-05-27T20:45:49.0962910Z  * branch              4d60188f1791b237d381c627d2be05e01fb9e8f9 -> FETCH_HEAD
+2026-05-27T20:45:49.0963289Z  * branch              4d63059853cf13de9f164ae2da7a1253bce79d3b -> FETCH_HEAD
+2026-05-27T20:45:49.0963677Z  * branch              4d7687d04f94721559fafabea8ef472eae66b920 -> FETCH_HEAD
+2026-05-27T20:45:49.0964075Z  * branch              4d9d80ca15b25dedc0936dfed5e2d115b3474a9e -> FETCH_HEAD
+2026-05-27T20:45:49.0964709Z  * branch              4e4f8c48f49e5a895747fc8311e3a61e284483c7 -> FETCH_HEAD
+2026-05-27T20:45:49.0965097Z  * branch              4e6f6604f1234c9cd5a70712ba4f950bf51efc0d -> FETCH_HEAD
+2026-05-27T20:45:49.0965478Z  * branch              4eb38827244c21ded18c4eec524502ddfeab297c -> FETCH_HEAD
+2026-05-27T20:45:49.0965867Z  * branch              4f2699d8d82b2d24f63c8ac59bb2ccf68992d458 -> FETCH_HEAD
+2026-05-27T20:45:49.0966248Z  * branch              4f3cb90882e8076b0c644f53e90310eb7bee2032 -> FETCH_HEAD
+2026-05-27T20:45:49.0966632Z  * branch              4f961c366b06c80ce02b8df991994f37855d5ae7 -> FETCH_HEAD
+2026-05-27T20:45:49.0967016Z  * branch              4fd81427888c2b99358d5df3292eb86234209d8d -> FETCH_HEAD
+2026-05-27T20:45:49.0967396Z  * branch              501ad66d230124fb1267cdb2de87189fa4f05665 -> FETCH_HEAD
+2026-05-27T20:45:49.0967783Z  * branch              502e59ab01552af1fb165fcd34b6e81b7b23a4ab -> FETCH_HEAD
+2026-05-27T20:45:49.0968172Z  * branch              503e30d59d994034294337bc3a1b169a51e19b3c -> FETCH_HEAD
+2026-05-27T20:45:49.0968561Z  * branch              508f3dfee34e81ceee41c3a7a299c33dd9a52949 -> FETCH_HEAD
+2026-05-27T20:45:49.0968951Z  * branch              50d390d82aae15f59f946fb2e917f6b271cf76b1 -> FETCH_HEAD
+2026-05-27T20:45:49.0969328Z  * branch              5106151bbf171c542c97dbfb8ab9657820940773 -> FETCH_HEAD
+2026-05-27T20:45:49.0969710Z  * branch              517716e9a3fc9a0dc970002af554845a3028a7f6 -> FETCH_HEAD
+2026-05-27T20:45:49.0970092Z  * branch              520ffa7f69d676dfde4fa3f41e2b8fb1f16cda50 -> FETCH_HEAD
+2026-05-27T20:45:49.0970486Z  * branch              521e7019b7e1622fab57f6886cb48a6ca9eae902 -> FETCH_HEAD
+2026-05-27T20:45:49.0970875Z  * branch              52bc27dfb83cbac7bbe2aa69cf36cbb8d3f882bc -> FETCH_HEAD
+2026-05-27T20:45:49.0971266Z  * branch              52e9b8c36f4510603d0947182c5a359ca11b873a -> FETCH_HEAD
+2026-05-27T20:45:49.0971649Z  * branch              533072f02fb8ea9fa13a99345a11b2c62643a5d0 -> FETCH_HEAD
+2026-05-27T20:45:49.0972039Z  * branch              5338e5df571635bd4010b4b30e9f1c30b2d50c9d -> FETCH_HEAD
+2026-05-27T20:45:49.0972423Z  * branch              5385c0049d0bb4c2ee23d24b7948527978ce29bc -> FETCH_HEAD
+2026-05-27T20:45:49.0972804Z  * branch              53d82cf6a723c4be304fb4110d0d5eba2684cba9 -> FETCH_HEAD
+2026-05-27T20:45:49.0973274Z  * branch              5422674a832c11a721917fdc5fdc01c769cde38d -> FETCH_HEAD
+2026-05-27T20:45:49.0973979Z  * branch              546d9b04b8a570e4046d14d9c4feb378767d75fe -> FETCH_HEAD
+2026-05-27T20:45:49.0974859Z  * branch              55223b4d52d78cc6faebbf109b4d9a54ed698147 -> FETCH_HEAD
+2026-05-27T20:45:49.0975550Z  * branch              5558116a11987dd98c59fee6f4d65f5929cdcf63 -> FETCH_HEAD
+2026-05-27T20:45:49.0976228Z  * branch              55c6d57148ba45d66313efe3a34e2e13464a816e -> FETCH_HEAD
+2026-05-27T20:45:49.0976903Z  * branch              56243e67182a14e64103a543026f0318a65ff06a -> FETCH_HEAD
+2026-05-27T20:45:49.0977890Z  * branch              562b7d5c01588338f038171f64fc038b53a3df57 -> FETCH_HEAD
+2026-05-27T20:45:49.0978588Z  * branch              56b0daef803426b34e31cd56f5d6fbf7f180c080 -> FETCH_HEAD
+2026-05-27T20:45:49.0979294Z  * branch              56b1970dc22ceee179c4f9d1a04cbf39c8a07d83 -> FETCH_HEAD
+2026-05-27T20:45:49.0979984Z  * branch              56bfc20393ff7ad2f25601a14f55cba66c4b4692 -> FETCH_HEAD
+2026-05-27T20:45:49.0980680Z  * branch              5747f3a5c2ca0000d2a32ddbbfaea0826180c26c -> FETCH_HEAD
+2026-05-27T20:45:49.0981363Z  * branch              5773ea549573a95866d2e4aad0b10379a108e4ea -> FETCH_HEAD
+2026-05-27T20:45:49.0982048Z  * branch              57826e444e18a0972f9dfc622fbf56352ba4f4e3 -> FETCH_HEAD
+2026-05-27T20:45:49.0982728Z  * branch              578a2b5a59dc765a336fbd5863fa7b2b2118195e -> FETCH_HEAD
+2026-05-27T20:45:49.0983431Z  * branch              57aa1e197b43c4c5d99f3fe68d0e76b8392db88b -> FETCH_HEAD
+2026-05-27T20:45:49.0984112Z  * branch              58297a4e1698b029eb023079026716f6bf0664ff -> FETCH_HEAD
+2026-05-27T20:45:49.0984982Z  * branch              5832c78253370b9000fe573a90738facbbc43184 -> FETCH_HEAD
+2026-05-27T20:45:49.0985666Z  * branch              58474eabbd573333b327f4ad0fb3133e7736df58 -> FETCH_HEAD
+2026-05-27T20:45:49.0986348Z  * branch              587a5348ff483cb771b2a27ee6da6afc69c755e2 -> FETCH_HEAD
+2026-05-27T20:45:49.0987051Z  * branch              58b3db6c083bdcec0cdedf26e0a9b4459b715f8b -> FETCH_HEAD
+2026-05-27T20:45:49.0987750Z  * branch              58db1344cff8e46c7dcfe6ede7053bfd9bffe32b -> FETCH_HEAD
+2026-05-27T20:45:49.0988453Z  * branch              5968a5c1ee8d758ebb3cf5825932c846359a2228 -> FETCH_HEAD
+2026-05-27T20:45:49.0989132Z  * branch              59843d391ee11f03f6301bebd4db2e5ef9118666 -> FETCH_HEAD
+2026-05-27T20:45:49.0989817Z  * branch              5a0b8ae29100cb269d06c177a95eebb966477e58 -> FETCH_HEAD
+2026-05-27T20:45:49.0990509Z  * branch              5a1814087c78737f22ed4a40dad7b786ad7206fb -> FETCH_HEAD
+2026-05-27T20:45:49.0991048Z  * branch              5a2a8af91ea162b262be5e9ef2d0a17cd71d9dbe -> FETCH_HEAD
+2026-05-27T20:45:49.0991715Z  * branch              5a86f62b8519c9135a485e78296cf0db4319fbef -> FETCH_HEAD
+2026-05-27T20:45:49.0992430Z  * branch              5abfbb46a43da685d8d7e7fe7621b2a07d700007 -> FETCH_HEAD
+2026-05-27T20:45:49.0993138Z  * branch              5ac20c404c50c474c413a34d9924b75abac80055 -> FETCH_HEAD
+2026-05-27T20:45:49.0993844Z  * branch              5acc20b235af03af8cfa43e4d619672889cc5769 -> FETCH_HEAD
+2026-05-27T20:45:49.0994732Z  * branch              5af076e6817aca8a12366e3deff5b8e9db4f8860 -> FETCH_HEAD
+2026-05-27T20:45:49.0995434Z  * branch              5b0169a77a3431c6854349e9317e0eff44a38426 -> FETCH_HEAD
+2026-05-27T20:45:49.0996126Z  * branch              5b79d3ba188efe5121800c3dacc3592ba5fd51f8 -> FETCH_HEAD
+2026-05-27T20:45:49.0996827Z  * branch              5b826ff6a71633d686d7222d5e875be9a8c77127 -> FETCH_HEAD
+2026-05-27T20:45:49.0997525Z  * branch              5bb85e007d2b723d398a07e12eee44548de9f713 -> FETCH_HEAD
+2026-05-27T20:45:49.0998246Z  * branch              5bf2a770c0e4291e1cd8209d995d127bfdbf0aa3 -> FETCH_HEAD
+2026-05-27T20:45:49.0998957Z  * branch              5c4a9480ff5bd786e1ea34ac8190fd81921fa2e2 -> FETCH_HEAD
+2026-05-27T20:45:49.0999657Z  * branch              5c771406f8086309ddb62ff425e297f637b1ddda -> FETCH_HEAD
+2026-05-27T20:45:49.1000354Z  * branch              5c8ef4d0947139e407231a7b002c49b15b82cfbc -> FETCH_HEAD
+2026-05-27T20:45:49.1001061Z  * branch              5db2e3abb5d432f65f7a4311ec7dc63ec8c47470 -> FETCH_HEAD
+2026-05-27T20:45:49.1001772Z  * branch              5dcee9d76b726dd7deaf755812932fbe5e6297c4 -> FETCH_HEAD
+2026-05-27T20:45:49.1002497Z  * branch              5dea7b0cc85160e7b0a73d60ca53ef8cc89dee88 -> FETCH_HEAD
+2026-05-27T20:45:49.1003204Z  * branch              5dff4a798fe97d286d641d85c67275c6deee6460 -> FETCH_HEAD
+2026-05-27T20:45:49.1003914Z  * branch              5e3fe7a4d4671b8e0599d391fe9cdf2ce0b3406e -> FETCH_HEAD
+2026-05-27T20:45:49.1004967Z  * branch              5e7cb61cba4905bf1e79063c82581098d76d2e37 -> FETCH_HEAD
+2026-05-27T20:45:49.1005866Z  * branch              5ef63d4c99bd563abe8378bf1c231dcfffccedf0 -> FETCH_HEAD
+2026-05-27T20:45:49.1006533Z  * branch              5f16dedbc1840981c991b5a62dfb6ee51c28ebf3 -> FETCH_HEAD
+2026-05-27T20:45:49.1006971Z  * branch              5f1f77900148fd3afb9ef278dbf022c24e8d1d90 -> FETCH_HEAD
+2026-05-27T20:45:49.1007364Z  * branch              5f24ec7e08db9396983f47eea91d5cf9d6cba077 -> FETCH_HEAD
+2026-05-27T20:45:49.1007892Z  * branch              5f480d74229566244c50721d7adf9339d7116294 -> FETCH_HEAD
+2026-05-27T20:45:49.1008275Z  * branch              5f96a64d7546278cbcc8749c20da1e7880ac9594 -> FETCH_HEAD
+2026-05-27T20:45:49.1008656Z  * branch              600477a1bfa22f48834dac774ff58bd1b2d05a58 -> FETCH_HEAD
+2026-05-27T20:45:49.1009183Z  * branch              600b0245d8d24cdb23196338b67b18ac81e0de61 -> FETCH_HEAD
+2026-05-27T20:45:49.1009576Z  * branch              601ebd093672c7dae3b52b7bfcd43fee54de66b3 -> FETCH_HEAD
+2026-05-27T20:45:49.1010071Z  * branch              603da45ab943760f57a5498c85e407749e9833a2 -> FETCH_HEAD
+2026-05-27T20:45:49.1010511Z  * branch              606088cc887c2886d48e25450e1778e1ee9e47ad -> FETCH_HEAD
+2026-05-27T20:45:49.1010895Z  * branch              60a61b8d1b452c828c59403e339ed240582c3ade -> FETCH_HEAD
+2026-05-27T20:45:49.1011422Z  * branch              60c0024bf7499ffe8acd52fc370bc1ba85b4c6a2 -> FETCH_HEAD
+2026-05-27T20:45:49.1011820Z  * branch              60c1b2e9886e8accdd191d8c65ac6136a80471c7 -> FETCH_HEAD
+2026-05-27T20:45:49.1012209Z  * branch              614a8ee5087d0a0660bb335029ddac5642fdea5c -> FETCH_HEAD
+2026-05-27T20:45:49.1012741Z  * branch              6167ae7dce86d85e33fe32444f57fb0520411e5b -> FETCH_HEAD
+2026-05-27T20:45:49.1013156Z  * branch              618257e7e8e9b2fe25a5a6c9fb9dde714e4dce14 -> FETCH_HEAD
+2026-05-27T20:45:49.1013665Z  * branch              618e70e1d2c5d87d7eeefc6e9af67d46cb410b0e -> FETCH_HEAD
+2026-05-27T20:45:49.1014066Z  * branch              6195aa5f7ef958fa7f0f953ad38a804618a9335d -> FETCH_HEAD
+2026-05-27T20:45:49.1014853Z  * branch              61bb74b5c049a7cf44756a03ccc5811d3893b8a4 -> FETCH_HEAD
+2026-05-27T20:45:49.1015353Z  * branch              61cc6c6da3819d17c9e6a02a385ca26df73671c9 -> FETCH_HEAD
+2026-05-27T20:45:49.1015742Z  * branch              61d0ecdeb6e9361d99e8bb9b2ea5aa2c10b73768 -> FETCH_HEAD
+2026-05-27T20:45:49.1016132Z  * branch              61d322eadbd6905771f9e695e2102f8a2095c641 -> FETCH_HEAD
+2026-05-27T20:45:49.1016660Z  * branch              62037563d23287ae3869c2548e6dbeb89aad6b51 -> FETCH_HEAD
+2026-05-27T20:45:49.1017049Z  * branch              6230b82464eb22b2e2b611cca1b4aac249dbd5a5 -> FETCH_HEAD
+2026-05-27T20:45:49.1017422Z  * branch              63f6592778a721b9808e8161c187481b3506e321 -> FETCH_HEAD
+2026-05-27T20:45:49.1017799Z  * branch              648d0ffe96444e8d6301216e80f4dedb9621c342 -> FETCH_HEAD
+2026-05-27T20:45:49.1018181Z  * branch              648dd1777ba0742669436bd455d8dd4d2d7c5073 -> FETCH_HEAD
+2026-05-27T20:45:49.1018699Z  * branch              654e1a3e75b5bd18aa13ef75d7b087d5ec6b134e -> FETCH_HEAD
+2026-05-27T20:45:49.1019114Z  * branch              65c55d24ad902b782211ad16b756df70e81fab40 -> FETCH_HEAD
+2026-05-27T20:45:49.1019498Z  * branch              6605f40f9e7062a74a40eceb233b944eb6c8e600 -> FETCH_HEAD
+2026-05-27T20:45:49.1019896Z  * branch              660f10bafbc3bc5ce5a06ac0f7d170a68042a1bd -> FETCH_HEAD
+2026-05-27T20:45:49.1020296Z  * branch              661cca4f82bbf7b868c0715e55fe330c3d4dde9e -> FETCH_HEAD
+2026-05-27T20:45:49.1020688Z  * branch              663be5ebd81ab1d6b1c9d00adb771d652ef901ce -> FETCH_HEAD
+2026-05-27T20:45:49.1021076Z  * branch              66eb7702145974232de0edb6655d7164cfcd42a5 -> FETCH_HEAD
+2026-05-27T20:45:49.1021457Z  * branch              67aa06119a06baf9b9db0e24d63e4442aeca117a -> FETCH_HEAD
+2026-05-27T20:45:49.1021849Z  * branch              67ab2c7db5e982b7763112f1b9e0416fc7ad3c73 -> FETCH_HEAD
+2026-05-27T20:45:49.1022229Z  * branch              681b420cd51d11e6938752e70d2e53d64a637aae -> FETCH_HEAD
+2026-05-27T20:45:49.1023082Z  * branch              6896beb9c4f0144b4e0305f256d3a26aa13144e3 -> FETCH_HEAD
+2026-05-27T20:45:49.1023485Z  * branch              689bb2bd575fcb51e0ed65d085cddf18db2ab134 -> FETCH_HEAD
+2026-05-27T20:45:49.1023873Z  * branch              68dbaec595665e98d394e072b36d790ea9753670 -> FETCH_HEAD
+2026-05-27T20:45:49.1024480Z  * branch              68e4388d23c0777caec790d6be63955a8733a0e2 -> FETCH_HEAD
+2026-05-27T20:45:49.1024880Z  * branch              69052a173f1af56db2309ea11fee97d5b0f50949 -> FETCH_HEAD
+2026-05-27T20:45:49.1025269Z  * branch              690de05020c3cecf0ee456c936f96de41532b178 -> FETCH_HEAD
+2026-05-27T20:45:49.1025657Z  * branch              6974f3ff4c6c35f4b004285cbe6b057ba357afd2 -> FETCH_HEAD
+2026-05-27T20:45:49.1026048Z  * branch              6991dee8121c0205c6c950d560fa8f6a3d9a851f -> FETCH_HEAD
+2026-05-27T20:45:49.1026433Z  * branch              69fe962438e041a457f6413303e2f74bbfbaf896 -> FETCH_HEAD
+2026-05-27T20:45:49.1026821Z  * branch              6a22301de4da1654406680d8351893c1f3810f11 -> FETCH_HEAD
+2026-05-27T20:45:49.1027205Z  * branch              6a7da751c522be5e116d7aa2713338e9e11da592 -> FETCH_HEAD
+2026-05-27T20:45:49.1027586Z  * branch              6b318a349f4c47882a8e6c19022b28d3c2f3617d -> FETCH_HEAD
+2026-05-27T20:45:49.1027970Z  * branch              6bfe0705d8b227d60e288ea54fccc94af788b51b -> FETCH_HEAD
+2026-05-27T20:45:49.1028362Z  * branch              6ccb250db7c12a5eb477d6651c329dcce15a364c -> FETCH_HEAD
+2026-05-27T20:45:49.1028745Z  * branch              6cf431290d2b1ab66bc22e624639812d0c8521f8 -> FETCH_HEAD
+2026-05-27T20:45:49.1029126Z  * branch              6d21444a891a1e87656803e543ae085ce5270b9c -> FETCH_HEAD
+2026-05-27T20:45:49.1029547Z  * branch              6d219f1b4e0cb0341dabc0358ee5458c2e51819a -> FETCH_HEAD
+2026-05-27T20:45:49.1030029Z  * branch              6d30861e0f4e3581b17244a8e54972b363512194 -> FETCH_HEAD
+2026-05-27T20:45:49.1030414Z  * branch              6d3df71a80ce4ec5eabf2f690afc55b70cb6fcd9 -> FETCH_HEAD
+2026-05-27T20:45:49.1030820Z  * branch              6e64f9d94236107b46b713fbee4eea4440f84706 -> FETCH_HEAD
+2026-05-27T20:45:49.1031212Z  * branch              6ea672f4ca4d71ee958cb8eba23abc2c8ca35596 -> FETCH_HEAD
+2026-05-27T20:45:49.1031595Z  * branch              6f09f300359782752795c38145a42bc025dd4b63 -> FETCH_HEAD
+2026-05-27T20:45:49.1031977Z  * branch              6f255b0089c4877ecefe6ae7e815b8412018365e -> FETCH_HEAD
+2026-05-27T20:45:49.1032356Z  * branch              6f38379a9504d91d169a069d89e6eafdd5ac0367 -> FETCH_HEAD
+2026-05-27T20:45:49.1032745Z  * branch              6f5c49530463bd1fb69327e52ccf0bfd5eaa06d3 -> FETCH_HEAD
+2026-05-27T20:45:49.1033127Z  * branch              6fd8aca579d8dc22289996451b223cf13aa9d002 -> FETCH_HEAD
+2026-05-27T20:45:49.1033517Z  * branch              717c44dce3ca46b50c98275f84ab4f7fb619c966 -> FETCH_HEAD
+2026-05-27T20:45:49.1033916Z  * branch              72669ed7079b5975bafbad2165c2675412715c4a -> FETCH_HEAD
+2026-05-27T20:45:49.1034568Z  * branch              7268daf9edede1afc92d7deec007dccd449ed8fe -> FETCH_HEAD
+2026-05-27T20:45:49.1034976Z  * branch              728e2a9488f9f566b315663616043316e3204747 -> FETCH_HEAD
+2026-05-27T20:45:49.1035349Z  * branch              728fdef9257e8159b814d2a15a35b9608af2fd84 -> FETCH_HEAD
+2026-05-27T20:45:49.1035737Z  * branch              729d9d40aa5c14df05e27023ecb243f9508891af -> FETCH_HEAD
+2026-05-27T20:45:49.1036124Z  * branch              72cf7cf878636e8a3f958bdbdbc7c66b99452923 -> FETCH_HEAD
+2026-05-27T20:45:49.1036505Z  * branch              734a342dac9e0a2d2d02fb1335637a4c9273c29f -> FETCH_HEAD
+2026-05-27T20:45:49.1036899Z  * branch              73f8290e5d13f2f25aa04f138865be5c43ef309c -> FETCH_HEAD
+2026-05-27T20:45:49.1037283Z  * branch              742fd58cae70ac7c21143e4e57a37bad692e9b3e -> FETCH_HEAD
+2026-05-27T20:45:49.1037683Z  * branch              750bc270da533a2dd9d7ed3ebbb9781b9bf27bd7 -> FETCH_HEAD
+2026-05-27T20:45:49.1038072Z  * branch              7557482c4def70b5a8956d33ffdddb7a3b5a99f0 -> FETCH_HEAD
+2026-05-27T20:45:49.1038714Z  * branch              757a055a3d676caa69d2ef5abcc5d2595bee4a6e -> FETCH_HEAD
+2026-05-27T20:45:49.1039113Z  * branch              759a5036e2699f13b4a353d749d964e8aaa9afde -> FETCH_HEAD
+2026-05-27T20:45:49.1039506Z  * branch              763a067f913c3d4e17865086434dd971db42e934 -> FETCH_HEAD
+2026-05-27T20:45:49.1039905Z  * branch              7749aa49c53419b509ec61f412ecbf2388d5cbd7 -> FETCH_HEAD
+2026-05-27T20:45:49.1040290Z  * branch              78483960872338b02f1a7e5582d14f778458f310 -> FETCH_HEAD
+2026-05-27T20:45:49.1040673Z  * branch              786a35c25a8b7f51f2fe222d0ed4f6d6035ceb16 -> FETCH_HEAD
+2026-05-27T20:45:49.1041059Z  * branch              79514cdb8c141d4d9c55aa1cb39bd3e9a3bd692a -> FETCH_HEAD
+2026-05-27T20:45:49.1041448Z  * branch              795a50eb2fb9da4539fe9831132557d252fd780b -> FETCH_HEAD
+2026-05-27T20:45:49.1041833Z  * branch              79843327ca7799c5a50097ef8f6a36f7601088ed -> FETCH_HEAD
+2026-05-27T20:45:49.1042226Z  * branch              7a16cd465617c2d018d1e46ac5e6dfdbbd9497a2 -> FETCH_HEAD
+2026-05-27T20:45:49.1042639Z  * branch              7a5d0d2a0cdb7820be46bc9621bb494d8655c9b2 -> FETCH_HEAD
+2026-05-27T20:45:49.1043077Z  * branch              7b5d46fb3fa6afa85042775a24a8994e523f8ded -> FETCH_HEAD
+2026-05-27T20:45:49.1043564Z  * branch              7c63bf142110197755abdfb495882c34df33b151 -> FETCH_HEAD
+2026-05-27T20:45:49.1043971Z  * branch              7c870de955af67281347cf5db47f430871cd7eaf -> FETCH_HEAD
+2026-05-27T20:45:49.1044562Z  * branch              7d1e4825b2a970c351f551ecd281daea2e001999 -> FETCH_HEAD
+2026-05-27T20:45:49.1044964Z  * branch              7d72b32bf4ffddab91e91ab6b1a0e92095ed476b -> FETCH_HEAD
+2026-05-27T20:45:49.1045349Z  * branch              7d83e56e9d84ff775b7e599f58ce99057f58860e -> FETCH_HEAD
+2026-05-27T20:45:49.1045735Z  * branch              7e21ad152eefa417ae243073bf784ef293e72b78 -> FETCH_HEAD
+2026-05-27T20:45:49.1046117Z  * branch              7e3c60606923bc9e783bee08b73296e013ca74c1 -> FETCH_HEAD
+2026-05-27T20:45:49.1046513Z  * branch              7e55ca4d0d7e1b776065c8971914b0c8fb2a5258 -> FETCH_HEAD
+2026-05-27T20:45:49.1046906Z  * branch              7e735a0d1419ea3f109db1c36babcfc66a32ad54 -> FETCH_HEAD
+2026-05-27T20:45:49.1047293Z  * branch              7e8790aa451b4082b5d75cdca4f84c34cfe6fb1c -> FETCH_HEAD
+2026-05-27T20:45:49.1047684Z  * branch              7e925079801d7da5db7c297c6c768ad33b693d48 -> FETCH_HEAD
+2026-05-27T20:45:49.1048064Z  * branch              7f400709ac92923c60aeff73cd71c983a3c46c55 -> FETCH_HEAD
+2026-05-27T20:45:49.1048454Z  * branch              803ba91c07a0815b4ef08a58cffcc90006efd4e3 -> FETCH_HEAD
+2026-05-27T20:45:49.1048841Z  * branch              80815d4e8aa375670be625e9d661e8a5adbc1c65 -> FETCH_HEAD
+2026-05-27T20:45:49.1049225Z  * branch              80c0e68af8d4d5395a506d8efc8c7a25f50af0fd -> FETCH_HEAD
+2026-05-27T20:45:49.1049615Z  * branch              80d083b60d863ede3688a669fe83d8398a563251 -> FETCH_HEAD
+2026-05-27T20:45:49.1049996Z  * branch              80e64a5a4b441016ea1007372df122c79745e58c -> FETCH_HEAD
+2026-05-27T20:45:49.1050384Z  * branch              80f56688877a2d2a13918a7b889dd38a15bd43f7 -> FETCH_HEAD
+2026-05-27T20:45:49.1050762Z  * branch              810132da6d95b75e91123bf33e21f7e1410475a2 -> FETCH_HEAD
+2026-05-27T20:45:49.1051154Z  * branch              81da53e385b6d87ed2a7cc713f81ff7deffb185d -> FETCH_HEAD
+2026-05-27T20:45:49.1051546Z  * branch              81dc71c4c481e700c815f4375873b1a7acffa343 -> FETCH_HEAD
+2026-05-27T20:45:49.1051930Z  * branch              81df1343cd0a2dfe3f799d9342737b509feec877 -> FETCH_HEAD
+2026-05-27T20:45:49.1052376Z  * branch              81dfe7d6a5f4a538c55c85b4477a083f2fe5f400 -> FETCH_HEAD
+2026-05-27T20:45:49.1052770Z  * branch              81e02cec8c1881f8f120edaf43fbd92a7b0a8e5c -> FETCH_HEAD
+2026-05-27T20:45:49.1053161Z  * branch              81f8b634a9dd61996d8a23130039f915ad581982 -> FETCH_HEAD
+2026-05-27T20:45:49.1053541Z  * branch              821c168639091010c7b7dfcee7279db2fea7b724 -> FETCH_HEAD
+2026-05-27T20:45:49.1054162Z  * branch              824021a57f5c7e95b9d7ed27e3d816a3b36ea09c -> FETCH_HEAD
+2026-05-27T20:45:49.1054849Z  * branch              828c86587b5a73500dbe7725d6b33442d0e4ea4e -> FETCH_HEAD
+2026-05-27T20:45:49.1055238Z  * branch              83472cc9feae342460df262cdc2608a1d7674062 -> FETCH_HEAD
+2026-05-27T20:45:49.1055629Z  * branch              835ba8b201badc807495c02782cb05c0176c13e4 -> FETCH_HEAD
+2026-05-27T20:45:49.1056012Z  * branch              8377f08201926ab66d18ec30a8d2c8da1c9b8862 -> FETCH_HEAD
+2026-05-27T20:45:49.1056400Z  * branch              8387257082f2f0a347397ae95cbba9fb5a756ec6 -> FETCH_HEAD
+2026-05-27T20:45:49.1056789Z  * branch              838996ba2e73adf0517bfdd753573c3e503ff203 -> FETCH_HEAD
+2026-05-27T20:45:49.1057174Z  * branch              83921ef972b71bbbd7181d1ba33210a8cfeed77d -> FETCH_HEAD
+2026-05-27T20:45:49.1057573Z  * branch              83c8fb202625ac4ca1eede8033fe977aef047fa3 -> FETCH_HEAD
+2026-05-27T20:45:49.1057957Z  * branch              83ec1931f95692918f4354c63165718c223bb3ea -> FETCH_HEAD
+2026-05-27T20:45:49.1058359Z  * branch              84690c0d4ed4fba149d8095a46df65cae4445cbe -> FETCH_HEAD
+2026-05-27T20:45:49.1058745Z  * branch              8490439c5edfaf5290318cc43570bbb17db949e1 -> FETCH_HEAD
+2026-05-27T20:45:49.1059139Z  * branch              84cd4e3b197d993d4b830f01e0ddecbf1fb77d40 -> FETCH_HEAD
+2026-05-27T20:45:49.1059536Z  * branch              84eabfce20625ca053494e4b3732735b3bfc989a -> FETCH_HEAD
+2026-05-27T20:45:49.1059925Z  * branch              84f269f4ba0c819d479de23217ac7b0ead4e71b0 -> FETCH_HEAD
+2026-05-27T20:45:49.1060313Z  * branch              855f265344e707d07825eccb79fe041d04601bb8 -> FETCH_HEAD
+2026-05-27T20:45:49.1060690Z  * branch              85a0110212d98bf4c6a0889625c875ef268c3d3d -> FETCH_HEAD
+2026-05-27T20:45:49.1061074Z  * branch              85c81c3c70060ca6681a66810f4395292986fe96 -> FETCH_HEAD
+2026-05-27T20:45:49.1061456Z  * branch              85ea33e8fdb07f0817570343b1d7e1eb20ce1403 -> FETCH_HEAD
+2026-05-27T20:45:49.1061838Z  * branch              86bb9be3ee2300393241b238035c824569628621 -> FETCH_HEAD
+2026-05-27T20:45:49.1062223Z  * branch              8731e8ca4b910b704c1f0351505450a1680f0365 -> FETCH_HEAD
+2026-05-27T20:45:49.1062600Z  * branch              87354214540cb9b92b36cdd09889041dce33aa34 -> FETCH_HEAD
+2026-05-27T20:45:49.1062985Z  * branch              8741c8a588fbd60f73e516c302ed472b7e1cdf61 -> FETCH_HEAD
+2026-05-27T20:45:49.1063369Z  * branch              8755cc13bf0da6e7573c0f5236c9b7d6836b3b07 -> FETCH_HEAD
+2026-05-27T20:45:49.1063763Z  * branch              87ca61aaebb1c0c40337a6e6c727f0956ea821cc -> FETCH_HEAD
+2026-05-27T20:45:49.1064151Z  * branch              8872f9a7a308bb50e1474048203a9f466aa0b70a -> FETCH_HEAD
+2026-05-27T20:45:49.1064750Z  * branch              898fa1e3d8517b9fcea53947fb96dc0d1fa07eb0 -> FETCH_HEAD
+2026-05-27T20:45:49.1065144Z  * branch              89d97b70bfd2086b8e4a02e012795536e68ed000 -> FETCH_HEAD
+2026-05-27T20:45:49.1065533Z  * branch              89f33552641d50caa3e13ce17214a656ec809219 -> FETCH_HEAD
+2026-05-27T20:45:49.1065939Z  * branch              8ad4ae6bb6bc2c9d4bbfff6dec81fefb79404ac1 -> FETCH_HEAD
+2026-05-27T20:45:49.1066329Z  * branch              8b289c4913e984f6da6476514d364ac999ebb046 -> FETCH_HEAD
+2026-05-27T20:45:49.1066717Z  * branch              8b31be0b34b833af99321fc46afc4c489408afce -> FETCH_HEAD
+2026-05-27T20:45:49.1067100Z  * branch              8b349fe375773f391044382172238f3d1821c433 -> FETCH_HEAD
+2026-05-27T20:45:49.1067475Z  * branch              8b68b52c696868a0ee73c26adb42134197e77914 -> FETCH_HEAD
+2026-05-27T20:45:49.1067860Z  * branch              8bdc46a89104577b703ec8d9dc760f65a0ae0522 -> FETCH_HEAD
+2026-05-27T20:45:49.1068245Z  * branch              8c7ae4c9db2dbb35eb26b7109899312753da35c7 -> FETCH_HEAD
+2026-05-27T20:45:49.1068640Z  * branch              8cdc82c7f5602ff63fab8b27b3a21af65d3fa061 -> FETCH_HEAD
+2026-05-27T20:45:49.1069032Z  * branch              8ce81673d62985e40cc397d8f1e11db046dc28e8 -> FETCH_HEAD
+2026-05-27T20:45:49.1069523Z  * branch              8ce99f07d126ae0edbe318f19a08ba0864bd403e -> FETCH_HEAD
+2026-05-27T20:45:49.1070214Z  * branch              8d857505d5c32ba77fa2ba03baca79de36d1ef6c -> FETCH_HEAD
+2026-05-27T20:45:49.1070727Z  * branch              8de102b5a547343dfe1bf584e9f34632df205593 -> FETCH_HEAD
+2026-05-27T20:45:49.1071159Z  * branch              8e2d5b4b0bf0c8e9bb86d72b52d157c6e8ffb44f -> FETCH_HEAD
+2026-05-27T20:45:49.1071549Z  * branch              8e7f9b2266e273465365f953965f97fa431bd7e8 -> FETCH_HEAD
+2026-05-27T20:45:49.1071935Z  * branch              8ec403fb4ea3621c900b63ef406c42c4f588d1da -> FETCH_HEAD
+2026-05-27T20:45:49.1072328Z  * branch              8ef66038f753df11fdac81600bea9f4ede17f315 -> FETCH_HEAD
+2026-05-27T20:45:49.1072720Z  * branch              8f1deacac0b52f0f79de21d6229ec22c1f0b4f39 -> FETCH_HEAD
+2026-05-27T20:45:49.1073117Z  * branch              8f213250b4a4ee52091e77e8dc45ddb7f9c18c13 -> FETCH_HEAD
+2026-05-27T20:45:49.1073503Z  * branch              902ffac877f59fc78eff4cb57ba27741cf6f9f30 -> FETCH_HEAD
+2026-05-27T20:45:49.1073910Z  * branch              90942b0761aa8d1ec3dd3d322c7a793e6689b645 -> FETCH_HEAD
+2026-05-27T20:45:49.1074527Z  * branch              90dd7603706a1719e9a8c682c0fe1fc0474d5fc3 -> FETCH_HEAD
+2026-05-27T20:45:49.1074938Z  * branch              90e2b43e9932cea752daa1ee300a9ecb9a2afe7a -> FETCH_HEAD
+2026-05-27T20:45:49.1075333Z  * branch              9235f1224fde92729ce919100cfe7d8390609c39 -> FETCH_HEAD
+2026-05-27T20:45:49.1075716Z  * branch              927e65b38766da1eb7bbda58978749231cb012ca -> FETCH_HEAD
+2026-05-27T20:45:49.1076114Z  * branch              92f3b8a8405302606f867d93eba55b3c44f6380a -> FETCH_HEAD
+2026-05-27T20:45:49.1076494Z  * branch              938ec6dc28fa5800952092b7c1c72053b2808be9 -> FETCH_HEAD
+2026-05-27T20:45:49.1076886Z  * branch              939fd27fe40c12c6b734c2d3533febfdeaea1cf0 -> FETCH_HEAD
+2026-05-27T20:45:49.1077284Z  * branch              943e0a9fb4ebcdb3058c12f84319eb9193d5e7d9 -> FETCH_HEAD
+2026-05-27T20:45:49.1077677Z  * branch              94acceb87d25d33eb6a6dbee11086a98c3fa91f0 -> FETCH_HEAD
+2026-05-27T20:45:49.1078090Z  * branch              94b80daef8cbd84f9b47287ef6f4c575de25bdd5 -> FETCH_HEAD
+2026-05-27T20:45:49.1078485Z  * branch              94c3b5194d58a9bba0b0af71bfe27edcffbca660 -> FETCH_HEAD
+2026-05-27T20:45:49.1078885Z  * branch              95e3885e6b5dba2ce5e188b91f596cc7356eed59 -> FETCH_HEAD
+2026-05-27T20:45:49.1079277Z  * branch              95e65dc7cbb1e568b64bf48d8be6ec9cb97cda70 -> FETCH_HEAD
+2026-05-27T20:45:49.1079671Z  * branch              95fa95eb1157de7241d8687b20f74d0cc58cf93c -> FETCH_HEAD
+2026-05-27T20:45:49.1080062Z  * branch              9606fff05793cddc3e8669f537a9d9a23e8ca1a7 -> FETCH_HEAD
+2026-05-27T20:45:49.1080445Z  * branch              962247ac3161334652f3f4d5d5804173b0d5356b -> FETCH_HEAD
+2026-05-27T20:45:49.1080830Z  * branch              9647b4c6ee0b5866516bc62dc1d3af07cc407d9c -> FETCH_HEAD
+2026-05-27T20:45:49.1081214Z  * branch              965271f36bf0a78b35ffa2999680117b1ae4b982 -> FETCH_HEAD
+2026-05-27T20:45:49.1081617Z  * branch              967df672dccfe6ace78c9ae127183e7c392d9bcb -> FETCH_HEAD
+2026-05-27T20:45:49.1082006Z  * branch              96bd1926385fd8d46f12acfbdefa4dd8c784fea7 -> FETCH_HEAD
+2026-05-27T20:45:49.1082394Z  * branch              97014b96948c9b849e09888566915b82ecbf3dad -> FETCH_HEAD
+2026-05-27T20:45:49.1082777Z  * branch              9719bb129cf477fb9b095086855e5e4d8ccf2351 -> FETCH_HEAD
+2026-05-27T20:45:49.1083161Z  * branch              976ea2d574d65eaeb340a2a54109c160a7e5e2b3 -> FETCH_HEAD
+2026-05-27T20:45:49.1083545Z  * branch              9793e0c49645b2dd650833b37f3c386c26a5d395 -> FETCH_HEAD
+2026-05-27T20:45:49.1083926Z  * branch              97b294b866e71e10d88d14f6cbcf4e09c61787eb -> FETCH_HEAD
+2026-05-27T20:45:49.1084525Z  * branch              97edc43a75bccc36cf9554542a87ce5c38c4946a -> FETCH_HEAD
+2026-05-27T20:45:49.1084926Z  * branch              97f48cd4f286bd1e590ad68cba6e0e5afdb3345d -> FETCH_HEAD
+2026-05-27T20:45:49.1085313Z  * branch              984c2b5a1f70b62864d6e822afb403c02f9d4555 -> FETCH_HEAD
+2026-05-27T20:45:49.1085979Z  * branch              98e16d0ae1b7d2fe7f936d5aa4a7a9e756ae073e -> FETCH_HEAD
+2026-05-27T20:45:49.1086371Z  * branch              98f9fb3ab3650336691880e5def55fb75df983de -> FETCH_HEAD
+2026-05-27T20:45:49.1086760Z  * branch              99971e585fbb1261eb934025fb91cb06a25b2a47 -> FETCH_HEAD
+2026-05-27T20:45:49.1087137Z  * branch              99b2c7467a6e1080541d628e68a9a396b3140c0b -> FETCH_HEAD
+2026-05-27T20:45:49.1087518Z  * branch              9a0986e0c925908b94f51b9f9f7f9e1f96f2c031 -> FETCH_HEAD
+2026-05-27T20:45:49.1087906Z  * branch              9a552e0967e2f106bfad3f82e46482feb428062f -> FETCH_HEAD
+2026-05-27T20:45:49.1088288Z  * branch              9afb7af30516d06b636d1e79259982dd1c018e23 -> FETCH_HEAD
+2026-05-27T20:45:49.1088676Z  * branch              9b165727be06015ded2e3c91aca77fd7e0037173 -> FETCH_HEAD
+2026-05-27T20:45:49.1089063Z  * branch              9b1dfaa8f0f76c7deb2f6d62506681b103cdefb4 -> FETCH_HEAD
+2026-05-27T20:45:49.1089466Z  * branch              9b50e017623d065f28ffa2456a12847ecd05cd7d -> FETCH_HEAD
+2026-05-27T20:45:49.1089841Z  * branch              9b7407071f30a82686887fb74183e8a28292fb67 -> FETCH_HEAD
+2026-05-27T20:45:49.1090222Z  * branch              9bc8bd635983fb3d86ec2c8f6594f18ab0649bf2 -> FETCH_HEAD
+2026-05-27T20:45:49.1090613Z  * branch              9bd168295e7e7a461ef61f18789a56f042111de7 -> FETCH_HEAD
+2026-05-27T20:45:49.1090990Z  * branch              9c15ae8c83646718b6e160cec4eb884814c00d7f -> FETCH_HEAD
+2026-05-27T20:45:49.1091382Z  * branch              9c5c4e745cd236ceb77ed9a840a37ebab3c06870 -> FETCH_HEAD
+2026-05-27T20:45:49.1091765Z  * branch              9c6404784d49271ef66f04b0527d4c1eb05773cc -> FETCH_HEAD
+2026-05-27T20:45:49.1092153Z  * branch              9c901974e66a493a1df72dc60c20dd7671120e4c -> FETCH_HEAD
+2026-05-27T20:45:49.1092542Z  * branch              9cb16b0bdfcaa8372675fa6ab394c6333af7ff28 -> FETCH_HEAD
+2026-05-27T20:45:49.1092929Z  * branch              9ce4339624cfd10cd39284e6cab30ae98fc7c930 -> FETCH_HEAD
+2026-05-27T20:45:49.1093330Z  * branch              9ce66665ce9425cb2f0bb078a5aafadb73ba70f1 -> FETCH_HEAD
+2026-05-27T20:45:49.1093722Z  * branch              9cea8ff34e99356f5d5586bfd86b667af89d1ba9 -> FETCH_HEAD
+2026-05-27T20:45:49.1094115Z  * branch              9d35c2bc5e79e9331a6c6bdb36fc6107ed607bfe -> FETCH_HEAD
+2026-05-27T20:45:49.1094733Z  * branch              9d7f3b7741386d22b48e0efe666372f9367bc847 -> FETCH_HEAD
+2026-05-27T20:45:49.1095124Z  * branch              9da8c12bcf864042795d5cfd582d268da473bc94 -> FETCH_HEAD
+2026-05-27T20:45:49.1095515Z  * branch              9e1d81927d10ca85ac655536b63c5dfd3fd552ee -> FETCH_HEAD
+2026-05-27T20:45:49.1095901Z  * branch              9e5d78ee8e66043ea5b031d25e30184ee6c937c8 -> FETCH_HEAD
+2026-05-27T20:45:49.1096295Z  * branch              9eb1a5de0d2e1e911a8bb4dd909cd8a22aee4cc1 -> FETCH_HEAD
+2026-05-27T20:45:49.1096701Z  * branch              9efb4f0cf4618e8a53c9cf43a1acb57ffb9f894b -> FETCH_HEAD
+2026-05-27T20:45:49.1097102Z  * branch              9fa39d3ceabb79d42bce5f7f30b962510de1ab62 -> FETCH_HEAD
+2026-05-27T20:45:49.1097505Z  * branch              9ff22d30f62e4b8eb1860e6844c89904cf4447f9 -> FETCH_HEAD
+2026-05-27T20:45:49.1097885Z  * branch              a00e8839a9b4e442102a73a4a7f47616270661ff -> FETCH_HEAD
+2026-05-27T20:45:49.1098284Z  * branch              a025e01d520fa07ec5beab77a84aee7ca44456cd -> FETCH_HEAD
+2026-05-27T20:45:49.1098671Z  * branch              a1b87958b21af3d539a6a9044ea1e0f2b1588bd5 -> FETCH_HEAD
+2026-05-27T20:45:49.1099073Z  * branch              a1de761f92f5b4d6acad3dbbe7de2888494888be -> FETCH_HEAD
+2026-05-27T20:45:49.1099463Z  * branch              a2783668da9bdcfd8998225e9b06ac871abf774e -> FETCH_HEAD
+2026-05-27T20:45:49.1099863Z  * branch              a2825bcb0a7dafcdff37e7ca66d47340c79cd838 -> FETCH_HEAD
+2026-05-27T20:45:49.1100255Z  * branch              a2963fb1572a6217b94b6163ba228021e3092d6e -> FETCH_HEAD
+2026-05-27T20:45:49.1100638Z  * branch              a2bae293edc3ae4b35449feaa4ba60980e9a653a -> FETCH_HEAD
+2026-05-27T20:45:49.1101252Z  * branch              a2fe9a54959e6b2165dfc28a1542fc8734998601 -> FETCH_HEAD
+2026-05-27T20:45:49.1101643Z  * branch              a36aa1d7d77e762e2bc9a93e94aa7ec233e8fbee -> FETCH_HEAD
+2026-05-27T20:45:49.1102040Z  * branch              a387404ac8c95bb7d7ed325d7bea78eac37bc27e -> FETCH_HEAD
+2026-05-27T20:45:49.1102426Z  * branch              a39725b8a1f2e352a1a0dff7ab26519cd04480eb -> FETCH_HEAD
+2026-05-27T20:45:49.1102817Z  * branch              a3ae99ebbfb575971c22088a66343daa5536e721 -> FETCH_HEAD
+2026-05-27T20:45:49.1103215Z  * branch              a3cbaa908c6fbd2ed1636f2def7d00218350f668 -> FETCH_HEAD
+2026-05-27T20:45:49.1103599Z  * branch              a41581313c1b7914109d4a55e6bb45326fc83099 -> FETCH_HEAD
+2026-05-27T20:45:49.1103979Z  * branch              a461f35a5398610c2b80db3903b24e4247a7ed76 -> FETCH_HEAD
+2026-05-27T20:45:49.1104590Z  * branch              a51276c7e4739f46b6a8aa5d083ff2db5004be38 -> FETCH_HEAD
+2026-05-27T20:45:49.1104981Z  * branch              a5437f227f86910a4731e94c1a0901aebedbb948 -> FETCH_HEAD
+2026-05-27T20:45:49.1105385Z  * branch              a5cb4d0d1e81fa7e2f5770ed77771f7b137de4b0 -> FETCH_HEAD
+2026-05-27T20:45:49.1105771Z  * branch              a5f08a01d471f023e353d584ad6c981ee3bdc0d4 -> FETCH_HEAD
+2026-05-27T20:45:49.1106161Z  * branch              a60a5ed802899171f6b7a22bccdcc745ce25f736 -> FETCH_HEAD
+2026-05-27T20:45:49.1106542Z  * branch              a64a466e472a673e8101dd03435ff7216cae63fb -> FETCH_HEAD
+2026-05-27T20:45:49.1106929Z  * branch              a67b9ce29932de4164248dbe840ed9db637e866c -> FETCH_HEAD
+2026-05-27T20:45:49.1107318Z  * branch              a6b0d899e8dabd37ede7d984065ba83e4514bdce -> FETCH_HEAD
+2026-05-27T20:45:49.1107717Z  * branch              a777b4fefb72b13ee382ea7fd5278955f66c47be -> FETCH_HEAD
+2026-05-27T20:45:49.1108104Z  * branch              a7827d03270c0f56da585028c1dae7224069c3b0 -> FETCH_HEAD
+2026-05-27T20:45:49.1108483Z  * branch              a7b14ba1e9395a0542f1f22106b33622aa93088b -> FETCH_HEAD
+2026-05-27T20:45:49.1108889Z  * branch              a7ff47f9ce6d7c64a1042870caa15403b877ab7d -> FETCH_HEAD
+2026-05-27T20:45:49.1109276Z  * branch              a88c454da4fa4954a7e53d289f1f52acd6bc568b -> FETCH_HEAD
+2026-05-27T20:45:49.1109668Z  * branch              a8a7d66e7b135818a8c48a3a59b0980bb22c0b1e -> FETCH_HEAD
+2026-05-27T20:45:49.1110054Z  * branch              a8d126d7b5863e144446e99dbac69b3afa94021d -> FETCH_HEAD
+2026-05-27T20:45:49.1110445Z  * branch              a8ffe983d9d9eb2b6268bf8ba2563fab4f611c98 -> FETCH_HEAD
+2026-05-27T20:45:49.1110836Z  * branch              a92577eb674fd91b2056c63fb0e3828429451982 -> FETCH_HEAD
+2026-05-27T20:45:49.1111215Z  * branch              a927c3746b54a4d622197a867b9e5d9854ed5765 -> FETCH_HEAD
+2026-05-27T20:45:49.1111597Z  * branch              a970020294000fb144874d8943c74fd2c2c3b3c4 -> FETCH_HEAD
+2026-05-27T20:45:49.1111975Z  * branch              a9dbfb1d391c9d09944c346293b163706f498f09 -> FETCH_HEAD
+2026-05-27T20:45:49.1112365Z  * branch              a9e9d2c93d21be64af28d675c232fc0ff30fce3c -> FETCH_HEAD
+2026-05-27T20:45:49.1112769Z  * branch              aa717aba621b4d02a5e2d8ec7755eb7b54dfca73 -> FETCH_HEAD
+2026-05-27T20:45:49.1113198Z  * branch              ab228e7ecc578e34bbde90700cee44aedebf2838 -> FETCH_HEAD
+2026-05-27T20:45:49.1113594Z  * branch              ab349dd699942b0c1dd0d023c1bd25d195ac8a36 -> FETCH_HEAD
+2026-05-27T20:45:49.1113985Z  * branch              ab8b4c85e6effe12a203cfe68f7fe13b67e5d99c -> FETCH_HEAD
+2026-05-27T20:45:49.1114613Z  * branch              aba653e79564eeb26b4f18034d06082d8dbee4ee -> FETCH_HEAD
+2026-05-27T20:45:49.1115009Z  * branch              abe38fc49ec9c792dd273f3a1dcbe8b510263dbf -> FETCH_HEAD
+2026-05-27T20:45:49.1115407Z  * branch              ac7a6308c0cab7c2a418d206351c6a01ea5c226a -> FETCH_HEAD
+2026-05-27T20:45:49.1115798Z  * branch              ac9085463177ea1bfd76629bbc5b7c0716a6d773 -> FETCH_HEAD
+2026-05-27T20:45:49.1116186Z  * branch              acbc759a71794d5ac8b4af33ab045e6fe9881bec -> FETCH_HEAD
+2026-05-27T20:45:49.1116819Z  * branch              acd66adc86b451288c999c2d7861581628fe92bb -> FETCH_HEAD
+2026-05-27T20:45:49.1117212Z  * branch              ace276b3a12f584b485a4ef363cc2b5f37dbfe79 -> FETCH_HEAD
+2026-05-27T20:45:49.1117605Z  * branch              ad451ba355c85b5c74258b531ffa13b31320e198 -> FETCH_HEAD
+2026-05-27T20:45:49.1117991Z  * branch              ad7bc749c54079b92d06bea9ad5e277c2417602b -> FETCH_HEAD
+2026-05-27T20:45:49.1118386Z  * branch              ad858e9742b943039b90d74b56076947381466f7 -> FETCH_HEAD
+2026-05-27T20:45:49.1118771Z  * branch              ada5a0788cd99139fa88a2bde7f014f859d6640f -> FETCH_HEAD
+2026-05-27T20:45:49.1119161Z  * branch              addb1f1fd6b4aec3ba676ff5e850e493746d9352 -> FETCH_HEAD
+2026-05-27T20:45:49.1119550Z  * branch              ae229221992f2c25c191947687154bb59464d988 -> FETCH_HEAD
+2026-05-27T20:45:49.1119935Z  * branch              ae253a7e1c3e66849ec86b0cec992fc73b9ae472 -> FETCH_HEAD
+2026-05-27T20:45:49.1120338Z  * branch              aef7faefc19169de087f840595bc715685e0b889 -> FETCH_HEAD
+2026-05-27T20:45:49.1120747Z  * branch              af0c2e54e0bfba56bf137b95a6f5fa60b79aba88 -> FETCH_HEAD
+2026-05-27T20:45:49.1121140Z  * branch              af14b8067e7a7b40b9ff1cbfc52774b54768dd13 -> FETCH_HEAD
+2026-05-27T20:45:49.1121537Z  * branch              af3436fae01f02a23bdffc751028bce1d810b3de -> FETCH_HEAD
+2026-05-27T20:45:49.1121929Z  * branch              af3bf16f57b610d6a3b6ec8bfe86337324d20884 -> FETCH_HEAD
+2026-05-27T20:45:49.1122316Z  * branch              af7495411f804cf15a99e6d9c4049c2b63de2619 -> FETCH_HEAD
+2026-05-27T20:45:49.1122706Z  * branch              af9e786f0a2d5cc835feb9cb2d32efeffab7f205 -> FETCH_HEAD
+2026-05-27T20:45:49.1123110Z  * branch              afaea257b3d3cdccebff93c3769206e9dcc22419 -> FETCH_HEAD
+2026-05-27T20:45:49.1123507Z  * branch              afbd25d735f4b813788d00519d0c9c82585e9b60 -> FETCH_HEAD
+2026-05-27T20:45:49.1123899Z  * branch              b01efaddbdf4baba43a00c2c45a3ac318640d87d -> FETCH_HEAD
+2026-05-27T20:45:49.1124549Z  * branch              b048b81d8c763863f264b0796da7eb93940d49f8 -> FETCH_HEAD
+2026-05-27T20:45:49.1124947Z  * branch              b04bf042042b6b66cefcf1be100de1c097f0fb48 -> FETCH_HEAD
+2026-05-27T20:45:49.1125339Z  * branch              b054721cd04f003ee8af2ec959b5fa58d6937d18 -> FETCH_HEAD
+2026-05-27T20:45:49.1125725Z  * branch              b058eed45ae30ee9d8828df354812411d1a1a76d -> FETCH_HEAD
+2026-05-27T20:45:49.1126118Z  * branch              b05df1a1d26c050f7586b0bd55e959fc193b6907 -> FETCH_HEAD
+2026-05-27T20:45:49.1126517Z  * branch              b0a1f2c5f25da87d4b2bca03e94a61b71e9f4a3e -> FETCH_HEAD
+2026-05-27T20:45:49.1126908Z  * branch              b0d69d8b3bdbdfce5781bd019e1667184978be48 -> FETCH_HEAD
+2026-05-27T20:45:49.1127301Z  * branch              b1e98a1e11b9eae6d524fe2671a939c85e030f6f -> FETCH_HEAD
+2026-05-27T20:45:49.1127690Z  * branch              b22b96305a6f9c9f5d9eb2b9accbfc77c8f9be4c -> FETCH_HEAD
+2026-05-27T20:45:49.1128083Z  * branch              b23b7757b92cf842eb9954b03447052af090cc3d -> FETCH_HEAD
+2026-05-27T20:45:49.1128480Z  * branch              b27de15e918f4455d83df014a2a4120f12db8069 -> FETCH_HEAD
+2026-05-27T20:45:49.1128860Z  * branch              b292021eec5f5d62055c73338fa53ca599f8254e -> FETCH_HEAD
+2026-05-27T20:45:49.1129253Z  * branch              b2a77e55fdbb683a5a6d76770b031f31b01bbe37 -> FETCH_HEAD
+2026-05-27T20:45:49.1129639Z  * branch              b2cec0685d60b79d7960fa3bb04171672527e3f9 -> FETCH_HEAD
+2026-05-27T20:45:49.1130027Z  * branch              b35f59065add2621ec393b85b23b2308e12bb449 -> FETCH_HEAD
+2026-05-27T20:45:49.1130415Z  * branch              b3ad892a36a723ddb785d3bbf9bf4e0a69fdd8fb -> FETCH_HEAD
+2026-05-27T20:45:49.1130810Z  * branch              b3e48c8fb3e6ef6700a618fb2a5e9b809d925218 -> FETCH_HEAD
+2026-05-27T20:45:49.1131197Z  * branch              b486384e355cf1620c95301d6f905aad8dc6b8eb -> FETCH_HEAD
+2026-05-27T20:45:49.1131583Z  * branch              b500a320926a6afcebcc50e0feb3b3e444057ef7 -> FETCH_HEAD
+2026-05-27T20:45:49.1131976Z  * branch              b516bee488454d8c8b5c92602d91ec54cb67d113 -> FETCH_HEAD
+2026-05-27T20:45:49.1132580Z  * branch              b55b6c19b31907502f21f7e0f69b0980694f76a7 -> FETCH_HEAD
+2026-05-27T20:45:49.1132972Z  * branch              b55f9118d0e68f3de12a3cdd92af1f56a78c0574 -> FETCH_HEAD
+2026-05-27T20:45:49.1133365Z  * branch              b5a2943ae16f54b4712dd61ea2b07578c81bd161 -> FETCH_HEAD
+2026-05-27T20:45:49.1133754Z  * branch              b619de83e4d195dcd23de350f34965c40539bed7 -> FETCH_HEAD
+2026-05-27T20:45:49.1134146Z  * branch              b670a318b4e7d8535a5e9f58f4ed209d6e9c244c -> FETCH_HEAD
+2026-05-27T20:45:49.1134824Z  * branch              b6762de484460ffb8e983dbd13eec0c048fc3c74 -> FETCH_HEAD
+2026-05-27T20:45:49.1135218Z  * branch              b6888db6497b170ffa0a17616d6d51ff559dab8a -> FETCH_HEAD
+2026-05-27T20:45:49.1135603Z  * branch              b68fc3c3514635dbe180687265e42260d8f80eaf -> FETCH_HEAD
+2026-05-27T20:45:49.1135989Z  * branch              b6af6ce03040a14b9033b4405365f3ba7af63647 -> FETCH_HEAD
+2026-05-27T20:45:49.1136393Z  * branch              b6ed1c1796b11a50eb486666ea6b2b52cd7e221d -> FETCH_HEAD
+2026-05-27T20:45:49.1136778Z  * branch              b71f505f9b6882e48be2c5918cb20bb065d4f67f -> FETCH_HEAD
+2026-05-27T20:45:49.1137166Z  * branch              b7741288bfe39369e514aa1e4467948580f4f7e5 -> FETCH_HEAD
+2026-05-27T20:45:49.1137547Z  * branch              b7809603cf6fd688d96a7426de65a754107dcf69 -> FETCH_HEAD
+2026-05-27T20:45:49.1137935Z  * branch              b783d8957fa16e3423533d77a1dfd206b6be38cd -> FETCH_HEAD
+2026-05-27T20:45:49.1138320Z  * branch              b78db1807f16580b6c22aaa827e193e9e3582bd8 -> FETCH_HEAD
+2026-05-27T20:45:49.1138714Z  * branch              b7cef48f722f9c1059111edf7fa9e47fca94b162 -> FETCH_HEAD
+2026-05-27T20:45:49.1139108Z  * branch              b7d64a02fe2de1f880183a1c2a426c870be610dc -> FETCH_HEAD
+2026-05-27T20:45:49.1139495Z  * branch              b7e4e73d7df7272d044d447afe523010b0aa010d -> FETCH_HEAD
+2026-05-27T20:45:49.1139888Z  * branch              b83307a5d6dbf52efa1463a198fbb769b538433a -> FETCH_HEAD
+2026-05-27T20:45:49.1140284Z  * branch              b854e013245dd498217231cf9ebf2db8b20ffbf6 -> FETCH_HEAD
+2026-05-27T20:45:49.1140677Z  * branch              b85583e7497a5a4f3a12443791cd6bcda7134201 -> FETCH_HEAD
+2026-05-27T20:45:49.1141063Z  * branch              b85ca2d14cc2428b2b97b65810c783e2a65e91cc -> FETCH_HEAD
+2026-05-27T20:45:49.1141448Z  * branch              b872f3c153805fdb76efb058f62ce1f7ff0dc1f2 -> FETCH_HEAD
+2026-05-27T20:45:49.1141837Z  * branch              b8b2d548d0d910e7ed448961091b94efee1a6ef8 -> FETCH_HEAD
+2026-05-27T20:45:49.1142221Z  * branch              b9a4fc8225e46311a7f574a7befdff59b401633a -> FETCH_HEAD
+2026-05-27T20:45:49.1142618Z  * branch              b9b703b3c73aef65effffe8e7ed4f1c406df03c8 -> FETCH_HEAD
+2026-05-27T20:45:49.1143009Z  * branch              ba5f4db32383e66b5cc20c402d951c644d8f2630 -> FETCH_HEAD
+2026-05-27T20:45:49.1143396Z  * branch              ba97162033964c49cf7cc43f78d48c8d0456fcd2 -> FETCH_HEAD
+2026-05-27T20:45:49.1143793Z  * branch              bb44b38d7c8075f6365dcef15a5bcf538e8326fa -> FETCH_HEAD
+2026-05-27T20:45:49.1144186Z  * branch              bb9a333c4dc7acb9bc447d0b8e24c6d44b6decca -> FETCH_HEAD
+2026-05-27T20:45:49.1144800Z  * branch              bbc128e78f2520ce709026629c0d24d4aea124fe -> FETCH_HEAD
+2026-05-27T20:45:49.1145186Z  * branch              bbc2dd0d2c765c9931494af757916a7eb81b5bca -> FETCH_HEAD
+2026-05-27T20:45:49.1145578Z  * branch              bbc3dfdf958a55107d43741a9358635a1f740280 -> FETCH_HEAD
+2026-05-27T20:45:49.1145968Z  * branch              bbcbd4d4eb52d41c05b95cbbbe57d4e6fde5b3c8 -> FETCH_HEAD
+2026-05-27T20:45:49.1146364Z  * branch              bbe75bb59829cc525ff68f8b751f2c51c9879803 -> FETCH_HEAD
+2026-05-27T20:45:49.1146760Z  * branch              bc2ae0fb4fa5e266bb9fca182a5dfb4b9196b144 -> FETCH_HEAD
+2026-05-27T20:45:49.1147155Z  * branch              bcbf748346e9dfe7fdfb110f260fe19f71221a6e -> FETCH_HEAD
+2026-05-27T20:45:49.1147550Z  * branch              bd17c266818e0dda161b578c741a4f6c33e5fc72 -> FETCH_HEAD
+2026-05-27T20:45:49.1148177Z  * branch              be0895ec5d1c01be07cf9e96b9e11818a8d9d26e -> FETCH_HEAD
+2026-05-27T20:45:49.1148568Z  * branch              be2221f65905e2b79730e79db7f719b0177c5931 -> FETCH_HEAD
+2026-05-27T20:45:49.1148957Z  * branch              be25d6204789bcd9469b8b98c3d3aefe7995ae19 -> FETCH_HEAD
+2026-05-27T20:45:49.1149337Z  * branch              be39569a2e74a269f2595b1e73997399b95b175c -> FETCH_HEAD
+2026-05-27T20:45:49.1149722Z  * branch              be7da45d63265e3789da33c760f7993078ce5fab -> FETCH_HEAD
+2026-05-27T20:45:49.1150100Z  * branch              bede492e73a172c864fc19090855551467921646 -> FETCH_HEAD
+2026-05-27T20:45:49.1150490Z  * branch              bf315a89e43d4f96db748b3dbc5574d613b9a810 -> FETCH_HEAD
+2026-05-27T20:45:49.1150881Z  * branch              bfca53bd5cc3912616205aa82cead28b1b2737c2 -> FETCH_HEAD
+2026-05-27T20:45:49.1151278Z  * branch              bffa38faf9d9c7b6fe4aa12af294025883f7ac64 -> FETCH_HEAD
+2026-05-27T20:45:49.1151677Z  * branch              c029656e8a4aca89705227ffcb88df1d2dab7d96 -> FETCH_HEAD
+2026-05-27T20:45:49.1152067Z  * branch              c083598d1aa07ccd4a620e7c099295b3be80770e -> FETCH_HEAD
+2026-05-27T20:45:49.1152454Z  * branch              c0b81aaf0764e607671853120e1a47b889600d2f -> FETCH_HEAD
+2026-05-27T20:45:49.1152835Z  * branch              c103911d5ac211b11257f4fa1f098eb42eb83470 -> FETCH_HEAD
+2026-05-27T20:45:49.1153222Z  * branch              c16691047b2d3b8d0447abb7038f5d5686e27ea8 -> FETCH_HEAD
+2026-05-27T20:45:49.1153608Z  * branch              c173fca86c0d7c204c36ff578e0d1e78699ac735 -> FETCH_HEAD
+2026-05-27T20:45:49.1153996Z  * branch              c225218307d65c9eb5c0e020b59c97dd4bd087ea -> FETCH_HEAD
+2026-05-27T20:45:49.1154521Z  * branch              c23b585ba6c1595fd875be707a92d5dfa2e405db -> FETCH_HEAD
+2026-05-27T20:45:49.1154912Z  * branch              c2f01a0e98efea84cb912789bee2457ab7ae8fa3 -> FETCH_HEAD
+2026-05-27T20:45:49.1155306Z  * branch              c3507c0884ffdf8dea02b89e38ab0a5e51f2c714 -> FETCH_HEAD
+2026-05-27T20:45:49.1155701Z  * branch              c3d20b8983f29a4275feac060dad110759f66484 -> FETCH_HEAD
+2026-05-27T20:45:49.1175562Z  * branch              c41199ac7afdfa80c53e2dae1782c0785c8e1077 -> FETCH_HEAD
+2026-05-27T20:45:49.1176187Z  * branch              c41444325d97ae507c235c78c2424601736163b1 -> FETCH_HEAD
+2026-05-27T20:45:49.1176629Z  * branch              c43c6f0447c9a3e90becd2f106df8b7611167c50 -> FETCH_HEAD
+2026-05-27T20:45:49.1177060Z  * branch              c4c81c78cd96994691453151bb7446d7c60ef4b7 -> FETCH_HEAD
+2026-05-27T20:45:49.1177458Z  * branch              c51fa61a862a559890be2475b0f3438c755d8ecf -> FETCH_HEAD
+2026-05-27T20:45:49.1177858Z  * branch              c5f5ec87861399a2c443242468e66fe2ec1bc02e -> FETCH_HEAD
+2026-05-27T20:45:49.1178249Z  * branch              c65507c96b50d40318d1feb62640eb3dc3bafd21 -> FETCH_HEAD
+2026-05-27T20:45:49.1178658Z  * branch              c677656de33eac318f67d6b8208a030fbab1a186 -> FETCH_HEAD
+2026-05-27T20:45:49.1179082Z  * branch              c67cfd6da87a17a7b10ca696afaeefeb4305d046 -> FETCH_HEAD
+2026-05-27T20:45:49.1179503Z  * branch              c698f9ac0ce80b640c30c0d717b8a5a64b9c5e4a -> FETCH_HEAD
+2026-05-27T20:45:49.1179908Z  * branch              c6c93e3c9120b0fb1e25f27e4f99188833d6eddf -> FETCH_HEAD
+2026-05-27T20:45:49.1180298Z  * branch              c6d867777f4a4ddb8998bf4c1ccc62995408c25a -> FETCH_HEAD
+2026-05-27T20:45:49.1180693Z  * branch              c83c46644a974ad4dc01f24759b4eab8c1ef819c -> FETCH_HEAD
+2026-05-27T20:45:49.1181079Z  * branch              c85fcc70cf5650490b34692e20a8337dbaab7a5b -> FETCH_HEAD
+2026-05-27T20:45:49.1181469Z  * branch              c8799731ac3f8861e3b34fd8a59f27346ecd4afb -> FETCH_HEAD
+2026-05-27T20:45:49.1181865Z  * branch              c8824a529daa64066326918a602513c7010fbae8 -> FETCH_HEAD
+2026-05-27T20:45:49.1182263Z  * branch              c8a032f257c1f619cdd7c549d790f947af005a99 -> FETCH_HEAD
+2026-05-27T20:45:49.1182666Z  * branch              c8d6010cdbc4d1abc415fb5668c2e0d41d81606b -> FETCH_HEAD
+2026-05-27T20:45:49.1183395Z  * branch              c8dd2e385f42d0ffd27ab8735285606946cd5f63 -> FETCH_HEAD
+2026-05-27T20:45:49.1183798Z  * branch              c8f118caf8a0923b1016ac495c7022b3097125ff -> FETCH_HEAD
+2026-05-27T20:45:49.1184185Z  * branch              c8f5927bce94acca80cce9a5c2008ea983a2204d -> FETCH_HEAD
+2026-05-27T20:45:49.1184751Z  * branch              c90fa0186d54e05c915acadd02af0e6cf21cea04 -> FETCH_HEAD
+2026-05-27T20:45:49.1185146Z  * branch              c93bf6ef0dfde40ec1497a21396e1a19e4e3f501 -> FETCH_HEAD
+2026-05-27T20:45:49.1185540Z  * branch              c99202f31ebfb4a01802ea1a7e02ea5e19b09454 -> FETCH_HEAD
+2026-05-27T20:45:49.1185921Z  * branch              c99e943644cd303e14688412dc8c35555502ff77 -> FETCH_HEAD
+2026-05-27T20:45:49.1186312Z  * branch              c9c1f610942eacd89666fe4d064efd93f4cca66e -> FETCH_HEAD
+2026-05-27T20:45:49.1186707Z  * branch              c9f7f0ec139e4ee9f043e85113d4c1a0f3129523 -> FETCH_HEAD
+2026-05-27T20:45:49.1187119Z  * branch              c9f96cfa25429d7b71fee37685f9df30a741d34a -> FETCH_HEAD
+2026-05-27T20:45:49.1187542Z  * branch              ca1cc53a29d818f6f7244cd027d4a8707f465e95 -> FETCH_HEAD
+2026-05-27T20:45:49.1187960Z  * branch              ca3d287d01f53449477ab49d0532ebd0fff446af -> FETCH_HEAD
+2026-05-27T20:45:49.1188366Z  * branch              caa45e4f5a4f3d92313d8098f929ad177d59728d -> FETCH_HEAD
+2026-05-27T20:45:49.1188773Z  * branch              cb399ef26f11f5338532ec4531c601f9d934ecbf -> FETCH_HEAD
+2026-05-27T20:45:49.1189173Z  * branch              cb6c47e70f6502d0ea1cb1afbb2983126b90524f -> FETCH_HEAD
+2026-05-27T20:45:49.1189563Z  * branch              cb9845b18f367f6d1b141dd489b3015a910f0b43 -> FETCH_HEAD
+2026-05-27T20:45:49.1189956Z  * branch              cbc24487f3628014860df9abb7625ed34cb45701 -> FETCH_HEAD
+2026-05-27T20:45:49.1190341Z  * branch              cbe125451be3d82cf37b9c2de6b0f238ac3f1008 -> FETCH_HEAD
+2026-05-27T20:45:49.1190738Z  * branch              cc8bd062e75214773ec78a06a7e20011effbfd04 -> FETCH_HEAD
+2026-05-27T20:45:49.1191136Z  * branch              ccf4126e27262c0094c20defe562556616595cc2 -> FETCH_HEAD
+2026-05-27T20:45:49.1191522Z  * branch              cd6421f2642ead867eb2e22b5c25b6a7164b9196 -> FETCH_HEAD
+2026-05-27T20:45:49.1191913Z  * branch              cd9f84629fcec8f9868b682339ea083248ffb240 -> FETCH_HEAD
+2026-05-27T20:45:49.1192304Z  * branch              cddec925da7f0de82d659dce426b92c13ed5d534 -> FETCH_HEAD
+2026-05-27T20:45:49.1192701Z  * branch              ce1b9d98672589c357c26c796d5a96df8a10829a -> FETCH_HEAD
+2026-05-27T20:45:49.1193091Z  * branch              ce1f052022d4d71d74853fd57232e131ce0a4d1d -> FETCH_HEAD
+2026-05-27T20:45:49.1193476Z  * branch              ce8b19188f4bfd69464b6c8adb9d92723ed89d33 -> FETCH_HEAD
+2026-05-27T20:45:49.1193874Z  * branch              cee5c2893fb8794f1d0b4b734a01717ef4eacf5b -> FETCH_HEAD
+2026-05-27T20:45:49.1194390Z  * branch              cee9479b0b392cb41a6048288a3000211fb57d01 -> FETCH_HEAD
+2026-05-27T20:45:49.1194811Z  * branch              cf193fcc3a0d970518c5aa1b5d6ea78092686491 -> FETCH_HEAD
+2026-05-27T20:45:49.1195213Z  * branch              cf5f7f2473cb44ee745d837866b01121b71076d0 -> FETCH_HEAD
+2026-05-27T20:45:49.1195604Z  * branch              cf765df7508e9839490ffee13b10ba958e7860db -> FETCH_HEAD
+2026-05-27T20:45:49.1195999Z  * branch              cfa9d8c7e0fbd4763e65ae236d370d5587a8a5cd -> FETCH_HEAD
+2026-05-27T20:45:49.1196394Z  * branch              cfb16dcbceed575a79dcd632c8d91e8473e6c6b7 -> FETCH_HEAD
+2026-05-27T20:45:49.1196802Z  * branch              d137afbb60acd7f9b467c13bcc0e3af1e2790b1b -> FETCH_HEAD
+2026-05-27T20:45:49.1197200Z  * branch              d14c3986e3d9680be17d6daab706ab6bf9d242e9 -> FETCH_HEAD
+2026-05-27T20:45:49.1197597Z  * branch              d15b26ef04d4e80a594f5d52760da83e4fd0a15a -> FETCH_HEAD
+2026-05-27T20:45:49.1197986Z  * branch              d1cee58e25cc99d03c36f9b5355619d08eca083c -> FETCH_HEAD
+2026-05-27T20:45:49.1198381Z  * branch              d2020c2ead4a812ce8104d8ae6af54b6e6e03277 -> FETCH_HEAD
+2026-05-27T20:45:49.1198902Z  * branch              d215af363a1bc5a2135f9be43f49776142b4d379 -> FETCH_HEAD
+2026-05-27T20:45:49.1199387Z  * branch              d21df0810dc964294444a69b4c4285aafc834797 -> FETCH_HEAD
+2026-05-27T20:45:49.1199774Z  * branch              d2584d1df88d4e388b68847faeb474b76fbab23f -> FETCH_HEAD
+2026-05-27T20:45:49.1200166Z  * branch              d2881bacdc8280bd37383df9cb2408ee20bb2606 -> FETCH_HEAD
+2026-05-27T20:45:49.1200559Z  * branch              d29d2ddcd6a767f6cfb334e050a89719aff408fd -> FETCH_HEAD
+2026-05-27T20:45:49.1200959Z  * branch              d2bda8fcf87e93977ebba6157880e51ec6c2a7d8 -> FETCH_HEAD
+2026-05-27T20:45:49.1201346Z  * branch              d351b6f4a58999ce52133dd3b28649543d5a46fa -> FETCH_HEAD
+2026-05-27T20:45:49.1201734Z  * branch              d3713db3a5ea146042a4a565ffa4ac10313ef855 -> FETCH_HEAD
+2026-05-27T20:45:49.1202126Z  * branch              d3754bd27bed5bc8ef7c6ebdf9791b3020e216b3 -> FETCH_HEAD
+2026-05-27T20:45:49.1202522Z  * branch              d38d1e6ef967fc46d20e16351a1615f5aed72148 -> FETCH_HEAD
+2026-05-27T20:45:49.1202920Z  * branch              d396da8aa38820b8ca3535078233f065856a59c7 -> FETCH_HEAD
+2026-05-27T20:45:49.1203310Z  * branch              d3d9243da704e828fb43a77440fb684a3fc66eb8 -> FETCH_HEAD
+2026-05-27T20:45:49.1203707Z  * branch              d409f13a7e852ba7cc14c3eb0db701afd0bffa84 -> FETCH_HEAD
+2026-05-27T20:45:49.1204098Z  * branch              d42101a412af5b75349c38dc5ed6ca7963336eaf -> FETCH_HEAD
+2026-05-27T20:45:49.1204793Z  * branch              d435047f761139275c1c9bef9518e62027764e44 -> FETCH_HEAD
+2026-05-27T20:45:49.1205188Z  * branch              d4af275c5ba31ecf48c7606a3d0b209bf8c4aa36 -> FETCH_HEAD
+2026-05-27T20:45:49.1205589Z  * branch              d503ee0db3c67b15f062d38cded5a4ed5d367995 -> FETCH_HEAD
+2026-05-27T20:45:49.1205977Z  * branch              d583a93789ec4433260a75f148de6a6acd71db6f -> FETCH_HEAD
+2026-05-27T20:45:49.1206364Z  * branch              d5b6157e74600bcdb18f727fd981ea7a900c1044 -> FETCH_HEAD
+2026-05-27T20:45:49.1206751Z  * branch              d5e10330c6c7d02f590e622434a9e8cdcfa50e44 -> FETCH_HEAD
+2026-05-27T20:45:49.1207151Z  * branch              d619107361196702d99dfbd83cfffbc1b9b13770 -> FETCH_HEAD
+2026-05-27T20:45:49.1207544Z  * branch              d62bafebf90a143d1834980420a5ed484ea245e7 -> FETCH_HEAD
+2026-05-27T20:45:49.1207938Z  * branch              d6cdb4a3a0ca4027fecd5eab2b9525bc746ecb80 -> FETCH_HEAD
+2026-05-27T20:45:49.1208337Z  * branch              d6e937b4a732ca12fe845ce6b367d9df4fd5d29d -> FETCH_HEAD
+2026-05-27T20:45:49.1208729Z  * branch              d714d4812805b8362a0b404b8a108f898c95e026 -> FETCH_HEAD
+2026-05-27T20:45:49.1209115Z  * branch              d8058a89800e18887acefca58d1b1b739deb97e2 -> FETCH_HEAD
+2026-05-27T20:45:49.1209514Z  * branch              d8ae1edbdab34324e3896ea959f1f1aaf47552dd -> FETCH_HEAD
+2026-05-27T20:45:49.1209906Z  * branch              d8e83243b5adf481363a0d48e44b2ecf6d55437f -> FETCH_HEAD
+2026-05-27T20:45:49.1210306Z  * branch              d9d211aaf1be497d8c36c763fd2aff680c031be1 -> FETCH_HEAD
+2026-05-27T20:45:49.1210706Z  * branch              d9e8980b2a83e0c3ef8818b9555b2fa8cf518e23 -> FETCH_HEAD
+2026-05-27T20:45:49.1211096Z  * branch              da2d7980b865226d4d906f6458f24a02b36c1e42 -> FETCH_HEAD
+2026-05-27T20:45:49.1211486Z  * branch              da53f6ccee0906255e43059943d7e3a2cf3739b4 -> FETCH_HEAD
+2026-05-27T20:45:49.1211871Z  * branch              daf47d2a60485b29d1a0a2cd739c0411f5b64764 -> FETCH_HEAD
+2026-05-27T20:45:49.1212262Z  * branch              db1c42e51759354fe81de6200e76e51e5389d5c3 -> FETCH_HEAD
+2026-05-27T20:45:49.1212646Z  * branch              db59ec9c230525792bfe98a73b814e340bb4156d -> FETCH_HEAD
+2026-05-27T20:45:49.1213067Z  * branch              db893894b20b9c8e935c1b3d69915b82099e1188 -> FETCH_HEAD
+2026-05-27T20:45:49.1213459Z  * branch              dba451254ddba69e48653ddc734bac0d4a069078 -> FETCH_HEAD
+2026-05-27T20:45:49.1213854Z  * branch              dbc3c746af5fedf4b4681123755438a79f950554 -> FETCH_HEAD
+2026-05-27T20:45:49.1214409Z  * branch              dbcbe251798eef6e0e05f9d2ad443ef9007aae54 -> FETCH_HEAD
+2026-05-27T20:45:49.1215111Z  * branch              dbdc65edda52e5c0821e9c0dbbf97ce085d122b5 -> FETCH_HEAD
+2026-05-27T20:45:49.1215525Z  * branch              dc3639a9044eff44a7da6a4a14e93434745f24a7 -> FETCH_HEAD
+2026-05-27T20:45:49.1215925Z  * branch              dc47fcf96d88aad16eafabd1b9830d63f21ac31d -> FETCH_HEAD
+2026-05-27T20:45:49.1216329Z  * branch              dc7cc586cb0aa171ed80689beb3eb53402bad926 -> FETCH_HEAD
+2026-05-27T20:45:49.1216730Z  * branch              dcfc8b5e0e220294ef09d416bff03019cc208dc3 -> FETCH_HEAD
+2026-05-27T20:45:49.1217121Z  * branch              dd0e067115b58a2b11ad8d61e2e29631cdd8cc75 -> FETCH_HEAD
+2026-05-27T20:45:49.1217516Z  * branch              ddae4eec6c5b6c720385629dc73c7438f3930908 -> FETCH_HEAD
+2026-05-27T20:45:49.1217909Z  * branch              de5f53bcc484e7dda45f3ab4a087d05e71a3a33a -> FETCH_HEAD
+2026-05-27T20:45:49.1218312Z  * branch              deb270b07f369de67f52cf349aabb1a6345409c8 -> FETCH_HEAD
+2026-05-27T20:45:49.1218711Z  * branch              df20871410760ecbfca46e8226035da408d82b3e -> FETCH_HEAD
+2026-05-27T20:45:49.1219105Z  * branch              df2fd3e1e511554311afc50308c64a6df19ddc2e -> FETCH_HEAD
+2026-05-27T20:45:49.1219497Z  * branch              df3278d2ce8099958945b3af12f7e4c76d2db975 -> FETCH_HEAD
+2026-05-27T20:45:49.1219883Z  * branch              df8a9475b73a580f0ef56d6c25b83e35f626dc5e -> FETCH_HEAD
+2026-05-27T20:45:49.1220283Z  * branch              dfae9db45d0fa1f34d8e4e039c95035e30abfa6f -> FETCH_HEAD
+2026-05-27T20:45:49.1220679Z  * branch              dfef82a5392ca1233ea105b4f0fe690bdab41dd2 -> FETCH_HEAD
+2026-05-27T20:45:49.1221075Z  * branch              e03c09fe3e8b81c1d9b6e2097fa022af3c224f72 -> FETCH_HEAD
+2026-05-27T20:45:49.1221460Z  * branch              e04e784373879b19b39d709b6e9ccee179999fd1 -> FETCH_HEAD
+2026-05-27T20:45:49.1221855Z  * branch              e05eaee97674b99be2bcabc980af18c62b762ff3 -> FETCH_HEAD
+2026-05-27T20:45:49.1222258Z  * branch              e05ff054e6fa39bc7826f4db1276b5a9b338250f -> FETCH_HEAD
+2026-05-27T20:45:49.1222663Z  * branch              e0e1ac1c542ca6dad94bfb32d366874270116f5a -> FETCH_HEAD
+2026-05-27T20:45:49.1223070Z  * branch              e0eecba9aa6adccd5c1288da5b0488fd1aef866b -> FETCH_HEAD
+2026-05-27T20:45:49.1223470Z  * branch              e0fe895d9734f16c2fff0b0536760dcd413d8b4b -> FETCH_HEAD
+2026-05-27T20:45:49.1223871Z  * branch              e11d9ef9bea1f017e3f7539575755caae9a414ba -> FETCH_HEAD
+2026-05-27T20:45:49.1224407Z  * branch              e16016476c28ea307984d0c8441e80ae77e5210c -> FETCH_HEAD
+2026-05-27T20:45:49.1224798Z  * branch              e170f5d6be247f8fa79d81461759dc6850c035c3 -> FETCH_HEAD
+2026-05-27T20:45:49.1225197Z  * branch              e172ef548ec16ceeab83a563cbf7b898bea0c1ee -> FETCH_HEAD
+2026-05-27T20:45:49.1225593Z  * branch              e19b2350e1a35ca1f0448ba2b9c1cb31e1219c63 -> FETCH_HEAD
+2026-05-27T20:45:49.1225989Z  * branch              e20fc7c95429e1b13f9f39900927c79f93695527 -> FETCH_HEAD
+2026-05-27T20:45:49.1226377Z  * branch              e26137b401e98f64940014a48bd22312bddeaf99 -> FETCH_HEAD
+2026-05-27T20:45:49.1226777Z  * branch              e2c5532ee8f6a480cea17d4f9af8f0414a93ba69 -> FETCH_HEAD
+2026-05-27T20:45:49.1227181Z  * branch              e2fd564fda02cf545cbfba39493db9553c924f4f -> FETCH_HEAD
+2026-05-27T20:45:49.1227572Z  * branch              e32328af34551abc626314fd6d130e3acd1be714 -> FETCH_HEAD
+2026-05-27T20:45:49.1227967Z  * branch              e33fdeaf9b3dc3f4876718b77082bc645647cf68 -> FETCH_HEAD
+2026-05-27T20:45:49.1228358Z  * branch              e34718b99a34cdff533d2d167b9a375b7fc58b04 -> FETCH_HEAD
+2026-05-27T20:45:49.1228759Z  * branch              e3694897f7ca2130fe4ca9c1a96a064fc973f882 -> FETCH_HEAD
+2026-05-27T20:45:49.1229165Z  * branch              e4a922facb566e407fc7f570cecf6fcc3ef67c90 -> FETCH_HEAD
+2026-05-27T20:45:49.1229559Z  * branch              e5018e7025e03414cfeb86f78b6d26eef1fb5512 -> FETCH_HEAD
+2026-05-27T20:45:49.1229959Z  * branch              e54fc16a9d2bd6aee01ef4b3b02a4d5fca47dde0 -> FETCH_HEAD
+2026-05-27T20:45:49.1230619Z  * branch              e57bc8af82b4455d47e4d3c72ef0565708b0c642 -> FETCH_HEAD
+2026-05-27T20:45:49.1231015Z  * branch              e5e66116f9a0e9288354d34f7c83c972a05f0467 -> FETCH_HEAD
+2026-05-27T20:45:49.1231401Z  * branch              e6375876986cadb203c7c6ba92da4fb8b6f6d4e9 -> FETCH_HEAD
+2026-05-27T20:45:49.1231800Z  * branch              e63e98d807f8b485e80f42644a0e211cc181f8b6 -> FETCH_HEAD
+2026-05-27T20:45:49.1232186Z  * branch              e64a218522d025d4c20ddb2b4c8672a97200811a -> FETCH_HEAD
+2026-05-27T20:45:49.1232568Z  * branch              e654d9280327e94b4b46595011e74c4f639effdd -> FETCH_HEAD
+2026-05-27T20:45:49.1232961Z  * branch              e7a51f47c772931263b84ca288b33f83540c1fcb -> FETCH_HEAD
+2026-05-27T20:45:49.1233350Z  * branch              e7f61d83d4d4aebaafd8c84a831c760d9ca578ab -> FETCH_HEAD
+2026-05-27T20:45:49.1233752Z  * branch              e82ff3f710aba3a4dfea6fd2c86200119fa21b85 -> FETCH_HEAD
+2026-05-27T20:45:49.1234151Z  * branch              e89b1aca651d1c35474b67eb1b682eca3507b719 -> FETCH_HEAD
+2026-05-27T20:45:49.1234686Z  * branch              e8a3242643b534f7d0bae274aea9bc3042a1d72b -> FETCH_HEAD
+2026-05-27T20:45:49.1235079Z  * branch              e8af5270d2055a227fbcf83213623654b46f5b3b -> FETCH_HEAD
+2026-05-27T20:45:49.1235463Z  * branch              e8c516080b986ff0b7e7da180200a4835d771131 -> FETCH_HEAD
+2026-05-27T20:45:49.1235855Z  * branch              e8ccb77f8a6d5dfbc07409d99428ed0a47158820 -> FETCH_HEAD
+2026-05-27T20:45:49.1236249Z  * branch              e92d05ab5ef1aa158841d09f7d3b6a9c4b494dc8 -> FETCH_HEAD
+2026-05-27T20:45:49.1236646Z  * branch              e951df09f22190e29035579aa52c5a6e7fb8c319 -> FETCH_HEAD
+2026-05-27T20:45:49.1237035Z  * branch              e954812653a1d24f2c2b034e05bca7a2a41a389f -> FETCH_HEAD
+2026-05-27T20:45:49.1237417Z  * branch              e981b9df167606f7295334a94153f4b58eb9f5a2 -> FETCH_HEAD
+2026-05-27T20:45:49.1237806Z  * branch              e98ef9063d105b7d6885d17691b520a37ef46555 -> FETCH_HEAD
+2026-05-27T20:45:49.1238207Z  * branch              ea3f1ad4b757cc8bca501f0769947bd1fffe8c94 -> FETCH_HEAD
+2026-05-27T20:45:49.1238605Z  * branch              ea80513bcdaef114315b98ed0fa4465350430174 -> FETCH_HEAD
+2026-05-27T20:45:49.1238993Z  * branch              eac7bee8d86db15741a42d1d059d975551e1070c -> FETCH_HEAD
+2026-05-27T20:45:49.1239394Z  * branch              eaeab008bbbe09ab5d4d88e08add7528d62ce111 -> FETCH_HEAD
+2026-05-27T20:45:49.1239790Z  * branch              ec0ec28759a6990e947d810833ec74ed1af551f3 -> FETCH_HEAD
+2026-05-27T20:45:49.1240179Z  * branch              ec22bcbf9c76e915caf37ea6b29e57f4f7d35a11 -> FETCH_HEAD
+2026-05-27T20:45:49.1240575Z  * branch              ec43890de4a9980cc9823267b4fd71cf27501119 -> FETCH_HEAD
+2026-05-27T20:45:49.1240960Z  * branch              ec6e08879794834bb901e746823cc14793e767f2 -> FETCH_HEAD
+2026-05-27T20:45:49.1241352Z  * branch              ec7deceb0d83a9b6677f2ab8de276bc903c47d7f -> FETCH_HEAD
+2026-05-27T20:45:49.1241741Z  * branch              ecc5945b50652f9d981869ab483e50ed35ff1a6e -> FETCH_HEAD
+2026-05-27T20:45:49.1242149Z  * branch              ed1ebbf808b4fbad760c1dd6a9e3a0bae59ce2aa -> FETCH_HEAD
+2026-05-27T20:45:49.1242551Z  * branch              ed7dac4a539d819fe855e029d8b0ef13500cd2ab -> FETCH_HEAD
+2026-05-27T20:45:49.1242940Z  * branch              ed82e443876649bb62c5f880e27eb31dd47ee9b1 -> FETCH_HEAD
+2026-05-27T20:45:49.1243338Z  * branch              ed923c1dead72184797b5a50ee1035686de1f9e5 -> FETCH_HEAD
+2026-05-27T20:45:49.1243726Z  * branch              ed933ca5c12a96dc785af862db0eef2132518e32 -> FETCH_HEAD
+2026-05-27T20:45:49.1244117Z  * branch              edaca26697c6646851c281cd74194eb498989379 -> FETCH_HEAD
+2026-05-27T20:45:49.1244678Z  * branch              eddae7e2e7d0a005b4cbb81db16fc2586f1e25d2 -> FETCH_HEAD
+2026-05-27T20:45:49.1245072Z  * branch              ee10dd1e6e95c2e8a1458d55464fe73278908325 -> FETCH_HEAD
+2026-05-27T20:45:49.1245465Z  * branch              ee37b88d2207bcb9c45de754726e5b0ba1d08ac1 -> FETCH_HEAD
+2026-05-27T20:45:49.1246071Z  * branch              ee40130e22b69af7f32df878ff19701feb30cd31 -> FETCH_HEAD
+2026-05-27T20:45:49.1246472Z  * branch              ee8fe0283eea20a1f2fdd930b263cc5587dc4d3a -> FETCH_HEAD
+2026-05-27T20:45:49.1246868Z  * branch              eea1219d59a9e9c1d9911cbefcb08eec7ffd61f6 -> FETCH_HEAD
+2026-05-27T20:45:49.1247265Z  * branch              eefb1740af88b0d3d5b1053901e2332da9a7c891 -> FETCH_HEAD
+2026-05-27T20:45:49.1247658Z  * branch              eefd239bb8279291a7c34cf5d04dd42b2f4788c1 -> FETCH_HEAD
+2026-05-27T20:45:49.1248047Z  * branch              ef18486e4b8ae8d046b0f173f4b8211d2a1080fc -> FETCH_HEAD
+2026-05-27T20:45:49.1248444Z  * branch              ef6279a963a8b82153e6bbebf4efc3fcac6b93e3 -> FETCH_HEAD
+2026-05-27T20:45:49.1248833Z  * branch              ef86bf8288d85b30f575e234088c6fa9fa94b469 -> FETCH_HEAD
+2026-05-27T20:45:49.1249231Z  * branch              efa32800f82689646ce28b160e968820a984a725 -> FETCH_HEAD
+2026-05-27T20:45:49.1249628Z  * branch              efae52d4fe57d83590c9418005ef3b273bd13a7e -> FETCH_HEAD
+2026-05-27T20:45:49.1250037Z  * branch              efdcd6b7c93734a1d715c7a12f413891cbacb0d1 -> FETCH_HEAD
+2026-05-27T20:45:49.1250425Z  * branch              f08309f3a000587e51d1525d1d5edf92471b6f20 -> FETCH_HEAD
+2026-05-27T20:45:49.1250825Z  * branch              f0a243e0bf241d1432abcc48d56fd9c35c4bc2bb -> FETCH_HEAD
+2026-05-27T20:45:49.1251218Z  * branch              f0a9e880c6db389f989fcb9b11fc6fcdecac4054 -> FETCH_HEAD
+2026-05-27T20:45:49.1251625Z  * branch              f0bb5f5f0185cfa0efdd6f25a30b974b6c2537ea -> FETCH_HEAD
+2026-05-27T20:45:49.1252035Z  * branch              f0eed34ed28959a1dc8ec172412034368b258ed2 -> FETCH_HEAD
+2026-05-27T20:45:49.1252423Z  * branch              f0fe22e57798f2bc129589d54248e5c2dfbc4795 -> FETCH_HEAD
+2026-05-27T20:45:49.1252820Z  * branch              f10b97c3e23f7234e06c451cf60eeb7cfcce5529 -> FETCH_HEAD
+2026-05-27T20:45:49.1253215Z  * branch              f10df0eae1264d53fce457365131382ef9669e70 -> FETCH_HEAD
+2026-05-27T20:45:49.1253615Z  * branch              f148664aface2f92a152edd02fb075f5e26f87ed -> FETCH_HEAD
+2026-05-27T20:45:49.1254017Z  * branch              f159a4c19aeaa39de273fd88cb3c8f7e0f030b8d -> FETCH_HEAD
+2026-05-27T20:45:49.1254831Z  * branch              f18a6cf1baa4528dfa911cc681dd6d2d9e59d685 -> FETCH_HEAD
+2026-05-27T20:45:49.1255261Z  * branch              f1b54ae70a0dc3ae0c44ac89f3510c8b9c458103 -> FETCH_HEAD
+2026-05-27T20:45:49.1255655Z  * branch              f1fd6451db1ce940272d9b5ec25fe965d8fbfdd4 -> FETCH_HEAD
+2026-05-27T20:45:49.1256050Z  * branch              f22290c10c59eea7a8f69ce8d62eb0a685c776e8 -> FETCH_HEAD
+2026-05-27T20:45:49.1256438Z  * branch              f2596c6e5183afe666344b7df54c7b6122f2aed4 -> FETCH_HEAD
+2026-05-27T20:45:49.1256834Z  * branch              f265feda2df8b3609cd90fcfa6bf26c1766f04a0 -> FETCH_HEAD
+2026-05-27T20:45:49.1257229Z  * branch              f28be4b43c2463923367a1fb07dfecf4e8ce6606 -> FETCH_HEAD
+2026-05-27T20:45:49.1257615Z  * branch              f294430093ba5290b107e079588714587e6b5496 -> FETCH_HEAD
+2026-05-27T20:45:49.1258005Z  * branch              f29ea3f60311d07110cff9a254a0b62f207c2573 -> FETCH_HEAD
+2026-05-27T20:45:49.1258391Z  * branch              f29f76578b76d4ce2ef5402f7f7180b0ca156b3c -> FETCH_HEAD
+2026-05-27T20:45:49.1258777Z  * branch              f2a59207e48a349787978e20bd63659432f9ff72 -> FETCH_HEAD
+2026-05-27T20:45:49.1259159Z  * branch              f2c5e6b4a43656048981cb6ace5fb0fab738ff34 -> FETCH_HEAD
+2026-05-27T20:45:49.1259551Z  * branch              f2dd9486fe67d791316388a064edd9cd27f1e3a8 -> FETCH_HEAD
+2026-05-27T20:45:49.1259945Z  * branch              f35f577686ad9883cbfc7b51b9d4733599f16441 -> FETCH_HEAD
+2026-05-27T20:45:49.1260332Z  * branch              f3e679ce2ba9cde589159a61f10dbb40b1d03478 -> FETCH_HEAD
+2026-05-27T20:45:49.1260725Z  * branch              f42be72c508de36b246ec61cc379d57563486f6c -> FETCH_HEAD
+2026-05-27T20:45:49.1261119Z  * branch              f42f9e232fcce7378cf8bc0c8ce6ecf131bed6e4 -> FETCH_HEAD
+2026-05-27T20:45:49.1261515Z  * branch              f44060e38c87d344e1c243e7ed976048994e628c -> FETCH_HEAD
+2026-05-27T20:45:49.1262128Z  * branch              f480aca182c5c1a305a475a3d245bf84ec74601d -> FETCH_HEAD
+2026-05-27T20:45:49.1262527Z  * branch              f481c584fcb05cc8c2018b880f23835c165ce256 -> FETCH_HEAD
+2026-05-27T20:45:49.1262923Z  * branch              f4cb24e464369946fac1e95e30801f0cb5f8be8c -> FETCH_HEAD
+2026-05-27T20:45:49.1263312Z  * branch              f4d600e84db627c1900a12f11ba771d3f25ec4bb -> FETCH_HEAD
+2026-05-27T20:45:49.1263709Z  * branch              f51b9f26e1cbc902c0a962a6afcba9ceb77745d2 -> FETCH_HEAD
+2026-05-27T20:45:49.1264094Z  * branch              f525b95b06340d2e2343f15e9e41996bc73d9c2b -> FETCH_HEAD
+2026-05-27T20:45:49.1264637Z  * branch              f531e6c8d08c29260af4a98ab51a73d4ef03d859 -> FETCH_HEAD
+2026-05-27T20:45:49.1265024Z  * branch              f557a2b30d7036078ed552f9a757ae3ff764e03b -> FETCH_HEAD
+2026-05-27T20:45:49.1265411Z  * branch              f58621e954ce1095be233a4798eb0e77a2754aea -> FETCH_HEAD
+2026-05-27T20:45:49.1265813Z  * branch              f602f3b19aedd94744e82a07a4e950432a1d77f2 -> FETCH_HEAD
+2026-05-27T20:45:49.1266199Z  * branch              f6552126db909c9bf39743cd1510b9e1eb9be384 -> FETCH_HEAD
+2026-05-27T20:45:49.1266590Z  * branch              f657bc7dac89965b87236ab7d1c2f6b3cfb47d93 -> FETCH_HEAD
+2026-05-27T20:45:49.1266979Z  * branch              f66900b7479f98e975bca1a46fffc8c7ece99de2 -> FETCH_HEAD
+2026-05-27T20:45:49.1267365Z  * branch              f66b228d46908d253607e0b5139903dd5894995b -> FETCH_HEAD
+2026-05-27T20:45:49.1267750Z  * branch              f6976e5fc935acef2ff610955ed3a227ab37881b -> FETCH_HEAD
+2026-05-27T20:45:49.1268140Z  * branch              f6ebd9c73650e6c121d029b3baf1bab13e876e17 -> FETCH_HEAD
+2026-05-27T20:45:49.1268533Z  * branch              f6ef18b96686491567b96f829afae2642c5fc68e -> FETCH_HEAD
+2026-05-27T20:45:49.1268920Z  * branch              f6ef9293e570c4167def4de2d116f3fc46056b97 -> FETCH_HEAD
+2026-05-27T20:45:49.1269315Z  * branch              f794d6f530e5d54ad4badf19800eb9cfd515b8bd -> FETCH_HEAD
+2026-05-27T20:45:49.1269710Z  * branch              f7a80471edd6193c480d0563c10c64697f9158f9 -> FETCH_HEAD
+2026-05-27T20:45:49.1270102Z  * branch              f82474d4d92a2d00a09f501f8dc7626fe28a60bc -> FETCH_HEAD
+2026-05-27T20:45:49.1270494Z  * branch              f863ad53650ac676cd0b180f7eaa8ad13f0404de -> FETCH_HEAD
+2026-05-27T20:45:49.1270885Z  * branch              f8711a3abda4f3be001231435c82080d4559ce79 -> FETCH_HEAD
+2026-05-27T20:45:49.1271279Z  * branch              f87fcf6cbe1390f145fb39e5c7ba8737ebe71880 -> FETCH_HEAD
+2026-05-27T20:45:49.1271672Z  * branch              f939f2bf29ca970cf035f945651240d20c78f498 -> FETCH_HEAD
+2026-05-27T20:45:49.1272065Z  * branch              f9b47fe4867514dd8f12db344a407b85fbc964f6 -> FETCH_HEAD
+2026-05-27T20:45:49.1272454Z  * branch              f9db5a2c210433fcda9c6fb218f25baf799717b2 -> FETCH_HEAD
+2026-05-27T20:45:49.1272850Z  * branch              fb3568d26b414962388f4bfcbe11292da0a1e487 -> FETCH_HEAD
+2026-05-27T20:45:49.1273251Z  * branch              fb54227756a3a4eab5b66e3b287af041765414ca -> FETCH_HEAD
+2026-05-27T20:45:49.1273639Z  * branch              fc1e3b9695cc7d2b807ec0979447710e1b99ae97 -> FETCH_HEAD
+2026-05-27T20:45:49.1274034Z  * branch              fd66b27c7f5a659ba4e7d511513ba324d7cfd82c -> FETCH_HEAD
+2026-05-27T20:45:49.1274554Z  * branch              fd7ad9f4cc1be5c787de55b0ecfd4a090c65f2cb -> FETCH_HEAD
+2026-05-27T20:45:49.1274959Z  * branch              fdbaa77b6103ae81bd6f4bd8f913a1a86e790487 -> FETCH_HEAD
+2026-05-27T20:45:49.1275353Z  * branch              fe3396fe2cb74b10b7b47976476d534a45375bbd -> FETCH_HEAD
+2026-05-27T20:45:49.1275743Z  * branch              fefd44318ae652f14c350ddcae1da374ea8f9f47 -> FETCH_HEAD
+2026-05-27T20:45:49.1276143Z  * branch              ff4d60b4e4db62fed66adf13ee72e920f113966a -> FETCH_HEAD
+2026-05-27T20:45:49.1276536Z  * branch              ff589cd2835a8c695d38a09421b0e814b87effb9 -> FETCH_HEAD
+2026-05-27T20:45:49.1276935Z  * branch              ff8ddd84e01dc9c8d7f6ab58660596d1e3cd8efd -> FETCH_HEAD
+2026-05-27T20:45:49.1277541Z  * branch              ff9303e27c2a5dde1068712ca7107174f1cd3933 -> FETCH_HEAD
+2026-05-27T20:45:49.1277939Z  * branch              ffb1347ab50bd5e1a2db2b1381c00022e3daa3ec -> FETCH_HEAD
+2026-05-27T20:45:49.1278339Z  * branch              ffb94821eb987e7e6afe6750b188077fc308251a -> FETCH_HEAD
+2026-05-27T20:45:49.1278726Z  * branch              ffebd5afcb0f57519748f09e76f06b05650e4688 -> FETCH_HEAD
+2026-05-27T20:45:49.2121471Z Previous HEAD position was 2cfc36fa8 Merge 0c2f52c437d832f7b1ad031d6a7885ef7aded366 into fa25bc5aa7a1914059e11889bffcbe344ef7bf96
+2026-05-27T20:45:49.2135413Z Switched to a new branch 'dependabot/pip/glean-parser-19.1.0'
+2026-05-27T20:45:49.2138288Z branch 'dependabot/pip/glean-parser-19.1.0' set up to track 'origin/dependabot/pip/glean-parser-19.1.0'.
+2026-05-27T20:45:49.2348132Z Synchronizing submodule url for 'privaterelay/locales'
+2026-05-27T20:45:49.2729844Z ##[group]Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+2026-05-27T20:45:49.2730239Z with:
+2026-05-27T20:45:49.2730426Z   python-version: 3.11
+2026-05-27T20:45:49.2730623Z   cache: pip
+2026-05-27T20:45:49.2730808Z   check-latest: false
+2026-05-27T20:45:49.2731129Z   token: ***
+2026-05-27T20:45:49.2731318Z   update-environment: true
+2026-05-27T20:45:49.2731539Z   allow-prereleases: false
+2026-05-27T20:45:49.2731767Z   freethreaded: false
+2026-05-27T20:45:49.2731961Z ##[endgroup]
+2026-05-27T20:45:49.3994220Z ##[group]Installed versions
+2026-05-27T20:45:49.4417732Z Successfully set up CPython (3.11.15)
+2026-05-27T20:45:49.4418526Z ##[endgroup]
+2026-05-27T20:45:49.6572873Z [command]/opt/hostedtoolcache/Python/3.11.15/x64/bin/pip cache dir
+2026-05-27T20:45:50.8390603Z /home/runner/.cache/pip
+2026-05-27T20:45:51.2717111Z pip cache is not found
+2026-05-27T20:45:51.2836804Z ##[group]Run pip install -r requirements.txt
+2026-05-27T20:45:51.2837171Z [36;1mpip install -r requirements.txt[0m
+2026-05-27T20:45:51.2873024Z shell: /usr/bin/bash -e {0}
+2026-05-27T20:45:51.2873264Z env:
+2026-05-27T20:45:51.2873515Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:45:51.2873936Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib/pkgconfig
+2026-05-27T20:45:51.2874570Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:45:51.2874930Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:45:51.2875274Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:45:51.2875631Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib
+2026-05-27T20:45:51.2875920Z ##[endgroup]
+2026-05-27T20:45:52.8467527Z Collecting boto3==1.43.6 (from -r requirements.txt (line 1))
+2026-05-27T20:45:52.9308718Z   Downloading boto3-1.43.6-py3-none-any.whl.metadata (6.5 kB)
+2026-05-27T20:45:52.9495258Z Collecting codetiming==1.4.0 (from -r requirements.txt (line 2))
+2026-05-27T20:45:52.9627345Z   Downloading codetiming-1.4.0-py3-none-any.whl.metadata (7.7 kB)
+2026-05-27T20:45:53.1317828Z Collecting cryptography==48.0.0 (from -r requirements.txt (line 3))
+2026-05-27T20:45:53.1422358Z   Downloading cryptography-48.0.0-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (4.3 kB)
+2026-05-27T20:45:53.1906371Z Collecting Django==5.2.14 (from -r requirements.txt (line 4))
+2026-05-27T20:45:53.2175638Z   Downloading django-5.2.14-py3-none-any.whl.metadata (4.1 kB)
+2026-05-27T20:45:53.2369231Z Collecting dj-database-url==3.1.2 (from -r requirements.txt (line 5))
+2026-05-27T20:45:53.2473400Z   Downloading dj_database_url-3.1.2-py3-none-any.whl.metadata (13 kB)
+2026-05-27T20:45:53.2712816Z Collecting django-allauth==65.16.1 (from django-allauth[socialaccount]==65.16.1->-r requirements.txt (line 6))
+2026-05-27T20:45:53.2826052Z   Downloading django_allauth-65.16.1-py3-none-any.whl.metadata (9.2 kB)
+2026-05-27T20:45:53.3063918Z Collecting django-cors-headers==4.9.0 (from -r requirements.txt (line 7))
+2026-05-27T20:45:53.3164500Z   Downloading django_cors_headers-4.9.0-py3-none-any.whl.metadata (16 kB)
+2026-05-27T20:45:53.3376588Z Collecting django-csp==4.0 (from -r requirements.txt (line 8))
+2026-05-27T20:45:53.3490948Z   Downloading django_csp-4.0-py3-none-any.whl.metadata (3.6 kB)
+2026-05-27T20:45:53.3726419Z Collecting django-debug-toolbar==6.3.0 (from -r requirements.txt (line 9))
+2026-05-27T20:45:53.3840166Z   Downloading django_debug_toolbar-6.3.0-py3-none-any.whl.metadata (4.5 kB)
+2026-05-27T20:45:53.4049551Z Collecting django-filter==25.2 (from -r requirements.txt (line 10))
+2026-05-27T20:45:53.4157894Z   Downloading django_filter-25.2-py3-none-any.whl.metadata (5.1 kB)
+2026-05-27T20:45:53.4368035Z Collecting django-ipware==7.0.1 (from -r requirements.txt (line 11))
+2026-05-27T20:45:53.4481769Z   Downloading django_ipware-7.0.1-py2.py3-none-any.whl.metadata (9.1 kB)
+2026-05-27T20:45:53.4665615Z Collecting python-ipware==3.0.0 (from -r requirements.txt (line 12))
+2026-05-27T20:45:53.4774129Z   Downloading python_ipware-3.0.0-py3-none-any.whl.metadata (15 kB)
+2026-05-27T20:45:53.4999835Z Collecting django-redis==6.0.0 (from -r requirements.txt (line 13))
+2026-05-27T20:45:53.5109639Z   Downloading django_redis-6.0.0-py3-none-any.whl.metadata (32 kB)
+2026-05-27T20:45:53.5930204Z Collecting django-ftl==0.14 (from -r requirements.txt (line 14))
+2026-05-27T20:45:53.6047338Z   Downloading django_ftl-0.14-py3-none-any.whl.metadata (6.0 kB)
+2026-05-27T20:45:53.6779682Z Collecting django-referrer-policy==1.0 (from -r requirements.txt (line 15))
+2026-05-27T20:45:53.6886185Z   Downloading django-referrer-policy-1.0.tar.gz (3.6 kB)
+2026-05-27T20:45:53.6961254Z   Installing build dependencies: started
+2026-05-27T20:45:54.9045306Z   Installing build dependencies: finished with status 'done'
+2026-05-27T20:45:54.9050555Z   Getting requirements to build wheel: started
+2026-05-27T20:45:55.2750153Z   Getting requirements to build wheel: finished with status 'done'
+2026-05-27T20:45:55.2759175Z   Preparing metadata (pyproject.toml): started
+2026-05-27T20:45:55.4494819Z   Preparing metadata (pyproject.toml): finished with status 'done'
+2026-05-27T20:45:55.4740568Z Collecting djangorestframework==3.17.1 (from -r requirements.txt (line 16))
+2026-05-27T20:45:55.4874924Z   Downloading djangorestframework-3.17.1-py3-none-any.whl.metadata (7.9 kB)
+2026-05-27T20:45:55.5074643Z Collecting django-waffle==5.0.0 (from -r requirements.txt (line 17))
+2026-05-27T20:45:55.5178966Z   Downloading django_waffle-5.0.0-py3-none-any.whl.metadata (2.4 kB)
+2026-05-27T20:45:55.5928427Z Collecting dockerflow==2026.3.4 (from -r requirements.txt (line 18))
+2026-05-27T20:45:55.6051182Z   Downloading dockerflow-2026.3.4-py2.py3-none-any.whl.metadata (3.4 kB)
+2026-05-27T20:45:55.6287378Z Collecting drf-spectacular==0.29.0 (from -r requirements.txt (line 19))
+2026-05-27T20:45:55.6398796Z   Downloading drf_spectacular-0.29.0-py3-none-any.whl.metadata (14 kB)
+2026-05-27T20:45:55.6627381Z Collecting drf-spectacular-sidecar==2026.5.1 (from -r requirements.txt (line 20))
+2026-05-27T20:45:55.6737797Z   Downloading drf_spectacular_sidecar-2026.5.1-py3-none-any.whl.metadata (3.6 kB)
+2026-05-27T20:45:55.7629980Z Collecting glean_parser==19.1.0 (from -r requirements.txt (line 21))
+2026-05-27T20:45:55.7749298Z   Downloading glean_parser-19.1.0-py3-none-any.whl.metadata (3.2 kB)
+2026-05-27T20:45:55.8515531Z Collecting google-cloud-profiler==4.1.0 (from -r requirements.txt (line 22))
+2026-05-27T20:45:55.8623870Z   Downloading google-cloud-profiler-4.1.0.tar.gz (32 kB)
+2026-05-27T20:45:55.8748821Z   Installing build dependencies: started
+2026-05-27T20:45:56.4698330Z   Installing build dependencies: finished with status 'done'
+2026-05-27T20:45:56.4703646Z   Getting requirements to build wheel: started
+2026-05-27T20:45:56.7342773Z   Getting requirements to build wheel: finished with status 'done'
+2026-05-27T20:45:56.7352296Z   Installing backend dependencies: started
+2026-05-27T20:45:57.3708415Z   Installing backend dependencies: finished with status 'done'
+2026-05-27T20:45:57.3715748Z   Preparing metadata (pyproject.toml): started
+2026-05-27T20:45:57.6167794Z   Preparing metadata (pyproject.toml): finished with status 'done'
+2026-05-27T20:45:57.6385056Z Collecting gunicorn==26.0.0 (from -r requirements.txt (line 23))
+2026-05-27T20:45:57.6506374Z   Downloading gunicorn-26.0.0-py3-none-any.whl.metadata (5.4 kB)
+2026-05-27T20:45:57.6708303Z Collecting jwcrypto==1.5.7 (from -r requirements.txt (line 24))
+2026-05-27T20:45:57.6824784Z   Downloading jwcrypto-1.5.7-py3-none-any.whl.metadata (3.3 kB)
+2026-05-27T20:45:57.7040699Z Collecting kinto-http==11.9.0 (from -r requirements.txt (line 25))
+2026-05-27T20:45:57.7160295Z   Downloading kinto_http-11.9.0-py3-none-any.whl.metadata (19 kB)
+2026-05-27T20:45:57.7949762Z Collecting markus==5.2.0 (from markus[datadog]==5.2.0->-r requirements.txt (line 26))
+2026-05-27T20:45:57.8058026Z   Downloading markus-5.2.0-py3-none-any.whl.metadata (5.2 kB)
+2026-05-27T20:45:57.8278683Z Collecting psycopg==3.3.4 (from psycopg[c]==3.3.4->-r requirements.txt (line 27))
+2026-05-27T20:45:57.8379693Z   Downloading psycopg-3.3.4-py3-none-any.whl.metadata (4.3 kB)
+2026-05-27T20:45:57.8616832Z Collecting PyJWT==2.12.1 (from -r requirements.txt (line 28))
+2026-05-27T20:45:57.8717769Z   Downloading pyjwt-2.12.1-py3-none-any.whl.metadata (4.1 kB)
+2026-05-27T20:45:57.8897088Z Collecting python-decouple==3.8 (from -r requirements.txt (line 29))
+2026-05-27T20:45:57.9006425Z   Downloading python_decouple-3.8-py3-none-any.whl.metadata (14 kB)
+2026-05-27T20:45:57.9304192Z Collecting requests==2.34.0 (from -r requirements.txt (line 30))
+2026-05-27T20:45:57.9416675Z   Downloading requests-2.34.0-py3-none-any.whl.metadata (4.8 kB)
+2026-05-27T20:45:57.9602974Z Collecting requests-oauthlib==2.0.0 (from -r requirements.txt (line 31))
+2026-05-27T20:45:57.9702748Z   Downloading requests_oauthlib-2.0.0-py2.py3-none-any.whl.metadata (11 kB)
+2026-05-27T20:45:58.0148826Z Collecting sentry-sdk==2.59.0 (from -r requirements.txt (line 32))
+2026-05-27T20:45:58.0264773Z   Downloading sentry_sdk-2.59.0-py2.py3-none-any.whl.metadata (10 kB)
+2026-05-27T20:45:58.0581121Z Collecting whitenoise==6.12.0 (from -r requirements.txt (line 33))
+2026-05-27T20:45:58.0683897Z   Downloading whitenoise-6.12.0-py3-none-any.whl.metadata (3.7 kB)
+2026-05-27T20:45:58.1052202Z Collecting phonenumbers==9.0.30 (from -r requirements.txt (line 36))
+2026-05-27T20:45:58.1162213Z   Downloading phonenumbers-9.0.30-py2.py3-none-any.whl.metadata (10 kB)
+2026-05-27T20:45:58.1557105Z Collecting twilio==9.10.9 (from -r requirements.txt (line 37))
+2026-05-27T20:45:58.1664711Z   Downloading twilio-9.10.9-py2.py3-none-any.whl.metadata (13 kB)
+2026-05-27T20:45:58.1855322Z Collecting vobject==0.9.9 (from -r requirements.txt (line 38))
+2026-05-27T20:45:58.1964341Z   Downloading vobject-0.9.9-py2.py3-none-any.whl.metadata (1.8 kB)
+2026-05-27T20:45:58.5633611Z Collecting coverage==7.14.0 (from -r requirements.txt (line 41))
+2026-05-27T20:45:58.5750920Z   Downloading coverage-7.14.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (8.5 kB)
+2026-05-27T20:45:58.5969569Z Collecting model-bakery==1.23.4 (from -r requirements.txt (line 42))
+2026-05-27T20:45:58.6092485Z   Downloading model_bakery-1.23.4-py3-none-any.whl.metadata (4.5 kB)
+2026-05-27T20:45:58.6293966Z Collecting pytest-cov==7.1.0 (from -r requirements.txt (line 43))
+2026-05-27T20:45:58.6398033Z   Downloading pytest_cov-7.1.0-py3-none-any.whl.metadata (32 kB)
+2026-05-27T20:45:58.6645957Z Collecting pytest-django==4.12.0 (from -r requirements.txt (line 44))
+2026-05-27T20:45:58.6751255Z   Downloading pytest_django-4.12.0-py3-none-any.whl.metadata (8.0 kB)
+2026-05-27T20:45:58.6969585Z Collecting responses==0.26.0 (from -r requirements.txt (line 45))
+2026-05-27T20:45:58.7077726Z   Downloading responses-0.26.0-py3-none-any.whl.metadata (48 kB)
+2026-05-27T20:45:58.7659761Z Collecting black==26.3.1 (from -r requirements.txt (line 48))
+2026-05-27T20:45:58.7778427Z   Downloading black-26.3.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (91 kB)
+2026-05-27T20:45:59.1102466Z Collecting ruff==0.15.12 (from -r requirements.txt (line 49))
+2026-05-27T20:45:59.1220316Z   Downloading ruff-0.15.12-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (26 kB)
+2026-05-27T20:45:59.2619979Z Collecting boto3-stubs==1.43.6 (from -r requirements.txt (line 52))
+2026-05-27T20:45:59.2738741Z   Downloading boto3_stubs-1.43.6-py3-none-any.whl.metadata (155 kB)
+2026-05-27T20:45:59.8421066Z Collecting botocore-stubs==1.42.41 (from -r requirements.txt (line 53))
+2026-05-27T20:45:59.8531171Z   Downloading botocore_stubs-1.42.41-py3-none-any.whl.metadata (3.4 kB)
+2026-05-27T20:45:59.9166301Z Collecting mypy-boto3-s3==1.43.5 (from -r requirements.txt (line 54))
+2026-05-27T20:45:59.9274568Z   Downloading mypy_boto3_s3-1.43.5-py3-none-any.whl.metadata (19 kB)
+2026-05-27T20:45:59.9514872Z Collecting django-stubs==6.0.4 (from -r requirements.txt (line 55))
+2026-05-27T20:45:59.9623000Z   Downloading django_stubs-6.0.4-py3-none-any.whl.metadata (22 kB)
+2026-05-27T20:45:59.9851565Z Collecting djangorestframework-stubs==3.16.9 (from -r requirements.txt (line 56))
+2026-05-27T20:45:59.9960670Z   Downloading djangorestframework_stubs-3.16.9-py3-none-any.whl.metadata (3.9 kB)
+2026-05-27T20:46:00.0540619Z Collecting mypy-boto3-ses==1.43.0 (from -r requirements.txt (line 57))
+2026-05-27T20:46:00.0652638Z   Downloading mypy_boto3_ses-1.43.0-py3-none-any.whl.metadata (15 kB)
+2026-05-27T20:46:00.1242605Z Collecting mypy-boto3-sns==1.43.0 (from -r requirements.txt (line 58))
+2026-05-27T20:46:00.1350777Z   Downloading mypy_boto3_sns-1.43.0-py3-none-any.whl.metadata (17 kB)
+2026-05-27T20:46:00.1939175Z Collecting mypy-boto3-sqs==1.43.0 (from -r requirements.txt (line 59))
+2026-05-27T20:46:00.2055616Z   Downloading mypy_boto3_sqs-1.43.0-py3-none-any.whl.metadata (16 kB)
+2026-05-27T20:46:00.3659229Z Collecting mypy==2.1.0 (from -r requirements.txt (line 60))
+2026-05-27T20:46:00.3770718Z   Downloading mypy-2.1.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.3 kB)
+2026-05-27T20:46:00.4049645Z Collecting types-requests==2.33.0.20260508 (from -r requirements.txt (line 61))
+2026-05-27T20:46:00.4156738Z   Downloading types_requests-2.33.0.20260508-py3-none-any.whl.metadata (2.0 kB)
+2026-05-27T20:46:00.6158778Z Collecting botocore<1.44.0,>=1.43.6 (from boto3==1.43.6->-r requirements.txt (line 1))
+2026-05-27T20:46:00.6270850Z   Downloading botocore-1.43.16-py3-none-any.whl.metadata (5.6 kB)
+2026-05-27T20:46:00.6459485Z Collecting jmespath<2.0.0,>=0.7.1 (from boto3==1.43.6->-r requirements.txt (line 1))
+2026-05-27T20:46:00.6561909Z   Downloading jmespath-1.1.0-py3-none-any.whl.metadata (7.6 kB)
+2026-05-27T20:46:00.6776542Z Collecting s3transfer<0.18.0,>=0.17.0 (from boto3==1.43.6->-r requirements.txt (line 1))
+2026-05-27T20:46:00.6876882Z   Downloading s3transfer-0.17.1-py3-none-any.whl.metadata (1.7 kB)
+2026-05-27T20:46:00.8665807Z Collecting cffi>=2.0.0 (from cryptography==48.0.0->-r requirements.txt (line 3))
+2026-05-27T20:46:00.8770259Z   Downloading cffi-2.0.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.6 kB)
+2026-05-27T20:46:00.9004743Z Collecting asgiref>=3.8.1 (from Django==5.2.14->-r requirements.txt (line 4))
+2026-05-27T20:46:00.9106681Z   Downloading asgiref-3.11.1-py3-none-any.whl.metadata (9.3 kB)
+2026-05-27T20:46:00.9296792Z Collecting sqlparse>=0.3.1 (from Django==5.2.14->-r requirements.txt (line 4))
+2026-05-27T20:46:00.9399844Z   Downloading sqlparse-0.5.5-py3-none-any.whl.metadata (4.7 kB)
+2026-05-27T20:46:00.9693175Z Collecting packaging (from django-csp==4.0->-r requirements.txt (line 8))
+2026-05-27T20:46:00.9708729Z   Using cached packaging-26.2-py3-none-any.whl.metadata (3.5 kB)
+2026-05-27T20:46:01.0088597Z Collecting redis>=4.0.2 (from django-redis==6.0.0->-r requirements.txt (line 13))
+2026-05-27T20:46:01.0191703Z   Downloading redis-7.4.0-py3-none-any.whl.metadata (12 kB)
+2026-05-27T20:46:01.0960187Z Collecting fluent-compiler>=0.4 (from django-ftl==0.14->-r requirements.txt (line 14))
+2026-05-27T20:46:01.1079063Z   Downloading fluent_compiler-1.1-py3-none-any.whl.metadata (5.6 kB)
+2026-05-27T20:46:01.1351943Z Collecting uritemplate>=2.0.0 (from drf-spectacular==0.29.0->-r requirements.txt (line 19))
+2026-05-27T20:46:01.1452841Z   Downloading uritemplate-4.2.0-py3-none-any.whl.metadata (2.6 kB)
+2026-05-27T20:46:01.1855534Z Collecting PyYAML>=5.1 (from drf-spectacular==0.29.0->-r requirements.txt (line 19))
+2026-05-27T20:46:01.1960462Z   Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2026-05-27T20:46:01.2230904Z Collecting jsonschema>=2.6.0 (from drf-spectacular==0.29.0->-r requirements.txt (line 19))
+2026-05-27T20:46:01.2332956Z   Downloading jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+2026-05-27T20:46:01.2512473Z Collecting inflection>=0.3.1 (from drf-spectacular==0.29.0->-r requirements.txt (line 19))
+2026-05-27T20:46:01.2611308Z   Downloading inflection-0.5.1-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-05-27T20:46:01.2861192Z Collecting click>=7 (from glean_parser==19.1.0->-r requirements.txt (line 21))
+2026-05-27T20:46:01.2961804Z   Downloading click-8.4.1-py3-none-any.whl.metadata (2.6 kB)
+2026-05-27T20:46:01.3193757Z Collecting diskcache>=4 (from glean_parser==19.1.0->-r requirements.txt (line 21))
+2026-05-27T20:46:01.3293637Z   Downloading diskcache-5.6.3-py3-none-any.whl.metadata (20 kB)
+2026-05-27T20:46:01.3508737Z Collecting jinja2>=2.10.1 (from glean_parser==19.1.0->-r requirements.txt (line 21))
+2026-05-27T20:46:01.3611989Z   Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+2026-05-27T20:46:01.3898205Z Collecting platformdirs>=2.4.0 (from glean_parser==19.1.0->-r requirements.txt (line 21))
+2026-05-27T20:46:01.4008371Z   Downloading platformdirs-4.9.6-py3-none-any.whl.metadata (4.7 kB)
+2026-05-27T20:46:01.4506269Z Collecting google-api-python-client!=1.12.0,!=2.0.2 (from google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T20:46:01.4613803Z   Downloading google_api_python_client-2.196.0-py3-none-any.whl.metadata (7.0 kB)
+2026-05-27T20:46:01.5001768Z Collecting google-auth>=1.0.0 (from google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T20:46:01.5104663Z   Downloading google_auth-2.53.0-py3-none-any.whl.metadata (5.5 kB)
+2026-05-27T20:46:01.5367487Z Collecting google-auth-httplib2 (from google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T20:46:01.5467136Z   Downloading google_auth_httplib2-0.4.0-py3-none-any.whl.metadata (3.0 kB)
+2026-05-27T20:46:01.6912185Z Collecting protobuf>=3.20 (from google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T20:46:01.7018574Z   Downloading protobuf-7.35.0-cp310-abi3-manylinux2014_x86_64.whl.metadata (595 bytes)
+2026-05-27T20:46:01.7264239Z Collecting typing_extensions>=4.5.0 (from jwcrypto==1.5.7->-r requirements.txt (line 24))
+2026-05-27T20:46:01.7374933Z   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2026-05-27T20:46:01.7568346Z Collecting Unidecode (from kinto-http==11.9.0->-r requirements.txt (line 25))
+2026-05-27T20:46:01.7674895Z   Downloading Unidecode-1.4.0-py3-none-any.whl.metadata (13 kB)
+2026-05-27T20:46:01.7873149Z Collecting backoff (from kinto-http==11.9.0->-r requirements.txt (line 25))
+2026-05-27T20:46:01.7973057Z   Downloading backoff-2.2.1-py3-none-any.whl.metadata (14 kB)
+2026-05-27T20:46:01.8918317Z Collecting charset_normalizer<4,>=2 (from requests==2.34.0->-r requirements.txt (line 30))
+2026-05-27T20:46:01.9025004Z   Downloading charset_normalizer-3.4.7-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+2026-05-27T20:46:01.9248824Z Collecting idna<4,>=2.5 (from requests==2.34.0->-r requirements.txt (line 30))
+2026-05-27T20:46:01.9349021Z   Downloading idna-3.16-py3-none-any.whl.metadata (6.4 kB)
+2026-05-27T20:46:01.9611799Z Collecting urllib3<3,>=1.26 (from requests==2.34.0->-r requirements.txt (line 30))
+2026-05-27T20:46:01.9714433Z   Downloading urllib3-2.7.0-py3-none-any.whl.metadata (6.9 kB)
+2026-05-27T20:46:01.9947204Z Collecting certifi>=2023.5.7 (from requests==2.34.0->-r requirements.txt (line 30))
+2026-05-27T20:46:02.0061359Z   Downloading certifi-2026.5.20-py3-none-any.whl.metadata (2.5 kB)
+2026-05-27T20:46:02.0263854Z Collecting oauthlib>=3.0.0 (from requests-oauthlib==2.0.0->-r requirements.txt (line 31))
+2026-05-27T20:46:02.0368510Z   Downloading oauthlib-3.3.1-py3-none-any.whl.metadata (7.9 kB)
+2026-05-27T20:46:02.5635192Z Collecting aiohttp>=3.8.4 (from twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T20:46:02.5742997Z   Downloading aiohttp-3.13.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.1 kB)
+2026-05-27T20:46:02.5940437Z Collecting aiohttp-retry>=2.8.3 (from twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T20:46:02.6042678Z   Downloading aiohttp_retry-2.9.1-py3-none-any.whl.metadata (8.8 kB)
+2026-05-27T20:46:02.6442106Z Collecting pytz (from vobject==0.9.9->-r requirements.txt (line 38))
+2026-05-27T20:46:02.6602429Z   Downloading pytz-2026.2-py2.py3-none-any.whl.metadata (22 kB)
+2026-05-27T20:46:02.6802582Z Collecting six (from vobject==0.9.9->-r requirements.txt (line 38))
+2026-05-27T20:46:02.6905530Z   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-05-27T20:46:02.7088431Z Collecting python-dateutil>=2.7.0 (from vobject==0.9.9->-r requirements.txt (line 38))
+2026-05-27T20:46:02.7187934Z   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+2026-05-27T20:46:02.7413151Z Collecting pluggy>=1.2 (from pytest-cov==7.1.0->-r requirements.txt (line 43))
+2026-05-27T20:46:02.7512702Z   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2026-05-27T20:46:02.7820631Z Collecting pytest>=7 (from pytest-cov==7.1.0->-r requirements.txt (line 43))
+2026-05-27T20:46:02.7924055Z   Downloading pytest-9.0.3-py3-none-any.whl.metadata (7.6 kB)
+2026-05-27T20:46:02.8179965Z Collecting mypy-extensions>=0.4.3 (from black==26.3.1->-r requirements.txt (line 48))
+2026-05-27T20:46:02.8280736Z   Downloading mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+2026-05-27T20:46:02.8467377Z Collecting pathspec>=1.0.0 (from black==26.3.1->-r requirements.txt (line 48))
+2026-05-27T20:46:02.8567064Z   Downloading pathspec-1.1.1-py3-none-any.whl.metadata (14 kB)
+2026-05-27T20:46:02.8807360Z Collecting pytokens~=0.4.0 (from black==26.3.1->-r requirements.txt (line 48))
+2026-05-27T20:46:02.8946767Z   Downloading pytokens-0.4.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (3.8 kB)
+2026-05-27T20:46:02.9202127Z Collecting types-s3transfer (from boto3-stubs==1.43.6->-r requirements.txt (line 52))
+2026-05-27T20:46:02.9303512Z   Downloading types_s3transfer-0.16.0-py3-none-any.whl.metadata (3.7 kB)
+2026-05-27T20:46:02.9639626Z Collecting types-awscrt (from botocore-stubs==1.42.41->-r requirements.txt (line 53))
+2026-05-27T20:46:02.9748106Z   Downloading types_awscrt-0.33.0-py3-none-any.whl.metadata (4.9 kB)
+2026-05-27T20:46:03.0013775Z Collecting django-stubs-ext>=6.0.2 (from django-stubs==6.0.4->-r requirements.txt (line 55))
+2026-05-27T20:46:03.0129022Z   Downloading django_stubs_ext-6.0.5-py3-none-any.whl.metadata (3.7 kB)
+2026-05-27T20:46:03.0353319Z Collecting types-pyyaml (from django-stubs==6.0.4->-r requirements.txt (line 55))
+2026-05-27T20:46:03.0454109Z   Downloading types_pyyaml-6.0.12.20260518-py3-none-any.whl.metadata (1.7 kB)
+2026-05-27T20:46:03.1533850Z Collecting librt>=0.11.0 (from mypy==2.1.0->-r requirements.txt (line 60))
+2026-05-27T20:46:03.1637136Z   Downloading librt-0.11.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (1.3 kB)
+2026-05-27T20:46:03.1933406Z Collecting ast-serialize<1.0.0,>=0.3.0 (from mypy==2.1.0->-r requirements.txt (line 60))
+2026-05-27T20:46:03.2034127Z   Downloading ast_serialize-0.5.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (1.3 kB)
+2026-05-27T20:46:03.2296017Z Collecting datadog>=0.45.0 (from markus[datadog]==5.2.0->-r requirements.txt (line 26))
+2026-05-27T20:46:03.2400363Z   Downloading datadog-0.52.1-py2.py3-none-any.whl.metadata (10 kB)
+2026-05-27T20:46:03.2600867Z Collecting psycopg-c==3.3.4 (from psycopg[c]==3.3.4->-r requirements.txt (line 27))
+2026-05-27T20:46:03.2807818Z   Downloading psycopg_c-3.3.4.tar.gz (647 kB)
+2026-05-27T20:46:03.3027140Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 647.1/647.1 kB 23.7 MB/s  0:00:00
+2026-05-27T20:46:03.3425677Z   Installing build dependencies: started
+2026-05-27T20:46:04.2073225Z   Installing build dependencies: finished with status 'done'
+2026-05-27T20:46:04.2079135Z   Getting requirements to build wheel: started
+2026-05-27T20:46:04.4744182Z   Getting requirements to build wheel: finished with status 'done'
+2026-05-27T20:46:04.4752816Z   Preparing metadata (pyproject.toml): started
+2026-05-27T20:46:04.8252459Z   Preparing metadata (pyproject.toml): finished with status 'done'
+2026-05-27T20:46:04.8751766Z Collecting aiohappyeyeballs>=2.5.0 (from aiohttp>=3.8.4->twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T20:46:04.8853414Z   Downloading aiohappyeyeballs-2.6.2-py3-none-any.whl.metadata (5.9 kB)
+2026-05-27T20:46:04.9019679Z Collecting aiosignal>=1.4.0 (from aiohttp>=3.8.4->twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T20:46:04.9119785Z   Downloading aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+2026-05-27T20:46:04.9317278Z Collecting attrs>=17.3.0 (from aiohttp>=3.8.4->twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T20:46:04.9417780Z   Downloading attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+2026-05-27T20:46:05.0068230Z Collecting frozenlist>=1.1.1 (from aiohttp>=3.8.4->twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T20:46:05.0172899Z   Downloading frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (20 kB)
+2026-05-27T20:46:05.3192356Z Collecting multidict<7.0,>=4.5 (from aiohttp>=3.8.4->twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T20:46:05.3298009Z   Downloading multidict-6.7.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+2026-05-27T20:46:05.3893538Z Collecting propcache>=0.2.0 (from aiohttp>=3.8.4->twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T20:46:05.3998232Z   Downloading propcache-0.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (16 kB)
+2026-05-27T20:46:05.6240380Z Collecting yarl<2.0,>=1.17.0 (from aiohttp>=3.8.4->twilio==9.10.9->-r requirements.txt (line 37))
+2026-05-27T20:46:05.6343783Z   Downloading yarl-1.24.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (94 kB)
+2026-05-27T20:46:05.6729707Z Collecting pycparser (from cffi>=2.0.0->cryptography==48.0.0->-r requirements.txt (line 3))
+2026-05-27T20:46:05.6828491Z   Downloading pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+2026-05-27T20:46:05.7076388Z Collecting fluent.syntax>=0.14 (from fluent-compiler>=0.4->django-ftl==0.14->-r requirements.txt (line 14))
+2026-05-27T20:46:05.7181650Z   Downloading fluent.syntax-0.19.0-py2.py3-none-any.whl.metadata (1.6 kB)
+2026-05-27T20:46:05.7385135Z Collecting babel>=2.8.0 (from fluent-compiler>=0.4->django-ftl==0.14->-r requirements.txt (line 14))
+2026-05-27T20:46:05.7488611Z   Downloading babel-2.18.0-py3-none-any.whl.metadata (2.2 kB)
+2026-05-27T20:46:05.7750548Z Collecting httplib2<1.0.0,>=0.19.0 (from google-api-python-client!=1.12.0,!=2.0.2->google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T20:46:05.7851991Z   Downloading httplib2-0.31.2-py3-none-any.whl.metadata (2.2 kB)
+2026-05-27T20:46:05.8308256Z Collecting google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0,>=1.31.5 (from google-api-python-client!=1.12.0,!=2.0.2->google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T20:46:05.8412743Z   Downloading google_api_core-2.30.3-py3-none-any.whl.metadata (3.1 kB)
+2026-05-27T20:46:05.8671635Z Collecting googleapis-common-protos<2.0.0,>=1.63.2 (from google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0,>=1.31.5->google-api-python-client!=1.12.0,!=2.0.2->google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T20:46:05.8773759Z   Downloading googleapis_common_protos-1.75.0-py3-none-any.whl.metadata (8.6 kB)
+2026-05-27T20:46:05.9043461Z Collecting proto-plus<2.0.0,>=1.22.3 (from google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0,>=1.31.5->google-api-python-client!=1.12.0,!=2.0.2->google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T20:46:05.9142945Z   Downloading proto_plus-1.28.0-py3-none-any.whl.metadata (2.2 kB)
+2026-05-27T20:46:05.9438465Z Collecting pyasn1-modules>=0.2.1 (from google-auth>=1.0.0->google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T20:46:05.9541676Z   Downloading pyasn1_modules-0.4.2-py3-none-any.whl.metadata (3.5 kB)
+2026-05-27T20:46:05.9862929Z Collecting pyparsing<4,>=3.1 (from httplib2<1.0.0,>=0.19.0->google-api-python-client!=1.12.0,!=2.0.2->google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T20:46:05.9963385Z   Downloading pyparsing-3.3.2-py3-none-any.whl.metadata (5.8 kB)
+2026-05-27T20:46:06.0546261Z Collecting MarkupSafe>=2.0 (from jinja2>=2.10.1->glean_parser==19.1.0->-r requirements.txt (line 21))
+2026-05-27T20:46:06.0650698Z   Downloading markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+2026-05-27T20:46:06.0857210Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema>=2.6.0->drf-spectacular==0.29.0->-r requirements.txt (line 19))
+2026-05-27T20:46:06.0959976Z   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+2026-05-27T20:46:06.1209002Z Collecting referencing>=0.28.4 (from jsonschema>=2.6.0->drf-spectacular==0.29.0->-r requirements.txt (line 19))
+2026-05-27T20:46:06.1309695Z   Downloading referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+2026-05-27T20:46:06.3585468Z Collecting rpds-py>=0.25.0 (from jsonschema>=2.6.0->drf-spectacular==0.29.0->-r requirements.txt (line 19))
+2026-05-27T20:46:06.3692357Z   Downloading rpds_py-0.30.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+2026-05-27T20:46:06.4062522Z Collecting pyasn1<0.7.0,>=0.6.1 (from pyasn1-modules>=0.2.1->google-auth>=1.0.0->google-cloud-profiler==4.1.0->-r requirements.txt (line 22))
+2026-05-27T20:46:06.4162096Z   Downloading pyasn1-0.6.3-py3-none-any.whl.metadata (8.4 kB)
+2026-05-27T20:46:06.4348024Z Collecting iniconfig>=1.0.1 (from pytest>=7->pytest-cov==7.1.0->-r requirements.txt (line 43))
+2026-05-27T20:46:06.4448089Z   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+2026-05-27T20:46:06.4683080Z Collecting pygments>=2.7.2 (from pytest>=7->pytest-cov==7.1.0->-r requirements.txt (line 43))
+2026-05-27T20:46:06.4784376Z   Downloading pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+2026-05-27T20:46:06.5110816Z Downloading boto3-1.43.6-py3-none-any.whl (140 kB)
+2026-05-27T20:46:06.5239445Z Downloading codetiming-1.4.0-py3-none-any.whl (7.2 kB)
+2026-05-27T20:46:06.5359185Z Downloading cryptography-48.0.0-cp311-abi3-manylinux_2_34_x86_64.whl (4.7 MB)
+2026-05-27T20:46:06.5785410Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 117.0 MB/s  0:00:00
+2026-05-27T20:46:06.5908957Z Downloading django-5.2.14-py3-none-any.whl (8.3 MB)
+2026-05-27T20:46:06.6382592Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.3/8.3 MB 180.4 MB/s  0:00:00
+2026-05-27T20:46:06.6491309Z Downloading dj_database_url-3.1.2-py3-none-any.whl (9.0 kB)
+2026-05-27T20:46:06.6619459Z Downloading django_allauth-65.16.1-py3-none-any.whl (2.1 MB)
+2026-05-27T20:46:06.6712277Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 259.3 MB/s  0:00:00
+2026-05-27T20:46:06.6819267Z Downloading django_cors_headers-4.9.0-py3-none-any.whl (12 kB)
+2026-05-27T20:46:06.6941493Z Downloading django_csp-4.0-py3-none-any.whl (25 kB)
+2026-05-27T20:46:06.7061158Z Downloading django_debug_toolbar-6.3.0-py3-none-any.whl (298 kB)
+2026-05-27T20:46:06.7205484Z Downloading django_filter-25.2-py3-none-any.whl (94 kB)
+2026-05-27T20:46:06.7325489Z Downloading django_ipware-7.0.1-py2.py3-none-any.whl (6.4 kB)
+2026-05-27T20:46:06.7443267Z Downloading python_ipware-3.0.0-py3-none-any.whl (10 kB)
+2026-05-27T20:46:06.7570892Z Downloading django_redis-6.0.0-py3-none-any.whl (33 kB)
+2026-05-27T20:46:06.7698578Z Downloading django_ftl-0.14-py3-none-any.whl (12 kB)
+2026-05-27T20:46:06.7820349Z Downloading djangorestframework-3.17.1-py3-none-any.whl (898 kB)
+2026-05-27T20:46:06.7895784Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 898.8/898.8 kB 164.5 MB/s  0:00:00
+2026-05-27T20:46:06.8001540Z Downloading django_waffle-5.0.0-py3-none-any.whl (48 kB)
+2026-05-27T20:46:06.8127391Z Downloading dockerflow-2026.3.4-py2.py3-none-any.whl (36 kB)
+2026-05-27T20:46:06.8259075Z Downloading drf_spectacular-0.29.0-py3-none-any.whl (105 kB)
+2026-05-27T20:46:06.8386284Z Downloading drf_spectacular_sidecar-2026.5.1-py3-none-any.whl (2.5 MB)
+2026-05-27T20:46:06.8483963Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.5/2.5 MB 297.8 MB/s  0:00:00
+2026-05-27T20:46:06.9190747Z Downloading glean_parser-19.1.0-py3-none-any.whl (119 kB)
+2026-05-27T20:46:06.9314567Z Downloading gunicorn-26.0.0-py3-none-any.whl (212 kB)
+2026-05-27T20:46:06.9444739Z Downloading jwcrypto-1.5.7-py3-none-any.whl (94 kB)
+2026-05-27T20:46:06.9594845Z Downloading kinto_http-11.9.0-py3-none-any.whl (27 kB)
+2026-05-27T20:46:06.9718299Z Downloading markus-5.2.0-py3-none-any.whl (26 kB)
+2026-05-27T20:46:06.9834879Z Downloading psycopg-3.3.4-py3-none-any.whl (213 kB)
+2026-05-27T20:46:06.9959658Z Downloading pyjwt-2.12.1-py3-none-any.whl (29 kB)
+2026-05-27T20:46:07.0080928Z Downloading python_decouple-3.8-py3-none-any.whl (9.9 kB)
+2026-05-27T20:46:07.0203139Z Downloading requests-2.34.0-py3-none-any.whl (73 kB)
+2026-05-27T20:46:07.0327819Z Downloading requests_oauthlib-2.0.0-py2.py3-none-any.whl (24 kB)
+2026-05-27T20:46:07.0444365Z Downloading sentry_sdk-2.59.0-py2.py3-none-any.whl (468 kB)
+2026-05-27T20:46:07.0592293Z Downloading whitenoise-6.12.0-py3-none-any.whl (20 kB)
+2026-05-27T20:46:07.0792933Z Downloading phonenumbers-9.0.30-py2.py3-none-any.whl (2.6 MB)
+2026-05-27T20:46:07.0890694Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.6/2.6 MB 313.9 MB/s  0:00:00
+2026-05-27T20:46:07.0991824Z Downloading twilio-9.10.9-py2.py3-none-any.whl (2.5 MB)
+2026-05-27T20:46:07.1187621Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.5/2.5 MB 136.4 MB/s  0:00:00
+2026-05-27T20:46:07.1296474Z Downloading vobject-0.9.9-py2.py3-none-any.whl (47 kB)
+2026-05-27T20:46:07.1431365Z Downloading coverage-7.14.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (252 kB)
+2026-05-27T20:46:07.1562991Z Downloading model_bakery-1.23.4-py3-none-any.whl (25 kB)
+2026-05-27T20:46:07.1681554Z Downloading pytest_cov-7.1.0-py3-none-any.whl (22 kB)
+2026-05-27T20:46:07.1799333Z Downloading pytest_django-4.12.0-py3-none-any.whl (26 kB)
+2026-05-27T20:46:07.1919166Z Downloading responses-0.26.0-py3-none-any.whl (35 kB)
+2026-05-27T20:46:07.2064117Z Downloading black-26.3.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.8 MB)
+2026-05-27T20:46:07.2150560Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 230.1 MB/s  0:00:00
+2026-05-27T20:46:07.2254790Z Downloading ruff-0.15.12-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (11.3 MB)
+2026-05-27T20:46:07.2921126Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.3/11.3 MB 175.4 MB/s  0:00:00
+2026-05-27T20:46:07.3032413Z Downloading boto3_stubs-1.43.6-py3-none-any.whl (70 kB)
+2026-05-27T20:46:07.3151281Z Downloading botocore_stubs-1.42.41-py3-none-any.whl (66 kB)
+2026-05-27T20:46:07.3301533Z Downloading mypy_boto3_s3-1.43.5-py3-none-any.whl (84 kB)
+2026-05-27T20:46:07.3422443Z Downloading django_stubs-6.0.4-py3-none-any.whl (543 kB)
+2026-05-27T20:46:07.3467992Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 543.8/543.8 kB 113.9 MB/s  0:00:00
+2026-05-27T20:46:07.3570968Z Downloading djangorestframework_stubs-3.16.9-py3-none-any.whl (57 kB)
+2026-05-27T20:46:07.3697032Z Downloading mypy_boto3_ses-1.43.0-py3-none-any.whl (39 kB)
+2026-05-27T20:46:07.3821512Z Downloading mypy_boto3_sns-1.43.0-py3-none-any.whl (40 kB)
+2026-05-27T20:46:07.3945738Z Downloading mypy_boto3_sqs-1.43.0-py3-none-any.whl (33 kB)
+2026-05-27T20:46:07.4062517Z Downloading mypy-2.1.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (14.9 MB)
+2026-05-27T20:46:07.4491009Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 14.9/14.9 MB 360.0 MB/s  0:00:00
+2026-05-27T20:46:07.4594985Z Downloading types_requests-2.33.0.20260508-py3-none-any.whl (20 kB)
+2026-05-27T20:46:07.4717722Z Downloading ast_serialize-0.5.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.3 MB)
+2026-05-27T20:46:07.4803273Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 156.8 MB/s  0:00:00
+2026-05-27T20:46:07.4909224Z Downloading botocore-1.43.16-py3-none-any.whl (15.1 MB)
+2026-05-27T20:46:07.5335334Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.1/15.1 MB 368.1 MB/s  0:00:00
+2026-05-27T20:46:07.5442303Z Downloading charset_normalizer-3.4.7-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (214 kB)
+2026-05-27T20:46:07.5566212Z Downloading idna-3.16-py3-none-any.whl (74 kB)
+2026-05-27T20:46:07.5689951Z Downloading jmespath-1.1.0-py3-none-any.whl (20 kB)
+2026-05-27T20:46:07.5837359Z Downloading oauthlib-3.3.1-py3-none-any.whl (160 kB)
+2026-05-27T20:46:07.5962881Z Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+2026-05-27T20:46:07.6087327Z Downloading pytokens-0.4.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (260 kB)
+2026-05-27T20:46:07.6234730Z Downloading s3transfer-0.17.1-py3-none-any.whl (88 kB)
+2026-05-27T20:46:07.6367086Z Downloading urllib3-2.7.0-py3-none-any.whl (131 kB)
+2026-05-27T20:46:07.6490708Z Downloading aiohttp-3.13.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.8 MB)
+2026-05-27T20:46:07.6686381Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 134.9 MB/s  0:00:00
+2026-05-27T20:46:07.6791416Z Downloading multidict-6.7.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (246 kB)
+2026-05-27T20:46:07.6922641Z Downloading yarl-1.24.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (106 kB)
+2026-05-27T20:46:07.7051762Z Downloading aiohappyeyeballs-2.6.2-py3-none-any.whl (15 kB)
+2026-05-27T20:46:07.7172804Z Downloading aiohttp_retry-2.9.1-py3-none-any.whl (10.0 kB)
+2026-05-27T20:46:07.7294736Z Downloading aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+2026-05-27T20:46:07.7419540Z Downloading asgiref-3.11.1-py3-none-any.whl (24 kB)
+2026-05-27T20:46:07.7553237Z Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-05-27T20:46:07.7674609Z Downloading certifi-2026.5.20-py3-none-any.whl (134 kB)
+2026-05-27T20:46:07.7803431Z Downloading cffi-2.0.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (215 kB)
+2026-05-27T20:46:07.7948896Z Downloading click-8.4.1-py3-none-any.whl (116 kB)
+2026-05-27T20:46:07.8113254Z Downloading datadog-0.52.1-py2.py3-none-any.whl (129 kB)
+2026-05-27T20:46:07.8240304Z Downloading diskcache-5.6.3-py3-none-any.whl (45 kB)
+2026-05-27T20:46:07.8364824Z Downloading django_stubs_ext-6.0.5-py3-none-any.whl (10 kB)
+2026-05-27T20:46:07.8493593Z Downloading fluent_compiler-1.1-py3-none-any.whl (37 kB)
+2026-05-27T20:46:07.8619871Z Downloading babel-2.18.0-py3-none-any.whl (10.2 MB)
+2026-05-27T20:46:07.8920012Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.2/10.2 MB 361.2 MB/s  0:00:00
+2026-05-27T20:46:07.9036850Z Downloading fluent.syntax-0.19.0-py2.py3-none-any.whl (16 kB)
+2026-05-27T20:46:07.9159463Z Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2026-05-27T20:46:07.9277843Z Downloading frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (231 kB)
+2026-05-27T20:46:07.9405105Z Downloading google_api_python_client-2.196.0-py3-none-any.whl (15.2 MB)
+2026-05-27T20:46:07.9869265Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.2/15.2 MB 342.6 MB/s  0:00:00
+2026-05-27T20:46:07.9974986Z Downloading google_api_core-2.30.3-py3-none-any.whl (173 kB)
+2026-05-27T20:46:08.0102122Z Downloading google_auth-2.53.0-py3-none-any.whl (246 kB)
+2026-05-27T20:46:08.0229289Z Downloading google_auth_httplib2-0.4.0-py3-none-any.whl (9.5 kB)
+2026-05-27T20:46:08.0349935Z Downloading googleapis_common_protos-1.75.0-py3-none-any.whl (300 kB)
+2026-05-27T20:46:08.0498166Z Downloading httplib2-0.31.2-py3-none-any.whl (91 kB)
+2026-05-27T20:46:08.0744811Z Downloading proto_plus-1.28.0-py3-none-any.whl (50 kB)
+2026-05-27T20:46:08.0871682Z Downloading protobuf-7.35.0-cp310-abi3-manylinux2014_x86_64.whl (327 kB)
+2026-05-27T20:46:08.1001991Z Downloading pyparsing-3.3.2-py3-none-any.whl (122 kB)
+2026-05-27T20:46:08.1124873Z Downloading uritemplate-4.2.0-py3-none-any.whl (11 kB)
+2026-05-27T20:46:08.1242897Z Downloading inflection-0.5.1-py2.py3-none-any.whl (9.5 kB)
+2026-05-27T20:46:08.1364015Z Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+2026-05-27T20:46:08.1502727Z Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-05-27T20:46:08.1635450Z Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-05-27T20:46:08.1756154Z Downloading librt-0.11.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (497 kB)
+2026-05-27T20:46:08.1910935Z Downloading markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+2026-05-27T20:46:08.2029972Z Downloading mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+2026-05-27T20:46:08.2060658Z Using cached packaging-26.2-py3-none-any.whl (100 kB)
+2026-05-27T20:46:08.2163684Z Downloading pathspec-1.1.1-py3-none-any.whl (57 kB)
+2026-05-27T20:46:08.2289537Z Downloading platformdirs-4.9.6-py3-none-any.whl (21 kB)
+2026-05-27T20:46:08.2425250Z Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+2026-05-27T20:46:08.2547247Z Downloading propcache-0.5.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (58 kB)
+2026-05-27T20:46:08.2668047Z Downloading pyasn1_modules-0.4.2-py3-none-any.whl (181 kB)
+2026-05-27T20:46:08.2793738Z Downloading pyasn1-0.6.3-py3-none-any.whl (83 kB)
+2026-05-27T20:46:08.2931193Z Downloading pytest-9.0.3-py3-none-any.whl (375 kB)
+2026-05-27T20:46:08.3085169Z Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2026-05-27T20:46:08.3203448Z Downloading pygments-2.20.0-py3-none-any.whl (1.2 MB)
+2026-05-27T20:46:08.3270151Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 221.1 MB/s  0:00:00
+2026-05-27T20:46:08.3371920Z Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+2026-05-27T20:46:08.3425035Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 806.6/806.6 kB 174.1 MB/s  0:00:00
+2026-05-27T20:46:08.3524691Z Downloading redis-7.4.0-py3-none-any.whl (409 kB)
+2026-05-27T20:46:08.3672757Z Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-05-27T20:46:08.3814098Z Downloading rpds_py-0.30.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (390 kB)
+2026-05-27T20:46:08.3950010Z Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-05-27T20:46:08.4067755Z Downloading sqlparse-0.5.5-py3-none-any.whl (46 kB)
+2026-05-27T20:46:08.4190242Z Downloading backoff-2.2.1-py3-none-any.whl (15 kB)
+2026-05-27T20:46:08.4333933Z Downloading pycparser-3.0-py3-none-any.whl (48 kB)
+2026-05-27T20:46:08.4459046Z Downloading pytz-2026.2-py2.py3-none-any.whl (510 kB)
+2026-05-27T20:46:08.4624565Z Downloading types_awscrt-0.33.0-py3-none-any.whl (45 kB)
+2026-05-27T20:46:08.4747298Z Downloading types_pyyaml-6.0.12.20260518-py3-none-any.whl (20 kB)
+2026-05-27T20:46:08.4867209Z Downloading types_s3transfer-0.16.0-py3-none-any.whl (19 kB)
+2026-05-27T20:46:08.4987155Z Downloading Unidecode-1.4.0-py3-none-any.whl (235 kB)
+2026-05-27T20:46:08.8104847Z Building wheels for collected packages: django-referrer-policy, google-cloud-profiler, psycopg-c
+2026-05-27T20:46:08.8113496Z   Building wheel for django-referrer-policy (pyproject.toml): started
+2026-05-27T20:46:09.0147387Z   Building wheel for django-referrer-policy (pyproject.toml): finished with status 'done'
+2026-05-27T20:46:09.0153760Z   Created wheel for django-referrer-policy: filename=django_referrer_policy-1.0-py2.py3-none-any.whl size=4855 sha256=32affe1edd2e249918f3e48d707b7632efa28f57bbefee0cca9d3341b798b48c
+2026-05-27T20:46:09.0155882Z   Stored in directory: /home/runner/.cache/pip/wheels/d9/60/04/9186cbdd9f4302f90e5425a3bef2ce3b9c6b521f2a923e880a
+2026-05-27T20:46:09.0176969Z   Building wheel for google-cloud-profiler (pyproject.toml): started
+2026-05-27T20:46:13.4289593Z   Building wheel for google-cloud-profiler (pyproject.toml): finished with status 'done'
+2026-05-27T20:46:13.4301720Z   Created wheel for google-cloud-profiler: filename=google_cloud_profiler-4.1.0-cp311-cp311-linux_x86_64.whl size=776047 sha256=053df49510673dabaa8c33e9c545e72b42a382076cb0a61caf3a4d3a82bfc9c2
+2026-05-27T20:46:13.4303172Z   Stored in directory: /home/runner/.cache/pip/wheels/8a/23/bc/1c0221e7bbf082f5c22afad73c77da0e48f2a65c6dc0725470
+2026-05-27T20:46:13.4326407Z   Building wheel for psycopg-c (pyproject.toml): started
+2026-05-27T20:46:43.8238073Z   Building wheel for psycopg-c (pyproject.toml): finished with status 'done'
+2026-05-27T20:46:43.8266242Z   Created wheel for psycopg-c: filename=psycopg_c-3.3.4-cp311-cp311-linux_x86_64.whl size=3042316 sha256=64e4fccb2477ed8e9c88fd3999a6c4d79dc537db399fefd8e73ac12c43d19964
+2026-05-27T20:46:43.8267982Z   Stored in directory: /home/runner/.cache/pip/wheels/9a/df/d9/ca0407a16490733114f8b3ec3c481c27f500cd5bd0575716b2
+2026-05-27T20:46:43.8284131Z Successfully built django-referrer-policy google-cloud-profiler psycopg-c
+2026-05-27T20:46:44.0511297Z Installing collected packages: pytz, python-decouple, whitenoise, urllib3, uritemplate, Unidecode, typing_extensions, types-s3transfer, types-pyyaml, types-awscrt, sqlparse, six, ruff, rpds-py, redis, PyYAML, pytokens, python-ipware, pyparsing, PyJWT, pygments, pycparser, pyasn1, psycopg-c, protobuf, propcache, pluggy, platformdirs, phonenumbers, pathspec, packaging, oauthlib, mypy-extensions, multidict, markus, MarkupSafe, librt, jmespath, iniconfig, inflection, idna, frozenlist, dockerflow, diskcache, coverage, codetiming, click, charset_normalizer, certifi, backoff, babel, attrs, ast-serialize, asgiref, aiohappyeyeballs, yarl, types-requests, sentry-sdk, requests, referencing, python-dateutil, pytest, pyasn1-modules, psycopg, proto-plus, mypy-boto3-sqs, mypy-boto3-sns, mypy-boto3-ses, mypy-boto3-s3, mypy, jinja2, httplib2, gunicorn, googleapis-common-protos, fluent.syntax, django-ipware, Django, cffi, botocore-stubs, black, aiosignal, vobject, responses, requests-oauthlib, pytest-django, pytest-cov, model-bakery, kinto-http, jsonschema-specifications, fluent-compiler, drf-spectacular-sidecar, djangorestframework, django-waffle, django-stubs-ext, django-referrer-policy, django-redis, django-filter, django-debug-toolbar, django-csp, django-cors-headers, django-allauth, dj-database-url, datadog, cryptography, botocore, boto3-stubs, aiohttp, s3transfer, jwcrypto, jsonschema, google-auth, django-stubs, django-ftl, aiohttp-retry, twilio, google-auth-httplib2, google-api-core, glean_parser, drf-spectacular, djangorestframework-stubs, boto3, google-api-python-client, google-cloud-profiler
+2026-05-27T20:47:00.4720510Z 
+2026-05-27T20:47:00.4774472Z Successfully installed Django-5.2.14 MarkupSafe-3.0.3 PyJWT-2.12.1 PyYAML-6.0.3 Unidecode-1.4.0 aiohappyeyeballs-2.6.2 aiohttp-3.13.5 aiohttp-retry-2.9.1 aiosignal-1.4.0 asgiref-3.11.1 ast-serialize-0.5.0 attrs-26.1.0 babel-2.18.0 backoff-2.2.1 black-26.3.1 boto3-1.43.6 boto3-stubs-1.43.6 botocore-1.43.16 botocore-stubs-1.42.41 certifi-2026.5.20 cffi-2.0.0 charset_normalizer-3.4.7 click-8.4.1 codetiming-1.4.0 coverage-7.14.0 cryptography-48.0.0 datadog-0.52.1 diskcache-5.6.3 dj-database-url-3.1.2 django-allauth-65.16.1 django-cors-headers-4.9.0 django-csp-4.0 django-debug-toolbar-6.3.0 django-filter-25.2 django-ftl-0.14 django-ipware-7.0.1 django-redis-6.0.0 django-referrer-policy-1.0 django-stubs-6.0.4 django-stubs-ext-6.0.5 django-waffle-5.0.0 djangorestframework-3.17.1 djangorestframework-stubs-3.16.9 dockerflow-2026.3.4 drf-spectacular-0.29.0 drf-spectacular-sidecar-2026.5.1 fluent-compiler-1.1 fluent.syntax-0.19.0 frozenlist-1.8.0 glean_parser-19.1.0 google-api-core-2.30.3 google-api-python-client-2.196.0 google-auth-2.53.0 google-auth-httplib2-0.4.0 google-cloud-profiler-4.1.0 googleapis-common-protos-1.75.0 gunicorn-26.0.0 httplib2-0.31.2 idna-3.16 inflection-0.5.1 iniconfig-2.3.0 jinja2-3.1.6 jmespath-1.1.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 jwcrypto-1.5.7 kinto-http-11.9.0 librt-0.11.0 markus-5.2.0 model-bakery-1.23.4 multidict-6.7.1 mypy-2.1.0 mypy-boto3-s3-1.43.5 mypy-boto3-ses-1.43.0 mypy-boto3-sns-1.43.0 mypy-boto3-sqs-1.43.0 mypy-extensions-1.1.0 oauthlib-3.3.1 packaging-26.2 pathspec-1.1.1 phonenumbers-9.0.30 platformdirs-4.9.6 pluggy-1.6.0 propcache-0.5.2 proto-plus-1.28.0 protobuf-7.35.0 psycopg-3.3.4 psycopg-c-3.3.4 pyasn1-0.6.3 pyasn1-modules-0.4.2 pycparser-3.0 pygments-2.20.0 pyparsing-3.3.2 pytest-9.0.3 pytest-cov-7.1.0 pytest-django-4.12.0 python-dateutil-2.9.0.post0 python-decouple-3.8 python-ipware-3.0.0 pytokens-0.4.1 pytz-2026.2 redis-7.4.0 referencing-0.37.0 requests-2.34.0 requests-oauthlib-2.0.0 responses-0.26.0 rpds-py-0.30.0 ruff-0.15.12 s3transfer-0.17.1 sentry-sdk-2.59.0 six-1.17.0 sqlparse-0.5.5 twilio-9.10.9 types-awscrt-0.33.0 types-pyyaml-6.0.12.20260518 types-requests-2.33.0.20260508 types-s3transfer-0.16.0 typing_extensions-4.15.0 uritemplate-4.2.0 urllib3-2.7.0 vobject-0.9.9 whitenoise-6.12.0 yarl-1.24.2
+2026-05-27T20:47:01.0741537Z ##[group]Run dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98
+2026-05-27T20:47:01.0741948Z with:
+2026-05-27T20:47:01.0742529Z   github-token: ***
+2026-05-27T20:47:01.0742753Z   skip-commit-verification: false
+2026-05-27T20:47:01.0743002Z   skip-verification: false
+2026-05-27T20:47:01.0743213Z env:
+2026-05-27T20:47:01.0743439Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:47:01.0743845Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib/pkgconfig
+2026-05-27T20:47:01.0744243Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:47:01.0744801Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:47:01.0745176Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:47:01.0745530Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib
+2026-05-27T20:47:01.0745831Z ##[endgroup]
+2026-05-27T20:47:01.6664166Z Parsing Dependabot metadata
+2026-05-27T20:47:01.6743855Z ##[group]Outputting metadata for 1 updated dependency
+2026-05-27T20:47:01.6744710Z outputs.dependency-names: glean-parser
+2026-05-27T20:47:01.6745225Z outputs.dependency-type: direct:production
+2026-05-27T20:47:01.6745767Z outputs.update-type: version-update:semver-minor
+2026-05-27T20:47:01.6746293Z outputs.directory: /
+2026-05-27T20:47:01.6746743Z outputs.package-ecosystem: pip
+2026-05-27T20:47:01.6747223Z outputs.target-branch: main
+2026-05-27T20:47:01.6748125Z outputs.previous-version: 19.0.0
+2026-05-27T20:47:01.6749608Z outputs.new-version: 19.1.0
+2026-05-27T20:47:01.6750486Z outputs.compatibility-score: 0
+2026-05-27T20:47:01.6750990Z outputs.maintainer-changes: false
+2026-05-27T20:47:01.6751443Z outputs.dependency-group: 
+2026-05-27T20:47:01.6752110Z outputs.alert-state: 
+2026-05-27T20:47:01.6752458Z outputs.ghsa-id: 
+2026-05-27T20:47:01.6752779Z outputs.cvss: 0
+2026-05-27T20:47:01.6753333Z ##[endgroup]
+2026-05-27T20:47:01.7015550Z ##[group]Run .github/workflows/python/python_job.bash run build_glean
+2026-05-27T20:47:01.7016063Z [36;1m.github/workflows/python/python_job.bash run build_glean[0m
+2026-05-27T20:47:01.7049373Z shell: /usr/bin/bash -e {0}
+2026-05-27T20:47:01.7049598Z env:
+2026-05-27T20:47:01.7049843Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:47:01.7050245Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib/pkgconfig
+2026-05-27T20:47:01.7050652Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:47:01.7051002Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:47:01.7051351Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:47:01.7051709Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib
+2026-05-27T20:47:01.7052017Z ##[endgroup]
+2026-05-27T20:47:01.7129978Z + glean_parser translate --format python_server --output privaterelay/glean telemetry/glean/relay-server-metrics.yaml
+2026-05-27T20:47:02.1202877Z ✨ Your metrics are Glean! ✨
+2026-05-27T20:47:02.1864707Z + black privaterelay/glean
+2026-05-27T20:47:02.3499175Z Warning: Python 3.11 cannot parse code formatted for Python 3.14. To fix this: run Black with Python 3.14, set --target-version to py311, or use --fast to skip the safety check. Black's safety check verifies equivalence by parsing the AST, which fails when the running Python is older than the target version.
+2026-05-27T20:47:02.6878068Z reformatted /home/runner/work/fx-private-relay/fx-private-relay/privaterelay/glean/server_events.py
+2026-05-27T20:47:02.6932491Z 
+2026-05-27T20:47:02.6932946Z All done! ✨ 🍰 ✨
+2026-05-27T20:47:02.6933362Z 1 file reformatted, 1 file left unchanged.
+2026-05-27T20:47:02.7183484Z + ruff check --fix --ignore E501 privaterelay/glean
+2026-05-27T20:47:02.7303675Z Found 4 errors (4 fixed, 0 remaining).
+2026-05-27T20:47:02.7309239Z Using GNU sed
+2026-05-27T20:47:02.7310498Z + sed -i -e 's/^AUTOGENERATED BY glean_parser \(.* DO NOT EDIT.\) DO NOT COMMIT.$/AUTOGENERATED BY glean_parser \1 To recreate, run:\n\nbash .github\/workflows\/python_job.bash run build_glean/' privaterelay/glean/server_events.py
+2026-05-27T20:47:02.7362290Z ##[group]Run git config user.email "<>"
+2026-05-27T20:47:02.7362629Z [36;1mgit config user.email "<>"[0m
+2026-05-27T20:47:02.7362980Z [36;1mgit config user.name "GitHub Actions - Run new glean-parser"[0m
+2026-05-27T20:47:02.7363403Z [36;1mgit add privaterelay/glean/server_events.py[0m
+2026-05-27T20:47:02.7363707Z [36;1mhas_changes=1[0m
+2026-05-27T20:47:02.7364118Z [36;1mgit commit --message="Re-generate code with glean-parser $GLEAN_VERSION" || has_changes=0[0m
+2026-05-27T20:47:02.7365259Z [36;1mif (( has_changes == 0 ))[0m
+2026-05-27T20:47:02.7365497Z [36;1mthen[0m
+2026-05-27T20:47:02.7365701Z [36;1m  echo "no changes to push"[0m
+2026-05-27T20:47:02.7365956Z [36;1m  exit 0[0m
+2026-05-27T20:47:02.7366134Z [36;1mfi[0m
+2026-05-27T20:47:02.7366309Z [36;1mgit push[0m
+2026-05-27T20:47:02.7399591Z shell: /usr/bin/bash -e {0}
+2026-05-27T20:47:02.7399832Z env:
+2026-05-27T20:47:02.7400094Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:47:02.7400565Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib/pkgconfig
+2026-05-27T20:47:02.7400985Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:47:02.7401364Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:47:02.7401749Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-05-27T20:47:02.7402125Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib
+2026-05-27T20:47:02.7402450Z   GLEAN_VERSION: 19.1.0
+2026-05-27T20:47:02.7402895Z   GITHUB_TOKEN: ***
+2026-05-27T20:47:02.7403104Z ##[endgroup]
+2026-05-27T20:47:02.7603425Z [dependabot/pip/glean-parser-19.1.0 4c9cc39dd] Re-generate code with glean-parser 19.1.0
+2026-05-27T20:47:02.7604772Z  1 file changed, 2 insertions(+), 2 deletions(-)
+2026-05-27T20:47:02.9850129Z fatal: could not read Username for 'https://github.com': No such device or address
+2026-05-27T20:47:02.9879869Z ##[error]Process completed with exit code 128.
+2026-05-27T20:47:02.9978242Z Post job cleanup.
+2026-05-27T20:47:03.0833156Z [command]/usr/bin/git version
+2026-05-27T20:47:03.0869105Z git version 2.54.0
+2026-05-27T20:47:03.0908495Z Temporarily overriding HOME='/home/runner/work/_temp/ee135acb-53d5-4af6-9389-37821ed56adc' before making global git config changes
+2026-05-27T20:47:03.0909422Z Adding repository directory to the temporary git global config as a safe directory
+2026-05-27T20:47:03.0914120Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/fx-private-relay/fx-private-relay
+2026-05-27T20:47:03.0945303Z Removing SSH command configuration
+2026-05-27T20:47:03.0951959Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-05-27T20:47:03.0986133Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-05-27T20:47:03.1194970Z Entering 'privaterelay/locales'
+2026-05-27T20:47:03.1280286Z Removing HTTP extra header
+2026-05-27T20:47:03.1284706Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-05-27T20:47:03.1316999Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-05-27T20:47:03.1526859Z Entering 'privaterelay/locales'
+2026-05-27T20:47:03.1576951Z Removing includeIf entries pointing to credentials config files
+2026-05-27T20:47:03.1583403Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-27T20:47:03.1614812Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-05-27T20:47:03.1825646Z Entering 'privaterelay/locales'
+2026-05-27T20:47:03.1845421Z file:/home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales/config	remote.origin.url
+2026-05-27T20:47:03.1879422Z [command]/usr/bin/git config --file /home/runner/work/fx-private-relay/fx-private-relay/.git/modules/privaterelay/locales/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-27T20:47:03.2045746Z Cleaning up orphan processes
