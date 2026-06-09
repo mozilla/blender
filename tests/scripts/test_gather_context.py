@@ -7,7 +7,12 @@ from unittest.mock import patch
 
 import pytest
 
-from scripts.gather_context import build_prompt, fetch_ci_logs, parse_job_log
+from scripts.gather_context import (
+    build_prompt,
+    fetch_ci_logs,
+    filter_lock_file_diff,
+    parse_job_log,
+)
 from scripts.sanitize import sanitize_for_prompt
 
 FIXTURES = Path(__file__).resolve().parent.parent / "fixtures"
@@ -265,3 +270,86 @@ def test_fetch_ci_logs_circleci_warning(mock_gh_api):
     assert has_circleci
     assert "CircleCI" in logs
     assert "cannot fetch" in logs
+
+
+# -- filter_lock_file_diff tests ----------------------------------------------
+
+DIFF_WITH_LOCK_FILES = """\
+diff --git a/src/index.ts b/src/index.ts
+index abc1234..def5678 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,3 +1,4 @@
+ import foo from 'foo';
++import bar from 'bar';
+ console.log(foo);
+diff --git a/package-lock.json b/package-lock.json
+index 1111111..2222222 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,5000 +1,6000 @@
+ { "lots": "of json" }
+diff --git a/yarn.lock b/yarn.lock
+index 3333333..4444444 100644
+--- a/yarn.lock
++++ b/yarn.lock
+@@ -1,100 +1,200 @@
+ dependency tree here
+diff --git a/tsconfig.json b/tsconfig.json
+index 5555555..6666666 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -1,3 +1,4 @@
+ { "strict": true }
+"""
+
+
+def test_filter_lock_file_diff_removes_lock_files():
+    result = filter_lock_file_diff(DIFF_WITH_LOCK_FILES)
+    assert "package-lock.json" not in result
+    assert "yarn.lock" not in result
+
+
+def test_filter_lock_file_diff_preserves_other_files():
+    result = filter_lock_file_diff(DIFF_WITH_LOCK_FILES)
+    assert "src/index.ts" in result
+    assert "tsconfig.json" in result
+    assert "import bar from 'bar'" in result
+
+
+def test_filter_lock_file_diff_inserts_placeholder():
+    result = filter_lock_file_diff(DIFF_WITH_LOCK_FILES)
+    assert "[lock file changes omitted]" in result
+
+
+def test_filter_lock_file_diff_no_lock_files():
+    diff = """\
+diff --git a/src/index.ts b/src/index.ts
+index abc1234..def5678 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -1,3 +1,4 @@
+ import foo from 'foo';
+"""
+    result = filter_lock_file_diff(diff)
+    assert "[lock file changes omitted]" not in result
+    assert "src/index.ts" in result
+
+
+def test_filter_lock_file_diff_nested_lock_file():
+    """Lock files in subdirectories should also be filtered."""
+    diff = """\
+diff --git a/frontend/package-lock.json b/frontend/package-lock.json
+index 1111111..2222222 100644
+--- a/frontend/package-lock.json
++++ b/frontend/package-lock.json
+@@ -1,100 +1,200 @@
+ lots of json
+"""
+    result = filter_lock_file_diff(diff)
+    assert "package-lock.json" not in result
+    assert "[lock file changes omitted]" in result
+
+
+def test_filter_lock_file_diff_empty_input():
+    assert filter_lock_file_diff("") == ""

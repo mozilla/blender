@@ -36,6 +36,54 @@ except ImportError:
     from sanitize import sanitize_for_prompt  # type: ignore[no-redef]
 
 
+# -- Lock file filtering ------------------------------------------------------
+
+LOCK_FILES = {
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "Pipfile.lock",
+    "poetry.lock",
+    "uv.lock",
+    "Gemfile.lock",
+    "composer.lock",
+    "Cargo.lock",
+    "go.sum",
+}
+
+
+def filter_lock_file_diff(diff: str) -> str:
+    """Remove lock file hunks from a unified diff.
+
+    Splits on ``diff --git`` boundaries, drops sections whose path
+    matches a known lock file, and inserts a placeholder.
+    """
+    if not diff:
+        return diff
+
+    # Split on file boundaries, keeping the delimiter
+    parts = re.split(r"(?=^diff --git )", diff, flags=re.MULTILINE)
+
+    filtered: list[str] = []
+    omitted = False
+    for part in parts:
+        if not part.strip():
+            continue
+        # Extract the b/ path from "diff --git a/... b/..."
+        m = re.match(r"diff --git a/.+ b/(.+)", part)
+        if m:
+            filename = m.group(1).split("/")[-1]
+            if filename in LOCK_FILES:
+                omitted = True
+                continue
+        filtered.append(part)
+
+    result = "".join(filtered)
+    if omitted:
+        result += "\n[lock file changes omitted]\n"
+    return result
+
+
 # -- GitHub API helpers -------------------------------------------------------
 
 MAX_LINES_PER_STEP = 200
@@ -341,6 +389,7 @@ def main() -> None:
     # Fetch PR diff
     print("Fetching PR diff...")
     pr_diff = fetch_pr_diff(repo, pr_number)
+    pr_diff_filtered = filter_lock_file_diff(pr_diff)
 
     # Fetch release notes
     print("Fetching release notes...")
@@ -379,7 +428,7 @@ def main() -> None:
     safe_title = sanitize_for_prompt(pr["title"])
     safe_checks = sanitize_for_prompt(failing_checks)
     safe_logs = sanitize_for_prompt(ci_logs)
-    safe_diff = sanitize_for_prompt(pr_diff)
+    safe_diff = sanitize_for_prompt(pr_diff_filtered)
     safe_body = sanitize_for_prompt(pr["body"])
     safe_notes = sanitize_for_prompt(release_notes)
     safe_ci = sanitize_for_prompt(ci_status)
