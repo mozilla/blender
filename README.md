@@ -30,7 +30,7 @@ For patch and minor updates, BLEnder checks:
 3. The version change is small (patch or minor)
 1. The update was created by Dependabot
 2. All tests pass
-4. The library's compatibility score is 80% or higher
+4. The library's compatibility score is 70% or higher
 5. No security advisories affect the new version
 
 All five must pass. If any check fails, the update waits or gets routed elsewhere.
@@ -79,8 +79,10 @@ Go to **BLEnder Setup** in the Actions tab and run the workflow for your project
 
 The pull request adds a `.blender/` directory with two files:
 
-- **`blender.yml`** — project metadata (name, language versions, install commands)
-- **`fix-dependabot-prompt.md`** — instructions BLEnder uses when fixing broken updates, tailored to your project's test commands, linters, and patterns
+- **`blender.yml`** — project metadata (name, language versions, install command)
+- **`agents.md`** — agent instructions BLEnder uses when fixing broken updates: install steps, exact CI and test commands, linters, and other repo knowledge
+
+If your repo has no existing agent instructions file, the PR also symlinks `CLAUDE.md`, `AGENTS.md`, and `.github/copilot-instructions.md` to `agents.md`.
 
 Review that the configuration looks right and merge it. BLEnder starts working on the next sweep.
 
@@ -108,9 +110,9 @@ Available fields:
 
 Omit fields that don't apply.
 
-### Prompt template (`.blender/fix-dependabot-prompt.md`)
+### Agent instructions (`.blender/agents.md`)
 
-A prompt with placeholders (`{{PR_TITLE}}`, `{{FAILING_CHECKS}}`, `{{CI_LOGS}}`) that BLEnder fills in at runtime. Lists the project's test commands, linters, and common fix patterns.
+Onboarding generates this file. It holds the repo knowledge BLEnder needs to fix a broken update: install steps, the exact CI and test commands, linters, and language versions. When the repo already has an agent instructions file (like `CLAUDE.md`), BLEnder writes only the delta — what those files don't already cover.
 
 ### Default settings
 
@@ -120,7 +122,7 @@ BLEnder ships with defaults in [`config/defaults.yml`](config/defaults.yml):
 automerge:
   allow_major: false
   review_major: true
-  min_compatibility_score: 80
+  min_compatibility_score: 70
   check_advisories: true
 
 fix:
@@ -135,7 +137,7 @@ Override any of these in your project's `.blender/blender.yml`.
 
 ## Manual triggers
 
-All workflows support manual runs from the Actions tab with a dry-run option to preview before committing.
+All workflows run manually from the Actions tab. The sweep, fix, auto-merge, and review workflows take a dry-run option to preview before committing.
 
 | Workflow | What it does |
 |----------|-------------|
@@ -143,9 +145,9 @@ All workflows support manual runs from the Actions tab with a dry-run option to 
 | **Fix Dependabot PR** | Fix a specific failing update |
 | **Auto-merge Dependabot PRs** | Merge safe updates for a project |
 | **Review Major Update** | Evaluate a major version bump |
-| **Setup** | Onboard a new project |
+| **Update BLEnder Config** | Onboard a new project |
 
-Set dry run to `true` to preview what BLEnder would do without making changes.
+Set dry run to `true` to preview what BLEnder would do without making changes. Update BLEnder Config has no dry-run — it opens a pull request you review before merging.
 
 ---
 
