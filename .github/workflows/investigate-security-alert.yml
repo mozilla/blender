@@ -267,7 +267,7 @@ jobs:
           GH_TOKEN: ${{ steps.setup.outputs.token }}
           FORK_REPO: ${{ steps.post-action.outputs.fork_repo }}
 
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f  # v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
         if: steps.post-action.outputs.action == 'private_fork' && steps.setup.outputs.node_version != ''
         with:
           node-version: ${{ steps.setup.outputs.node_version }}
