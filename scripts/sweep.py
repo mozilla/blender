@@ -45,7 +45,10 @@ BOT_LOGIN = "mozilla-blender[bot]"
 
 # Only process repos owned by these GitHub orgs/users.
 # Any installation from an owner not on this list is ignored.
-ALLOWED_OWNERS = frozenset({"mozilla", "mozilla-services", "mozilla-extensions"})
+# petemoore is a personal staging fork used to validate taskcluster onboarding.
+ALLOWED_OWNERS = frozenset(
+    {"mozilla", "mozilla-services", "mozilla-extensions", "taskcluster", "petemoore"}
+)
 
 # Used to skip alerts that already have an investigated tag.
 BLENDER_REPO = "mozilla/blender"
