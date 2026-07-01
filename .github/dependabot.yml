@@ -5,6 +5,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
 
   # Python deps — pyproject.toml and the mirrored scripts/requirements.txt
   - package-ecosystem: "pip"
@@ -13,9 +15,13 @@ updates:
       - "/scripts"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
 
   # Pinned action SHAs in the workflows
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
