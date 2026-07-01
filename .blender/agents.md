@@ -1,4 +1,5 @@
 <!-- blender:start — auto-generated, do not hand-edit -->
+<!-- blender:start — auto-generated, do not hand-edit -->
 # BLEnder — Agent Instructions (Delta)
 
 Project-level guidance lives in `CLAUDE.md`. This file adds info BLEnder
@@ -51,4 +52,5 @@ do not require regenerating any artifacts.
 - `pyproject.toml` — runtime + dev/test deps.
 - `scripts/requirements.txt` — mirrors runtime pins from `pyproject.toml`; keep them in sync when bumping.
 - `.github/workflows/*.yml` — pinned action SHAs and pinned tool versions (e.g. `actionlint@v1.7.12`).
+<!-- blender:end -->
 <!-- blender:end -->
