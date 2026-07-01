@@ -419,6 +419,33 @@ class TestAlertDiscovery:
         assert actions[0].alert_number == 42
         assert actions[0].alert_package == "lodash"
 
+    def test_investigate_disabled_skips_alerts(self):
+        """investigate.enabled=false -> no alerts fetched or emitted."""
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+
+        actions = check_alerts(repo, config={"investigate": {"enabled": False}})
+        assert actions == []
+        repo._requester.requestJsonAndCheck.assert_not_called()
+
+    def test_severity_threshold_filters_low_alerts(self):
+        """Alerts below severity_threshold are dropped; others kept."""
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        repo._requester.requestJsonAndCheck.return_value = (
+            {},
+            [
+                _make_alert(1, "low-pkg", severity="low"),
+                _make_alert(2, "high-pkg", severity="high"),
+            ],
+        )
+        repo.get_branches.return_value = []
+
+        actions = check_alerts(
+            repo, config={"investigate": {"severity_threshold": "high"}}
+        )
+        assert [a.alert_package for a in actions] == ["high-pkg"]
+
     def test_alert_with_existing_branch_skipped(self):
         """Alert with blender/security/{number}-* branch -> skip."""
         repo = MagicMock()

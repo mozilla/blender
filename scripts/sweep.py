@@ -52,6 +52,10 @@ BLENDER_REPO = "mozilla/blender"
 INVESTIGATED_TAG_PREFIX = "investigated/"
 _INVESTIGATED_TAG_RE = re.compile(r"^investigated/(.+)/(\d+)$")
 
+# Dependabot alert severities, ranked low to high. Used to skip alerts
+# below a repo's configured investigate.severity_threshold.
+SEVERITY_RANK = {"low": 1, "medium": 2, "high": 3, "critical": 4}
+
 
 AUTO_ENGINEER_LABEL = "blender:auto-engineer"
 AUTO_ENGINEER_BRANCH_PREFIX = "blender/auto-engineer/"
@@ -510,7 +514,9 @@ def process_repo(
 
     # Check Dependabot security alerts
     try:
-        alert_actions = check_alerts(repo, investigated=investigated)
+        alert_actions = check_alerts(
+            repo, investigated=investigated, config=repo_config
+        )
         actions.extend(alert_actions)
     except Exception as e:
         print(f"    Error checking alerts: {e}")
@@ -563,13 +569,24 @@ def fetch_investigated_alerts(
 def check_alerts(
     repo: Repository,
     investigated: set[tuple[str, int]] | None = None,
+    config: dict | None = None,
 ) -> list[Action]:
     """Check for open Dependabot security alerts and emit investigate actions.
 
     Uses PyGithub's raw requester because there is no built-in method
     for the Dependabot alerts API.
+
+    Honors the repo's ``investigate`` config: skips entirely when
+    ``enabled`` is false, and drops alerts below ``severity_threshold``.
     """
     actions: list[Action] = []
+
+    inv_config = (config or {}).get("investigate", {})
+    if not inv_config.get("enabled", True):
+        print("    Investigate disabled for this repo, skipping alerts")
+        return actions
+    threshold = str(inv_config.get("severity_threshold", "") or "").lower()
+    min_rank = SEVERITY_RANK.get(threshold, 0)
 
     url = f"/repos/{repo.full_name}/dependabot/alerts"
     try:
@@ -605,6 +622,14 @@ def check_alerts(
         severity = advisory.get("severity", "unknown")
         patched = vuln.get("first_patched_version", {})
         patched_version = patched.get("identifier", "") if patched else ""
+
+        # Skip alerts below the configured severity threshold
+        if min_rank and SEVERITY_RANK.get(severity.lower(), 0) < min_rank:
+            print(
+                f"    Alert #{alert_number}: {severity} below "
+                f"threshold {threshold}, skipping"
+            )
+            continue
 
         # Skip if a blender/security branch already exists for this alert
         branch_prefix = f"blender/security/{alert_number}-"
