@@ -57,7 +57,7 @@ All fields are optional. Omit them to use defaults.
 
 ```yaml
 automerge:
-  min_compatibility_score: 90  # default: 80
+  min_compatibility_score: 90  # default: 70
   allow_major: false           # default: false
   check_advisories: true       # default: true
 fix:

@@ -1,0 +1,27 @@
+version: 2
+updates:
+  # Node tooling — the pinned Claude Code CLI in package.json
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+
+  # Python deps — pyproject.toml and the mirrored scripts/requirements.txt
+  - package-ecosystem: "pip"
+    directories:
+      - "/"
+      - "/scripts"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+
+  # Pinned action SHAs in the workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7

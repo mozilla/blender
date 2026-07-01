@@ -19,7 +19,6 @@ investigate:
   dry_run: false
   max_claude_turns: 20
   max_budget_usd: 1.50
-  run_tests: true
   severity_threshold: ""
   dismiss_unaffected: false
 

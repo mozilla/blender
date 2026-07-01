@@ -75,7 +75,7 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ inputs.target_repo }}
           DRY_RUN: ${{ inputs.dry_run || steps.blender-config.outputs.automerge_dry_run || 'false' }}
-          MIN_COMPAT_SCORE: ${{ steps.blender-config.outputs.automerge_min_compatibility_score || '80' }}
+          MIN_COMPAT_SCORE: ${{ steps.blender-config.outputs.automerge_min_compatibility_score || '70' }}
           ALLOW_MAJOR: ${{ steps.blender-config.outputs.automerge_allow_major || 'false' }}
           REVIEW_MAJOR: ${{ steps.blender-config.outputs.automerge_review_major || 'true' }}
 

@@ -167,4 +167,6 @@ runs:
     - name: Install Claude Code
       if: inputs.install-claude == 'true'
       shell: bash
-      run: npm install -g @anthropic-ai/claude-code@stable
+      run: |
+        npm ci
+        echo "$GITHUB_WORKSPACE/node_modules/.bin" >> "$GITHUB_PATH"

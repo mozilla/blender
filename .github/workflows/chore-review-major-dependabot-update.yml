@@ -162,7 +162,9 @@ jobs:
         run: sudo apt-get install -y bubblewrap socat
 
       - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code@stable
+        run: |
+          npm ci
+          echo "$GITHUB_WORKSPACE/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Gather PR context
         working-directory: target
