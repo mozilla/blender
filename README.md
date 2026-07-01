@@ -57,6 +57,19 @@ When BLEnder sees an update the breaks the repos checks, BLEnder:
 
 The AI cannot access the internet, call any APIs, or see any credentials. Its output is validated before anything is committed.
 
+### Security alert investigation
+
+The sweep also picks up open [Dependabot security alerts](https://docs.github.com/en/code-security/dependabot/dependabot-alerts/about-dependabot-alerts). For each one, BLEnder reads the codebase in a sandbox to judge whether the vulnerability actually reaches your project, then acts on the verdict:
+
+- **Unaffected** — dismisses the alert (when `dismiss_unaffected` is on) or opens a lock-file bump PR for a clean transitive fix.
+- **Affected** — opens a private security advisory and a fork where it drafts a fix.
+
+You can tune this with the `investigate` config: turn it off per repo, set a minimum `severity_threshold`, or cap Claude's turns and budget.
+
+### Auto-engineer (experimental)
+
+BLEnder can also take on issue-driven code changes: label an issue, and it plans, implements, and self-reviews the work across separate steps. This is **off by default** and broader than the Dependabot flow. Enable it per repo under the `auto_engineer` config.
+
 ---
 
 ## Dashboard
@@ -120,6 +133,7 @@ BLEnder ships with defaults in [`config/defaults.yml`](config/defaults.yml):
 
 ```yaml
 automerge:
+  dry_run: false
   allow_major: false
   review_major: true
   min_compatibility_score: 70
@@ -129,6 +143,28 @@ fix:
   dry_run: false
   max_claude_turns: 30
   max_budget_usd: 2.00
+  max_fix_attempts: 3
+
+investigate:
+  enabled: true
+  dry_run: false
+  max_claude_turns: 20
+  max_budget_usd: 1.50
+  severity_threshold: ""      # "", "low", "medium", "high", or "critical"
+  dismiss_unaffected: false
+
+auto_engineer:                # experimental, off by default
+  enabled: false
+  dry_run: true
+  issue_label: "auto-engineer"
+  trusted_author_associations: "OWNER"
+  forbidden_paths: ".github/ .env .circleci/"
+  max_plan_turns: 20
+  max_plan_budget_usd: 1.50
+  max_implement_turns: 40
+  max_implement_budget_usd: 4.00
+  max_self_review_turns: 15
+  max_self_review_budget_usd: 1.00
 ```
 
 Override any of these in your project's `.blender/blender.yml`.
@@ -137,7 +173,7 @@ Override any of these in your project's `.blender/blender.yml`.
 
 ## Manual triggers
 
-All workflows run manually from the Actions tab. The sweep, fix, auto-merge, and review workflows take a dry-run option to preview before committing.
+All workflows run manually from the Actions tab. Every one except Update BLEnder Config takes a dry-run option to preview before committing.
 
 | Workflow | What it does |
 |----------|-------------|
@@ -145,6 +181,8 @@ All workflows run manually from the Actions tab. The sweep, fix, auto-merge, and
 | **Fix Dependabot PR** | Fix a specific failing update |
 | **Auto-merge Dependabot PRs** | Merge safe updates for a project |
 | **Review Major Update** | Evaluate a major version bump |
+| **Investigate Security Alert** | Assess whether an alert affects a project |
+| **Auto-Engineer** | Plan and implement an issue-labeled change |
 | **Update BLEnder Config** | Onboard a new project |
 
 Set dry run to `true` to preview what BLEnder would do without making changes. Update BLEnder Config has no dry-run — it opens a pull request you review before merging.
