@@ -591,6 +591,8 @@ class TestOwnerAllowlist:
     def test_allowed_owner_is_processed(self):
         """Repo under an allowed owner -> process it."""
         assert "mozilla" in ALLOWED_OWNERS
+        assert "taskcluster" in ALLOWED_OWNERS
+        assert "petemoore" in ALLOWED_OWNERS
 
     def test_disallowed_owner_is_skipped(self):
         """Repo under an unknown owner -> skipped, no process_repo call."""
