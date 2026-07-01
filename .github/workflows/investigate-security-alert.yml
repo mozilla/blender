@@ -287,7 +287,9 @@ jobs:
 
       - name: Install Claude Code
         if: steps.post-action.outputs.action == 'private_fork'
-        run: npm install -g @anthropic-ai/claude-code@stable
+        run: |
+          npm ci
+          echo "$GITHUB_WORKSPACE/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Copy verdict to fork
         if: steps.post-action.outputs.action == 'private_fork'
