@@ -49,8 +49,12 @@ jobs:
         with:
           python-version: '3.11'
 
+      - uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04  # v6
+
       - name: Install Python dependencies
-        run: pip install -r scripts/requirements.txt
+        run: |
+          uv sync
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Fetch repo config
         id: fetch-config

@@ -8,11 +8,9 @@ updates:
     cooldown:
       default-days: 7
 
-  # Python deps — pyproject.toml and the mirrored scripts/requirements.txt
-  - package-ecosystem: "pip"
-    directories:
-      - "/"
-      - "/scripts"
+  # Python deps — pyproject.toml and uv.lock
+  - package-ecosystem: "uv"
+    directory: "/"
     schedule:
       interval: "weekly"
     cooldown:
