@@ -29,7 +29,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04  # v6
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v6
 
       - name: Install Python dependencies
         run: |
