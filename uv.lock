@@ -24,7 +24,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "node-semver", specifier = "==0.9.0" },
+    { name = "node-semver", specifier = "==0.9.1" },
     { name = "packaging", specifier = "==26.2" },
     { name = "pygithub", specifier = "==2.9.1" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=9.1.1" },
@@ -391,11 +391,11 @@ wheels = [
 
 [[package]]
 name = "node-semver"
-version = "0.9.0"
+version = "0.9.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/eb/c5/e823658f716b17ab1c52d68ed13a0e09c0130af052401a26b5738e4290cc/node-semver-0.9.0.tar.gz", hash = "sha256:04aa0b0016dbc06748d6378c42d8cf82a343415bd9fca6284f488041d08b33bb", size = 12632, upload-time = "2023-02-23T14:28:56.834Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/80/46/83d4ff2e6ee95a2395c9695f92b83c7aec16a8341cf4b50be08d67f59deb/node_semver-0.9.1.tar.gz", hash = "sha256:f052dbdcbc42dd5a0c04b22829a3af98c1f29e4675cc6d88db24250a3f7f8ec7", size = 12828, upload-time = "2026-06-23T03:06:50.862Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1a/4b/180481021692a76dc91f46fa6a49cdef4c3e630c77a83b7fda3f4eb7aa04/node_semver-0.9.0-py3-none-any.whl", hash = "sha256:8153270903772b1e59500ced6f0aca0f7bdb021651c27584e9283b7077b4916b", size = 12165, upload-time = "2023-02-23T14:28:55.129Z" },
+    { url = "https://files.pythonhosted.org/packages/05/82/aee31be77e4539deb4b1305f2b42ed5f92a2ff7b8057ada67a0c3ba12187/node_semver-0.9.1-py3-none-any.whl", hash = "sha256:47669dc0f7e104cc482f69fda53c04fbe34ce9b7c9d6990e43c99a028d1628bd", size = 12051, upload-time = "2026-06-23T03:06:49.633Z" },
 ]
 
 [[package]]
