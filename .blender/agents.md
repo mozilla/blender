@@ -44,11 +44,12 @@ a failure:
 
 ## No code generation
 No Glean, protobuf, GraphQL, or OpenAPI generators in this repo. Dependabot
-PRs that touch Python deps in `pyproject.toml` / `scripts/requirements.txt`
+PRs that touch Python deps in `pyproject.toml` / `uv.lock`
 do not require regenerating any artifacts.
 
 ## Dependency files Dependabot touches
 - `pyproject.toml` — runtime + dev/test deps.
-- `scripts/requirements.txt` — mirrors runtime pins from `pyproject.toml`; keep them in sync when bumping.
+- `uv.lock` — the resolved lockfile; `uv sync` installs from it. Regenerate with `uv lock` after editing `pyproject.toml`.
+- `package.json` / `package-lock.json` — the pinned Claude Code CLI.
 - `.github/workflows/*.yml` — pinned action SHAs and pinned tool versions (e.g. `actionlint@v1.7.12`).
 <!-- blender:end -->
