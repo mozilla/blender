@@ -99,9 +99,18 @@ else
   RUN_LINK="BLEnder investigation"
 fi
 
+# On a public repo, linking the Dependabot alert discloses the package,
+# CVE, and severity. Keep the detail only for private/internal repos.
+VISIBILITY=$(gh api "repos/${REPO}" --jq '.visibility')
+if [ "$VISIBILITY" = "public" ]; then
+  ALERT_LINE="Resolves a flagged transitive dependency advisory."
+else
+  ALERT_LINE="Bumps **${PACKAGE}** to \`${PATCHED_VERSION:-latest}\` to resolve [Dependabot alert #${ALERT_NUMBER}](https://github.com/${REPO}/security/dependabot/${ALERT_NUMBER})."
+fi
+
 PR_BODY="## Summary
 
-Bumps **${PACKAGE}** to \`${PATCHED_VERSION:-latest}\` to resolve [Dependabot alert #${ALERT_NUMBER}](https://github.com/${REPO}/security/dependabot/${ALERT_NUMBER}).
+${ALERT_LINE}
 
 This is a transitive dependency update via \`${PIP_LOCK_TOOL}\`. Only lock files changed.
 
