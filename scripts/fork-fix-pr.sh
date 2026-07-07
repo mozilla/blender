@@ -17,30 +17,24 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/pr-lib.sh
+source "${SCRIPT_DIR}/pr-lib.sh"
 
-if [ -z "${GH_TOKEN:-}" ] || [ -z "${REPO:-}" ]; then
-  echo "Error: GH_TOKEN and REPO are required."
-  exit 1
-fi
+require_token_repo
 
 if [ -z "${ALERT_NUMBER:-}" ] || [ -z "${ALERT_PACKAGE:-}" ]; then
   echo "Error: ALERT_NUMBER and ALERT_PACKAGE are required."
   exit 1
 fi
 
-if git diff --quiet && git diff --cached --quiet; then
+if no_changes; then
   echo "No changes to commit. Nothing to do."
   echo "pushed=false" >> "${GITHUB_OUTPUT:-/dev/null}"
   exit 0
 fi
 
 # Read commit message from Claude, fall back to default
-if [ -f .blender-commit-msg ]; then
-  COMMIT_MSG=$(cat .blender-commit-msg)
-  rm .blender-commit-msg
-else
-  COMMIT_MSG="BLEnder fix: security update for ${ALERT_PACKAGE}"
-fi
+COMMIT_MSG=$(read_commit_msg "BLEnder fix: security update for ${ALERT_PACKAGE}")
 
 BRANCH_NAME="blender/fix-alert-${ALERT_NUMBER}"
 
@@ -52,25 +46,16 @@ CHANGED_FILES=()
 while IFS= read -r file; do
   [ -z "$file" ] && continue
   CHANGED_FILES+=("$file")
-done < <(git diff --name-only)
+done < <(list_changed_files)
 
 COMMIT_SHA=$("${SCRIPT_DIR}/git-commit-api.sh" "$COMMIT_MSG" "$PARENT" "${CHANGED_FILES[@]}")
 
-# Create branch ref, updating it if it already exists
-gh api "repos/${REPO}/git/refs" \
-  --method POST \
-  --field "ref=refs/heads/${BRANCH_NAME}" \
-  --field "sha=${COMMIT_SHA}" || {
-    echo "Branch ${BRANCH_NAME} already exists. Updating."
-    gh api "repos/${REPO}/git/refs/heads/${BRANCH_NAME}" \
-      --method PATCH \
-      --field "sha=${COMMIT_SHA}"
-  }
+create_or_update_branch "$REPO" "$BRANCH_NAME" "$COMMIT_SHA"
 
 echo "Created branch ${BRANCH_NAME} with commit ${COMMIT_SHA}"
 
 # Skip PR creation if one is already open for this branch
-EXISTING_PR=$(gh pr list --repo "$REPO" --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')
+EXISTING_PR=$(existing_open_pr "$REPO" "$BRANCH_NAME")
 if [ -n "$EXISTING_PR" ]; then
   echo "PR #${EXISTING_PR} already open for ${BRANCH_NAME}. Skipping."
   echo "pushed=true" >> "${GITHUB_OUTPUT:-/dev/null}"
@@ -78,14 +63,7 @@ if [ -n "$EXISTING_PR" ]; then
 fi
 
 # Build PR body. The fork is private, so include the verdict context.
-SERVER_URL="${GITHUB_SERVER_URL:-https://github.com}"
-REPOSITORY="${GITHUB_REPOSITORY:-mozilla/blender}"
-RUN_ID="${GITHUB_RUN_ID:-}"
-if [ -n "$RUN_ID" ]; then
-  RUN_LINK="[BLEnder investigation](${SERVER_URL}/${REPOSITORY}/actions/runs/${RUN_ID})"
-else
-  RUN_LINK="BLEnder investigation"
-fi
+RUN_LINK=$(run_link)
 
 VERDICT_SECTION=""
 if [ -f .blender-alert-verdict.json ]; then

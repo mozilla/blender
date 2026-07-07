@@ -15,11 +15,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/pr-lib.sh
+source "${SCRIPT_DIR}/pr-lib.sh"
 
-if [ -z "${GH_TOKEN:-}" ] || [ -z "${REPO:-}" ]; then
-  echo "Error: GH_TOKEN and REPO are required."
-  exit 1
-fi
+require_token_repo
 
 if [ -z "${PACKAGE:-}" ] || [ -z "${ALERT_NUMBER:-}" ]; then
   echo "Error: PACKAGE and ALERT_NUMBER are required."
@@ -35,7 +34,7 @@ fi
 BRANCH_NAME="blender/security-bump-${PACKAGE}"
 
 # Check for existing open PR on this branch — exit before any API calls
-EXISTING_PR=$(gh pr list --repo "$REPO" --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')
+EXISTING_PR=$(existing_open_pr "$REPO" "$BRANCH_NAME")
 if [ -n "$EXISTING_PR" ]; then
   echo "PR #${EXISTING_PR} already open for ${BRANCH_NAME}. Skipping."
   exit 0
@@ -60,36 +59,13 @@ done
 COMMIT_SHA=$("${SCRIPT_DIR}/git-commit-api.sh" "$COMMIT_MSG" "$PARENT" "${CHANGED_FILES[@]}")
 
 # Create branch ref
-gh api "repos/${REPO}/git/refs" \
-  --method POST \
-  --field "ref=refs/heads/${BRANCH_NAME}" \
-  --field "sha=${COMMIT_SHA}" || {
-    echo "Branch ${BRANCH_NAME} already exists. Updating."
-    gh api "repos/${REPO}/git/refs/heads/${BRANCH_NAME}" \
-      --method PATCH \
-      --field "sha=${COMMIT_SHA}"
-  }
+create_or_update_branch "$REPO" "$BRANCH_NAME" "$COMMIT_SHA"
 
 echo "Created branch ${BRANCH_NAME} with commit ${COMMIT_SHA}"
 
 # Build PR body
-SERVER_URL="${GITHUB_SERVER_URL:-https://github.com}"
-REPOSITORY="${GITHUB_REPOSITORY:-mozilla/blender}"
-RUN_ID="${GITHUB_RUN_ID:-}"
-if [ -n "$RUN_ID" ]; then
-  RUN_LINK="[BLEnder investigation](${SERVER_URL}/${REPOSITORY}/actions/runs/${RUN_ID})"
-else
-  RUN_LINK="BLEnder investigation"
-fi
-
-# On a public repo, linking the Dependabot alert discloses the package,
-# CVE, and severity. Keep the detail only for private/internal repos.
-VISIBILITY=$(gh api "repos/${REPO}" --jq '.visibility')
-if [ "$VISIBILITY" = "public" ]; then
-  ALERT_LINE="Resolves a flagged transitive dependency advisory."
-else
-  ALERT_LINE="Bumps **${PACKAGE}** to \`${PATCHED_VERSION:-latest}\` to resolve [Dependabot alert #${ALERT_NUMBER}](https://github.com/${REPO}/security/dependabot/${ALERT_NUMBER})."
-fi
+RUN_LINK=$(run_link)
+ALERT_LINE=$(bump_alert_line "$REPO" "$PACKAGE" "${PATCHED_VERSION:-}" "$ALERT_NUMBER")
 
 PR_BODY="## Summary
 

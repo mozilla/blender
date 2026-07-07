@@ -12,21 +12,15 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/pr-lib.sh
+source "${SCRIPT_DIR}/pr-lib.sh"
 
-if [ -z "${GH_TOKEN:-}" ] || [ -z "${REPO:-}" ]; then
-  echo "Error: GH_TOKEN and REPO are required."
-  exit 1
-fi
+require_token_repo
 
 # Read commit message from Claude, fall back to default
-if [ -f .blender-commit-msg ]; then
-  COMMIT_MSG=$(cat .blender-commit-msg)
-  rm .blender-commit-msg
-else
-  COMMIT_MSG="BLEnder fix: auto-fix CI failure from dependency update"
-fi
+COMMIT_MSG=$(read_commit_msg "BLEnder fix: auto-fix CI failure from dependency update")
 
-if git diff --quiet && git diff --cached --quiet; then
+if no_changes; then
   echo "No changes to commit."
   echo "pushed=false" >> "${GITHUB_OUTPUT:-/dev/null}"
   exit 0
@@ -39,7 +33,7 @@ CHANGED_FILES=()
 while IFS= read -r file; do
   [ -z "$file" ] && continue
   CHANGED_FILES+=("$file")
-done < <(git diff --name-only)
+done < <(list_changed_files)
 
 COMMIT=$("${SCRIPT_DIR}/git-commit-api.sh" "$COMMIT_MSG" "$PARENT" "${CHANGED_FILES[@]}")
 
