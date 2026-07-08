@@ -53,6 +53,19 @@ def test_json_session_log():
     assert extract(log) == VERDICT
 
 
+def test_json_log_with_stderr_noise_and_result_event():
+    """Real-world case: 2>&1 prepends a trust warning, and the verdict
+    lives in the result event of a single-line JSON stream."""
+    text = "I have enough evidence.\n```VERDICT_JSON\n" + json.dumps(VERDICT) + "\n```"
+    events = [
+        {"type": "system", "subtype": "init"},
+        {"type": "result", "subtype": "success", "result": text},
+    ]
+    log = "Ignoring 3 permissions.allow entries: workspace not trusted.\n"
+    log += json.dumps(events)
+    assert extract(log) == VERDICT
+
+
 def test_no_verdict_returns_none():
     assert extract("No verdict here.") is None
     assert extract("[]") is None

@@ -328,14 +328,16 @@ jobs:
           BLENDER_MODE: fix
           CLAUDE_VERBOSE: ${{ inputs.verbose }}
 
-      - name: Commit and push fix
+      - name: Commit fix and open fork PR
         id: commit
         if: steps.post-action.outputs.action == 'private_fork' && inputs.dry_run != 'true'
         working-directory: fork
-        run: ${{ github.workspace }}/scripts/commit.sh
+        run: ${{ github.workspace }}/scripts/fork-fix-pr.sh
         env:
           GH_TOKEN: ${{ steps.setup.outputs.token }}
           REPO: ${{ steps.post-action.outputs.fork_repo }}
+          ALERT_NUMBER: ${{ inputs.alert_number }}
+          ALERT_PACKAGE: ${{ inputs.alert_package }}
 
       # Mark this alert as investigated so the sweep does not re-trigger it.
       # Uses a lightweight tag on the blender repo.
