@@ -15,24 +15,49 @@ import sys
 VERDICT_FILE = ".blender-alert-verdict.json"
 
 
-def _extract_text_from_json_log(log: str) -> str:
-    """Extract assistant text from --output-format json session logs."""
+def _iter_json_docs(log: str):
+    """Yield parsed JSON documents from a Claude session log.
+
+    Handles a single array (--output-format json), JSON-lines (a
+    --verbose stream), and logs where non-JSON stderr noise is mixed in
+    (e.g. a trust warning that `2>&1` merges into the file).
+    """
+    stripped = log.strip()
+    if not stripped:
+        return
+    # Fast path: the whole log is one JSON document.
     try:
-        events = json.loads(log)
-    except (json.JSONDecodeError, TypeError):
-        return ""
-
-    if not isinstance(events, list):
-        return ""
-
-    parts = []
-    for event in events:
-        msg = event.get("message") if isinstance(event, dict) else None
-        if not msg or msg.get("role") != "assistant":
+        yield json.loads(stripped)
+        return
+    except json.JSONDecodeError:
+        pass
+    # Fallback: parse each line that looks like JSON, skipping noise.
+    for line in stripped.splitlines():
+        line = line.strip()
+        if not line or line[0] not in "[{":
             continue
-        for block in msg.get("content", []):
-            if isinstance(block, dict) and block.get("type") == "text":
-                parts.append(block["text"])
+        try:
+            yield json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+
+def _extract_text_from_json_log(log: str) -> str:
+    """Extract assistant and result text from Claude session logs."""
+    parts = []
+    for doc in _iter_json_docs(log):
+        events = doc if isinstance(doc, list) else [doc]
+        for event in events:
+            if not isinstance(event, dict):
+                continue
+            # The final result event carries the last message text.
+            if event.get("type") == "result" and isinstance(event.get("result"), str):
+                parts.append(event["result"])
+            msg = event.get("message")
+            if isinstance(msg, dict) and msg.get("role") == "assistant":
+                for block in msg.get("content", []):
+                    if isinstance(block, dict) and block.get("type") == "text":
+                        parts.append(block["text"])
     return "\n".join(parts)
 
 
