@@ -83,6 +83,7 @@ jobs:
           name: blender-context
           path: target/.blender-context/
           retention-days: 14
+          include-hidden-files: true
 
       - name: Warn about CircleCI
         if: steps.gather.outputs.HAS_CIRCLECI_FAILURE == 'true'
