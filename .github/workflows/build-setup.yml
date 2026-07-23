@@ -104,7 +104,27 @@ jobs:
           fi
 
           git commit -m "feat: add BLEnder config"
+
+          # Push the branch to upload the tree and blobs, then replace the tip
+          # with a commit created via the GitHub API. API-created commits are
+          # GitHub-signed (Verified), which repos that enable "Require signed
+          # commits" branch protection (e.g. mozilla/fxa) require in order to
+          # merge. git builds the tree locally, so file modes — including the
+          # symlinks created by setup.sh — are preserved.
           git push --force-with-lease origin "$BRANCH"
+
+          TREE=$(git rev-parse "HEAD^{tree}")
+          PARENT=$(git rev-parse "HEAD^")
+          VERIFIED_SHA=$(gh api "repos/${REPO}/git/commits" \
+            --method POST \
+            -f "message=feat: add BLEnder config" \
+            -f "tree=${TREE}" \
+            -f "parents[]=${PARENT}" \
+            --jq '.sha')
+          gh api "repos/${REPO}/git/refs/heads/${BRANCH}" \
+            --method PATCH \
+            -f "sha=${VERIFIED_SHA}" \
+            -F "force=true"
 
           # Check for existing PR (reuse branch-exists result)
           if [ "$BRANCH_EXISTS" = "true" ]; then
@@ -137,3 +157,4 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ inputs.target_repo }}
