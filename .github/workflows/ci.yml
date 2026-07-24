@@ -47,12 +47,11 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v6
         with:
           persist-credentials: false
-      - name: Install ruff
-        run: pip install ruff
+      - uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3  # v6
       - name: Run ruff check
-        run: ruff check scripts/
+        run: uv run --extra dev ruff check scripts/
       - name: Run ruff format check
-        run: ruff format --check scripts/
+        run: uv run --extra dev ruff format --check scripts/
 
   yamllint:
     runs-on: ubuntu-latest
