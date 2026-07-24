@@ -35,16 +35,31 @@ BASE_TREE=$(gh api "repos/${REPO}/git/commits/${PARENT}" --jq '.tree.sha')
 # Upload each file as a blob
 TREE_ITEMS="[]"
 for file in "${FILES[@]}"; do
-  BLOB_SHA=$(base64 -w 0 "$file" | \
-    jq -Rs '{"encoding": "base64", "content": .}' | \
-    gh api "repos/${REPO}/git/blobs" \
-    --method POST \
-    --input - \
-    --jq '.sha')
+  if [ -L "$file" ]; then
+    # Symlink: the blob content is the link target, with git mode 120000.
+    # Uploading it as a regular file (100644) would replace the link with a
+    # file containing the target path.
+    BLOB_SHA=$(printf '%s' "$(readlink "$file")" | \
+      jq -Rs '{"encoding": "utf-8", "content": .}' | \
+      gh api "repos/${REPO}/git/blobs" \
+      --method POST \
+      --input - \
+      --jq '.sha')
+    MODE="120000"
+  else
+    BLOB_SHA=$(base64 -w 0 "$file" | \
+      jq -Rs '{"encoding": "base64", "content": .}' | \
+      gh api "repos/${REPO}/git/blobs" \
+      --method POST \
+      --input - \
+      --jq '.sha')
+    MODE="100644"
+  fi
   TREE_ITEMS=$(echo "$TREE_ITEMS" | jq \
     --arg path "$file" \
     --arg sha "$BLOB_SHA" \
-    '. + [{"path": $path, "mode": "100644", "type": "blob", "sha": $sha}]')
+    --arg mode "$MODE" \
+    '. + [{"path": $path, "mode": $mode, "type": "blob", "sha": $sha}]')
 done
 
 # Create tree
