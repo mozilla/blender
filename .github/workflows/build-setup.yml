@@ -65,23 +65,11 @@ jobs:
             echo "Error: Setup did not generate config at .blender/"
             exit 1
           fi
-          git config user.name "blender[bot]"
-          git config user.email "blender[bot]@users.noreply.github.com"
+          # shellcheck source=scripts/pr-lib.sh
+          source "${BLENDER_DIR}/scripts/pr-lib.sh"
+          require_token_repo
 
           BRANCH="blender-setup"
-
-          # Handle re-runs: check for existing branch
-          BRANCH_EXISTS=false
-          if git ls-remote --exit-code origin "$BRANCH" >/dev/null 2>&1; then
-            BRANCH_EXISTS=true
-          fi
-
-          if [ "$BRANCH_EXISTS" = "true" ]; then
-            echo "Branch $BRANCH already exists on remote. Force-pushing update."
-            git checkout -B "$BRANCH"
-          else
-            git checkout -b "$BRANCH"
-          fi
 
           # Stage .blender/ directory
           git add .blender/
@@ -103,15 +91,22 @@ jobs:
             exit 0
           fi
 
-          git commit -m "feat: add BLEnder config"
-          git push --force-with-lease origin "$BRANCH"
+          # Create a verified commit via the GitHub API, then point the branch
+          # at it. API commits are GitHub-signed (Verified), which repos that
+          # require signed commits (e.g. mozilla/fxa) need in order to merge.
+          # git-commit-api.sh preserves symlink modes via readlink.
+          PARENT=$(git rev-parse HEAD)
+          mapfile -t FILES < <(git diff --cached --name-only)
+          COMMIT=$("${BLENDER_DIR}/scripts/git-commit-api.sh" \
+            "feat: add BLEnder config" "$PARENT" "${FILES[@]}")
 
-          # Check for existing PR (reuse branch-exists result)
-          if [ "$BRANCH_EXISTS" = "true" ]; then
-            existing_pr=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number // empty' 2>/dev/null || true)
-          else
-            existing_pr=""
-          fi
+          # Create the branch, or force it to the new commit on re-runs.
+          gh api "repos/${REPO}/git/refs" --method POST \
+            -f "ref=refs/heads/${BRANCH}" -f "sha=${COMMIT}" 2>/dev/null || \
+          gh api "repos/${REPO}/git/refs/heads/${BRANCH}" --method PATCH \
+            -f "sha=${COMMIT}" -F "force=true"
+
+          existing_pr=$(existing_open_pr "$REPO" "$BRANCH")
           if [ -n "$existing_pr" ]; then
             echo "PR #${existing_pr} already exists. Updated branch."
           else
@@ -137,3 +132,5 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ inputs.target_repo }}
+          BLENDER_DIR: ${{ github.workspace }}
