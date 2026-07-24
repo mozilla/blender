@@ -4,6 +4,6 @@
   "description": "Tooling dependencies for BLEnder's GitHub Actions workflows.",
   "private": true,
   "dependencies": {
-    "@anthropic-ai/claude-code": "2.1.201"
+    "@anthropic-ai/claude-code": "2.1.207"
   }
 }
