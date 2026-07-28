@@ -65,6 +65,17 @@ jobs:
           install-sandbox: 'true'
           install-claude: 'true'
 
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6
+        with:
+          python-version: '3.11'
+
+      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990  # v6
+
+      - name: Install Python dependencies
+        run: |
+          uv sync
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+
       - name: Check for existing BLEnder PR
         id: existing-pr
         run: |
