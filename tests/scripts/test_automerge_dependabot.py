@@ -19,6 +19,7 @@ from scripts.automerge_dependabot import (
     SkipPR,
     _normalize_pep440_range,
     _post_dependabot_recreate,
+    approve_and_merge,
     extract_metadata,
     gate_advisories,
     gate_compatibility,
@@ -26,7 +27,12 @@ from scripts.automerge_dependabot import (
     main,
     version_in_range,
 )
-from scripts.github_utils import Verdict, has_blender_verdict, has_codeowner_approval
+from scripts.github_utils import (
+    Verdict,
+    _allowed_merge_method,
+    has_blender_verdict,
+    has_codeowner_approval,
+)
 
 
 # --- _normalize_pep440_range ---
@@ -630,3 +636,51 @@ def test_gate_compatibility_raises_when_dep_has_no_old_version():
 
     with pytest.raises(RetryPR, match="no compatibility badge"):
         gate_compatibility(pr, meta)
+
+
+# --- _allowed_merge_method ---
+
+
+class TestAllowedMergeMethod:
+    """Pick a merge method the repo allows; prefer SQUASH, then MERGE, REBASE."""
+
+    @staticmethod
+    def _pr(squash: bool, merge: bool, rebase: bool) -> MagicMock:
+        pr = MagicMock()
+        pr.base.repo.allow_squash_merge = squash
+        pr.base.repo.allow_merge_commit = merge
+        pr.base.repo.allow_rebase_merge = rebase
+        return pr
+
+    def test_prefers_squash_when_allowed(self):
+        assert _allowed_merge_method(self._pr(True, True, True)) == "SQUASH"
+
+    def test_falls_back_to_merge_when_squash_disabled(self):
+        # e.g. mozilla/fxa: merge-commit-only.
+        assert _allowed_merge_method(self._pr(False, True, False)) == "MERGE"
+
+    def test_falls_back_to_rebase_when_only_rebase(self):
+        assert _allowed_merge_method(self._pr(False, False, True)) == "REBASE"
+
+    def test_defaults_to_merge_when_none_allowed(self):
+        assert _allowed_merge_method(self._pr(False, False, False)) == "MERGE"
+
+
+# --- approve_and_merge surfaces enable_auto_merge errors ---
+
+
+@patch("scripts.automerge_dependabot.enable_auto_merge")
+def test_approve_and_merge_raises_skippr_on_enable_error(mock_enable):
+    mock_enable.return_value = "Pull request is in clean status"
+    pr = MagicMock()
+    with pytest.raises(SkipPR, match="could not enable auto-merge"):
+        approve_and_merge(pr, compat_score=90)
+    pr.create_review.assert_called_once()
+
+
+@patch("scripts.automerge_dependabot.enable_auto_merge")
+def test_approve_and_merge_succeeds_when_enable_returns_none(mock_enable):
+    mock_enable.return_value = None
+    pr = MagicMock()
+    approve_and_merge(pr, compat_score=90)
+    pr.create_review.assert_called_once()
