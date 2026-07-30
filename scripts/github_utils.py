@@ -87,6 +87,28 @@ def has_codeowner_approval(pr: PullRequest) -> bool:
     return False
 
 
+_MERGE_METHOD_PREFERENCE = ("SQUASH", "MERGE", "REBASE")
+
+
+def _allowed_merge_method(pr: PullRequest) -> str:
+    """Return a merge method the target repo allows, preferring squash.
+
+    Hardcoding SQUASH fails on repos that disable squash merges (e.g.
+    merge-commit-only repos like mozilla/fxa), so fall back to whatever
+    the repo actually permits.
+    """
+    repo = pr.base.repo
+    allowed = {
+        "SQUASH": repo.allow_squash_merge,
+        "MERGE": repo.allow_merge_commit,
+        "REBASE": repo.allow_rebase_merge,
+    }
+    for method in _MERGE_METHOD_PREFERENCE:
+        if allowed.get(method):
+            return method
+    return "MERGE"
+
+
 def enable_auto_merge(pr: PullRequest) -> str | None:
     """Enable auto-merge on a PR via the GraphQL API.
 
@@ -96,10 +118,16 @@ def enable_auto_merge(pr: PullRequest) -> str | None:
     GITHUB_TOKEN in Actions doesn't have with branch protection.
     The GraphQL enablePullRequestAutoMerge mutation works with the
     standard token and lets GitHub merge once protection rules pass.
+
+    Uses a merge method the repo allows (see _allowed_merge_method);
+    hardcoding SQUASH fails on repos that only allow merge commits.
     """
+    method = _allowed_merge_method(pr)
     query = """
-    mutation EnableAutoMerge($prId: ID!) {
-      enablePullRequestAutoMerge(input: {pullRequestId: $prId, mergeMethod: SQUASH}) {
+    mutation EnableAutoMerge($prId: ID!, $method: PullRequestMergeMethod!) {
+      enablePullRequestAutoMerge(
+        input: {pullRequestId: $prId, mergeMethod: $method}
+      ) {
         pullRequest { autoMergeRequest { enabledAt } }
       }
     }
@@ -107,7 +135,10 @@ def enable_auto_merge(pr: PullRequest) -> str | None:
     _, data = pr._requester.requestJsonAndCheck(
         "POST",
         "/graphql",
-        input={"query": query, "variables": {"prId": pr.node_id}},
+        input={
+            "query": query,
+            "variables": {"prId": pr.node_id, "method": method},
+        },
     )
     errors = data.get("errors")
     if errors:

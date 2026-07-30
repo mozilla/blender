@@ -602,7 +602,9 @@ def approve_and_merge(pr: PullRequest, compat_score: int | None) -> None:
         "no advisories)."
     )
     pr.create_review(event="APPROVE", body=review_body)
-    enable_auto_merge(pr)
+    error = enable_auto_merge(pr)
+    if error:
+        raise SkipPR(f"could not enable auto-merge: {error}")
 
 
 # --- Main ---
