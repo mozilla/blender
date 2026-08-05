@@ -605,8 +605,6 @@ def approve_and_merge(pr: PullRequest, compat_score: int | None) -> None:
         f"(CI green, patch/minor, compat {compat_display}, "
         "no advisories)."
     )
-    # Idempotency (#117): don't re-approve the same commit every sweep. A
-    # persistent enable-auto-merge failure otherwise stacks endless approvals.
     if blender_approved_head(pr):
         print("  BLEnder already approved this commit; not re-approving.")
     else:
@@ -615,9 +613,6 @@ def approve_and_merge(pr: PullRequest, compat_score: int | None) -> None:
     error = enable_auto_merge(pr)
     if not error:
         return
-    # Auto-merge can't be armed when the PR is already mergeable — repos with
-    # no required status checks reach a "clean" state immediately, so the queue
-    # API refuses. Merge directly in that case (#117).
     if "clean status" in error.lower():
         print("  PR already mergeable; merging directly.")
         merge_error = merge_pr(pr)
