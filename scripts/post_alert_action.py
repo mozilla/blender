@@ -471,10 +471,6 @@ def main() -> None:
             comment_on_pr(repo, existing_pr, reason, dry_run)
             action = "existing_pr"
         elif dismiss_enabled and severity.lower() not in DISMISS_BLOCKED_SEVERITIES:
-            # Checked before bump_pr: dismissing is the intended outcome for an
-            # unaffected low/medium alert, and it must take precedence over the
-            # npm bump path (which is npm-only and never fired dismiss for npm
-            # alerts — see #112).
             print("  Unaffected + dismiss enabled (low/medium). Dismissing alert.")
             dismiss_alert(repo, alert_number, reason, dry_run)
             action = "dismissed"
