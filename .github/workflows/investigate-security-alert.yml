@@ -188,11 +188,6 @@ jobs:
         if: steps.post-action.outputs.action == 'npm_bump'
         working-directory: target
         run: |
-          # The npm bump path is npm-only (npm audit fix + package-lock.json).
-          # On yarn/pnpm repos there is no package-lock.json, so npm-bump.sh
-          # fails and the job errors — which means the alert never gets tagged
-          # and the sweep re-investigates it forever (#111). Skip gracefully so
-          # the job succeeds and the alert is marked investigated.
           if [ ! -f package-lock.json ]; then
             echo "::warning ::No package-lock.json (yarn/pnpm repo) — npm bump unsupported; skipping (see #111)."
             echo "fixed=false" >> "$GITHUB_OUTPUT"
