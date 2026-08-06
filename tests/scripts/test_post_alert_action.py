@@ -332,6 +332,23 @@ class TestMainFlow:
 
         mock_repo._requester.requestJsonAndCheck.assert_not_called()
 
+    def test_dismiss_skips_unknown_severity(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """Empty/unknown severity is not auto-dismissed (could be high/critical)."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="",
+        )
+
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+
     def test_npm_bump_outputs_action(
         self, verdict_file, tmp_path, monkeypatch
     ):
