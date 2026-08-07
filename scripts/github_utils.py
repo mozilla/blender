@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from enum import Enum
 
+from github import GithubException
 from github.PullRequest import PullRequest
 
 
@@ -165,32 +166,18 @@ def blender_approved_head(pr: PullRequest) -> bool:
 
 
 def merge_pr(pr: PullRequest) -> str | None:
-    """Merge a PR directly via the GraphQL API.
-
-    Returns None on success, or an error message string on failure.
+    """Merge a PR directly, returning None on success or an error string.
 
     Used when auto-merge cannot be armed because the PR is already
     mergeable: repos with no required status checks reach a "clean"
     state immediately, so enablePullRequestAutoMerge is refused and the
     PR must be merged directly. Uses a repo-allowed merge method.
     """
-    method = _allowed_merge_method(pr)
-    query = """
-    mutation MergePR($prId: ID!, $method: PullRequestMergeMethod!) {
-      mergePullRequest(input: {pullRequestId: $prId, mergeMethod: $method}) {
-        pullRequest { merged }
-      }
-    }
-    """
-    _, data = pr._requester.requestJsonAndCheck(
-        "POST",
-        "/graphql",
-        input={
-            "query": query,
-            "variables": {"prId": pr.node_id, "method": method},
-        },
-    )
-    errors = data.get("errors")
-    if errors:
-        return "; ".join(e.get("message", str(e)) for e in errors)
+    method = _allowed_merge_method(pr).lower()
+    try:
+        status = pr.merge(merge_method=method)
+    except GithubException as exc:
+        return str(exc)
+    if not status.merged:
+        return status.message or "merge did not complete"
     return None
