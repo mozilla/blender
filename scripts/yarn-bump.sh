@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
-# BLEnder yarn bump: commit yarn.lock (+ package.json) changes via a verified
-# commit and open a PR. Runs after scripts/yarn-fix.sh in the target checkout.
+# BLEnder yarn bump: commit yarn.lock changes via verified commit and open a PR.
+# Runs after scripts/yarn-fix.sh in the target repo checkout. Mirrors npm-bump.sh.
 #
-# Mirrors npm-bump.sh; delegates blob -> tree -> commit to git-commit-api.sh.
-# See #122.
-#
-# Environment variables:
 #   GH_TOKEN          -- GitHub token (required, also used by gh cli)
 #   PACKAGE           -- yarn package name (required)
 #   PATCHED_VERSION   -- version to bump to (optional)
@@ -25,7 +21,6 @@ if [ -z "${PACKAGE:-}" ] || [ -z "${ALERT_NUMBER:-}" ]; then
   exit 1
 fi
 
-# Check that yarn.lock changed
 if git diff --quiet yarn.lock 2>/dev/null; then
   echo "yarn.lock unchanged after yarn up. Nothing to do."
   exit 0
@@ -33,7 +28,6 @@ fi
 
 BRANCH_NAME="blender/security-bump-${PACKAGE}"
 
-# Check for existing open PR on this branch — exit before any API calls
 EXISTING_PR=$(existing_open_pr "$REPO" "$BRANCH_NAME")
 if [ -n "$EXISTING_PR" ]; then
   echo "PR #${EXISTING_PR} already open for ${BRANCH_NAME}. Skipping."
@@ -48,8 +42,6 @@ Created by BLEnder (https://github.com/mozilla/blender)"
 DEFAULT_BRANCH=$(gh api "repos/${REPO}" --jq '.default_branch')
 PARENT=$(gh api "repos/${REPO}/git/ref/heads/${DEFAULT_BRANCH}" --jq '.object.sha')
 
-# Collect changed files. NOTE: PnP repos may also change .pnp.cjs and
-# .yarn/cache/* — not handled here yet (see #122).
 CHANGED_FILES=()
 for file in yarn.lock package.json; do
   if ! git diff --quiet "$file" 2>/dev/null; then
@@ -59,12 +51,9 @@ done
 
 COMMIT_SHA=$("${SCRIPT_DIR}/git-commit-api.sh" "$COMMIT_MSG" "$PARENT" "${CHANGED_FILES[@]}")
 
-# Create branch ref
 create_or_update_branch "$REPO" "$BRANCH_NAME" "$COMMIT_SHA"
-
 echo "Created branch ${BRANCH_NAME} with commit ${COMMIT_SHA}"
 
-# Build PR body
 RUN_LINK=$(run_link)
 ALERT_LINE=$(bump_alert_line "$REPO" "$PACKAGE" "${PATCHED_VERSION:-}" "$ALERT_NUMBER")
 

@@ -377,8 +377,7 @@ class TestMainFlow:
         assert "npm_package=lodash" in outputs
         assert "npm_version=1.0.1" in outputs
 
-        # npm path defers to the workflow step; it never creates a PR here.
-        # (get_contents IS called now, to detect the package manager.)
+        # npm defers to the workflow step; no PR is created here.
         mock_repo.create_pull.assert_not_called()
 
     def test_yarn_bump_outputs_action(

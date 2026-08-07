@@ -503,8 +503,6 @@ def main() -> None:
             action = "dismissed"
         elif recommended == "bump_pr":
             if ecosystem == "npm" and patched_version:
-                # npm and yarn share the npm_and_yarn ecosystem; the lockfile
-                # decides which bump path to take.
                 pkg_manager = detect_js_package_manager(repo)
                 if pkg_manager == "yarn":
                     print("  yarn ecosystem — deferring to yarn_bump workflow step.")
@@ -519,7 +517,6 @@ def main() -> None:
                     write_output("npm_version", patched_version)
                     write_output("alert_number", str(alert_number))
                 else:
-                    # pnpm or no lockfile — no supported bump path yet (#122).
                     print(
                         f"  JS package manager '{pkg_manager}' has no bump path. "
                         "No action."
