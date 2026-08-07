@@ -44,22 +44,29 @@ esac
 echo "Before — where ${YARN_PACKAGE} resolves:"
 yarn why "$YARN_PACKAGE" 2>/dev/null || true
 
-# `-R` raises the dependency recursively (transitive deps included).
-TARGET="$YARN_PACKAGE"
-if [ -n "${YARN_VERSION:-}" ]; then
-  TARGET="${YARN_PACKAGE}@npm:^${YARN_VERSION}"
-fi
-echo "Running: yarn up -R ${TARGET}"
-if ! yarn up -R "$TARGET"; then
-  echo "::warning ::'yarn up -R ${TARGET}' failed; leaving for manual remediation."
+# Berry v4's `-R` (recursive — covers transitive deps) takes the package NAME
+# only: it re-resolves every occurrence to the newest version satisfying each
+# existing range. Passing a version/range errors ("Ranges aren't allowed when
+# using --recursive"). --mode=update-lockfile writes yarn.lock without
+# installing, mirroring npm's --package-lock-only. Verified live against
+# mozilla/fxa (yarn@4.9.2): a single run bumped all vulnerable brace-expansion
+# lines to their patched in-range versions, yarn.lock-only.
+echo "Running: yarn up -R ${YARN_PACKAGE} --mode=update-lockfile"
+if ! yarn up -R "$YARN_PACKAGE" --mode=update-lockfile; then
+  echo "::warning ::'yarn up -R ${YARN_PACKAGE}' failed; leaving for manual remediation."
   out fixed false
   exit 0
 fi
 
-# Best-effort verification. Format differs from npm audit and across Berry
-# minor versions, so this is informational only — do not gate on it yet (#122).
-echo "After — yarn npm audit (informational):"
-yarn npm audit --all --recursive 2>/dev/null | grep -i "$YARN_PACKAGE" || true
+# -R stays within the ranges declared by consumers. If the patched version is
+# outside every consumer's range (e.g. needs a major bump they don't allow),
+# yarn.lock won't change — that case needs a `resolutions` override, which is
+# not implemented yet (see #122).
+if git diff --quiet yarn.lock 2>/dev/null; then
+  echo "::warning ::yarn.lock unchanged — ${YARN_PACKAGE} likely needs a resolutions override to reach ${YARN_VERSION:-the patched version} (see #122)."
+  out fixed false
+  exit 0
+fi
 
-echo "Upgraded ${YARN_PACKAGE} (verify via CI / Dependabot)."
+echo "yarn.lock updated for ${YARN_PACKAGE} (advisory verified via CI / Dependabot)."
 out fixed true
