@@ -16,6 +16,7 @@ from scripts.alert_report import (
 from scripts.post_alert_action import (
     create_advisory_and_fork,
     create_bump_pr,
+    detect_js_package_manager,
     detect_pip_lock_tool,
     dismiss_alert,
     fetch_patched_version,
@@ -376,9 +377,39 @@ class TestMainFlow:
         assert "npm_package=lodash" in outputs
         assert "npm_version=1.0.1" in outputs
 
-        # npm path should not touch repo contents or create PRs
-        mock_repo.get_contents.assert_not_called()
+        # npm path defers to the workflow step; it never creates a PR here.
+        # (get_contents IS called now, to detect the package manager.)
         mock_repo.create_pull.assert_not_called()
+
+    def test_yarn_bump_outputs_action(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """A yarn repo (yarn.lock, no package-lock.json) routes to yarn_bump."""
+        verdict_file(SAMPLE_VERDICT)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []  # no existing PR
+
+        def get_contents(path):
+            if path == "yarn.lock":
+                return MagicMock()
+            raise Exception("404")
+
+        mock_repo.get_contents.side_effect = get_contents
+
+        output_file = str(tmp_path / "github_output")
+        open(output_file, "w").close()
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            ALERT_ECOSYSTEM="npm", ALERT_PATCHED_VERSION="1.0.1",
+            GITHUB_OUTPUT=output_file,
+        )
+
+        outputs = open(output_file).read()
+        assert "action=yarn_bump" in outputs
+        assert "yarn_package=lodash" in outputs
+        assert "yarn_version=1.0.1" in outputs
 
     def test_dismiss_precedes_npm_bump_for_unaffected(
         self, verdict_file, tmp_path, monkeypatch
@@ -485,6 +516,33 @@ class TestDetectPipLockTool:
         else:
             assert result is not None
             assert result[0] == expected_tool
+
+
+class TestDetectJsPackageManager:
+    """detect_js_package_manager checks lockfiles: package-lock.json, yarn.lock, pnpm-lock.yaml."""
+
+    @pytest.mark.parametrize(
+        "files_present, expected",
+        [
+            ({"package-lock.json"}, "npm"),
+            ({"yarn.lock"}, "yarn"),
+            ({"pnpm-lock.yaml"}, "pnpm"),
+            ({"package-lock.json", "yarn.lock"}, "npm"),  # npm wins when both exist
+            (set(), None),
+        ],
+        ids=["npm", "yarn", "pnpm", "npm-wins", "none"],
+    )
+    def test_detection(self, files_present, expected):
+        repo = MagicMock()
+
+        def get_contents(path):
+            if path in files_present:
+                return MagicMock()
+            raise Exception("404")
+
+        repo.get_contents.side_effect = get_contents
+
+        assert detect_js_package_manager(repo) == expected
 
 
 class TestPipLockBumpFlow:

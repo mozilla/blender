@@ -399,6 +399,28 @@ def detect_pip_lock_tool(
     return None
 
 
+def detect_js_package_manager(repo) -> str | None:
+    """Detect the JS package manager from the lockfile present.
+
+    Dependabot reports npm and yarn alerts under one ecosystem
+    (``npm_and_yarn``), so the lockfile is what tells them apart.
+    Returns "npm", "yarn", "pnpm", or None if no JS lockfile is found.
+    """
+    lock_files = {
+        "package-lock.json": "npm",
+        "yarn.lock": "yarn",
+        "pnpm-lock.yaml": "pnpm",
+    }
+    for lock_file, manager in lock_files.items():
+        try:
+            repo.get_contents(lock_file)
+            print(f"  Found {lock_file} — {manager}")
+            return manager
+        except Exception:
+            continue
+    return None
+
+
 def dismiss_alert(
     repo,
     alert_number: int,
@@ -481,11 +503,28 @@ def main() -> None:
             action = "dismissed"
         elif recommended == "bump_pr":
             if ecosystem == "npm" and patched_version:
-                print("  npm ecosystem — deferring to npm_bump workflow step.")
-                action = "npm_bump"
-                write_output("npm_package", package_name)
-                write_output("npm_version", patched_version)
-                write_output("alert_number", str(alert_number))
+                # npm and yarn share the npm_and_yarn ecosystem; the lockfile
+                # decides which bump path to take.
+                pkg_manager = detect_js_package_manager(repo)
+                if pkg_manager == "yarn":
+                    print("  yarn ecosystem — deferring to yarn_bump workflow step.")
+                    action = "yarn_bump"
+                    write_output("yarn_package", package_name)
+                    write_output("yarn_version", patched_version)
+                    write_output("alert_number", str(alert_number))
+                elif pkg_manager == "npm":
+                    print("  npm ecosystem — deferring to npm_bump workflow step.")
+                    action = "npm_bump"
+                    write_output("npm_package", package_name)
+                    write_output("npm_version", patched_version)
+                    write_output("alert_number", str(alert_number))
+                else:
+                    # pnpm or no lockfile — no supported bump path yet (#122).
+                    print(
+                        f"  JS package manager '{pkg_manager}' has no bump path. "
+                        "No action."
+                    )
+                    action = "noop"
             elif ecosystem == "npm":
                 print("  npm ecosystem but no patched version. Cannot bump.")
                 action = "noop"
