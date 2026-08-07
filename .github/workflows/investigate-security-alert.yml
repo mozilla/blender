@@ -188,6 +188,11 @@ jobs:
         if: steps.post-action.outputs.action == 'npm_bump'
         working-directory: target
         run: |
+          if [ ! -f package-lock.json ]; then
+            echo "::warning ::No package-lock.json (yarn/pnpm repo) — npm bump unsupported; skipping (see #111)."
+            echo "fixed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           echo "Before fix — vulnerable instances:"
           npm ls "$NPM_PACKAGE" --all 2>/dev/null || true
           echo "---"
