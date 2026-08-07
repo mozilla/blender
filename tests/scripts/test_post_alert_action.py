@@ -332,6 +332,23 @@ class TestMainFlow:
 
         mock_repo._requester.requestJsonAndCheck.assert_not_called()
 
+    def test_dismiss_skips_unknown_severity(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """Empty/unknown severity is not auto-dismissed (could be high/critical)."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="",
+        )
+
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+
     def test_npm_bump_outputs_action(
         self, verdict_file, tmp_path, monkeypatch
     ):
@@ -362,6 +379,29 @@ class TestMainFlow:
         # npm path should not touch repo contents or create PRs
         mock_repo.get_contents.assert_not_called()
         mock_repo.create_pull.assert_not_called()
+
+    def test_dismiss_precedes_npm_bump_for_unaffected(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """Unaffected low/medium alert is dismissed, not routed to npm_bump (#112)."""
+        verdict_file(SAMPLE_VERDICT)  # affected=False, recommended_action=bump_pr
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []  # no existing PR
+
+        output_file = str(tmp_path / "github_output")
+        open(output_file, "w").close()
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            ALERT_ECOSYSTEM="npm", ALERT_SEVERITY="medium",
+            DISMISS_UNAFFECTED="true", DRY_RUN="true",
+            GITHUB_OUTPUT=output_file,
+        )
+
+        outputs = open(output_file).read()
+        assert "action=dismissed" in outputs
+        assert "action=npm_bump" not in outputs
 
     def test_npm_bump_no_patched_version(
         self, verdict_file, tmp_path, monkeypatch

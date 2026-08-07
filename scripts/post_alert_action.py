@@ -42,6 +42,7 @@ from scripts.alert_report import write_step_summary  # noqa: E402
 
 BLENDER_NAME = "BLEnder"
 DISMISS_BLOCKED_SEVERITIES = {"critical", "high"}
+DISMISS_UNKNOWN_SEVERITIES = {"", "unknown"}
 VERDICT_FILE = ".blender-alert-verdict.json"
 REQUIRED_KEYS = {
     "affected",
@@ -470,6 +471,14 @@ def main() -> None:
             print(f"  Existing PR #{existing_pr} covers this package.")
             comment_on_pr(repo, existing_pr, reason, dry_run)
             action = "existing_pr"
+        elif (
+            dismiss_enabled
+            and severity.lower() not in DISMISS_BLOCKED_SEVERITIES
+            and severity.lower() not in DISMISS_UNKNOWN_SEVERITIES
+        ):
+            print("  Unaffected + dismiss enabled (low/medium). Dismissing alert.")
+            dismiss_alert(repo, alert_number, reason, dry_run)
+            action = "dismissed"
         elif recommended == "bump_pr":
             if ecosystem == "npm" and patched_version:
                 print("  npm ecosystem — deferring to npm_bump workflow step.")
@@ -511,10 +520,6 @@ def main() -> None:
                             action = "noop"
                     else:
                         action = "noop"
-        elif dismiss_enabled and severity.lower() not in DISMISS_BLOCKED_SEVERITIES:
-            print("  Unaffected + dismiss enabled. Dismissing alert.")
-            dismiss_alert(repo, alert_number, reason, dry_run)
-            action = "dismissed"
         elif dismiss_enabled:
             print(
                 f"  Unaffected but severity is {severity}."
