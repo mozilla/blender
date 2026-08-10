@@ -671,7 +671,8 @@ class TestAllowedMergeMethod:
 
 @patch("scripts.automerge_dependabot.enable_auto_merge")
 def test_approve_and_merge_raises_skippr_on_enable_error(mock_enable):
-    mock_enable.return_value = "Pull request is in clean status"
+    # A persistent, non-"clean status" error should surface as SkipPR.
+    mock_enable.return_value = "User is not authorized for this protected branch"
     pr = MagicMock()
     with pytest.raises(SkipPR, match="could not enable auto-merge"):
         approve_and_merge(pr, compat_score=90)
@@ -684,3 +685,47 @@ def test_approve_and_merge_succeeds_when_enable_returns_none(mock_enable):
     pr = MagicMock()
     approve_and_merge(pr, compat_score=90)
     pr.create_review.assert_called_once()
+
+
+# --- #117: idempotent approve + direct-merge when already clean ---
+
+
+@patch("scripts.automerge_dependabot.enable_auto_merge")
+@patch("scripts.automerge_dependabot.blender_approved_head")
+def test_approve_and_merge_skips_reapproval_when_already_approved(
+    mock_approved, mock_enable
+):
+    mock_approved.return_value = True
+    mock_enable.return_value = None
+    pr = MagicMock()
+    approve_and_merge(pr, compat_score=90)
+    pr.create_review.assert_not_called()
+
+
+@patch("scripts.automerge_dependabot.merge_pr")
+@patch("scripts.automerge_dependabot.enable_auto_merge")
+@patch("scripts.automerge_dependabot.blender_approved_head")
+def test_approve_and_merge_direct_merges_when_clean(
+    mock_approved, mock_enable, mock_merge
+):
+    mock_approved.return_value = False
+    mock_enable.return_value = "Pull request is in clean status"
+    mock_merge.return_value = None
+    pr = MagicMock()
+    approve_and_merge(pr, compat_score=90)
+    pr.create_review.assert_called_once()
+    mock_merge.assert_called_once_with(pr)
+
+
+@patch("scripts.automerge_dependabot.merge_pr")
+@patch("scripts.automerge_dependabot.enable_auto_merge")
+@patch("scripts.automerge_dependabot.blender_approved_head")
+def test_approve_and_merge_raises_when_direct_merge_fails(
+    mock_approved, mock_enable, mock_merge
+):
+    mock_approved.return_value = False
+    mock_enable.return_value = "Pull request is in clean status"
+    mock_merge.return_value = "merge conflict"
+    pr = MagicMock()
+    with pytest.raises(SkipPR, match="direct merge failed"):
+        approve_and_merge(pr, compat_score=90)

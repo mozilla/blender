@@ -35,16 +35,20 @@ import nodesemver
 try:
     from scripts.github_utils import (
         BOT_LOGIN,
+        blender_approved_head,
         enable_auto_merge,
         has_blender_verdict,
         has_codeowner_approval,
+        merge_pr,
     )
 except ModuleNotFoundError:
     from github_utils import (
         BOT_LOGIN,
+        blender_approved_head,
         enable_auto_merge,
         has_blender_verdict,
         has_codeowner_approval,
+        merge_pr,
     )
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
@@ -594,17 +598,29 @@ def gate_advisories(gh: Github, meta: PRMetadata) -> None:
 
 
 def approve_and_merge(pr: PullRequest, compat_score: int | None) -> None:
-    """Approve the PR and enable auto-merge."""
+    """Approve the PR, then enable auto-merge (or merge directly if clean)."""
     compat_display = f"{compat_score}%" if compat_score is not None else "unknown"
     review_body = (
         "BLEnder auto-merge: all safety gates passed "
         f"(CI green, patch/minor, compat {compat_display}, "
         "no advisories)."
     )
-    pr.create_review(event="APPROVE", body=review_body)
+    if blender_approved_head(pr):
+        print("  BLEnder already approved this commit; not re-approving.")
+    else:
+        pr.create_review(event="APPROVE", body=review_body)
+
     error = enable_auto_merge(pr)
-    if error:
-        raise SkipPR(f"could not enable auto-merge: {error}")
+    if not error:
+        return
+    if "clean status" in error.lower():
+        print("  PR already mergeable; merging directly.")
+        merge_error = merge_pr(pr)
+        if merge_error:
+            raise SkipPR(f"direct merge failed: {merge_error}")
+        print("  Merged.")
+        return
+    raise SkipPR(f"could not enable auto-merge: {error}")
 
 
 # --- Main ---
