@@ -504,17 +504,14 @@ def main() -> None:
         elif recommended == "bump_pr":
             if ecosystem == "npm" and patched_version:
                 pkg_manager = detect_js_package_manager(repo)
-                if pkg_manager == "yarn":
-                    print("  yarn ecosystem — deferring to yarn_bump workflow step.")
-                    action = "yarn_bump"
-                    write_output("yarn_package", package_name)
-                    write_output("yarn_version", patched_version)
-                    write_output("alert_number", str(alert_number))
-                elif pkg_manager == "npm":
-                    print("  npm ecosystem — deferring to npm_bump workflow step.")
-                    action = "npm_bump"
-                    write_output("npm_package", package_name)
-                    write_output("npm_version", patched_version)
+                if pkg_manager in ("npm", "yarn"):
+                    print(
+                        f"  {pkg_manager} ecosystem — deferring to "
+                        f"{pkg_manager}_bump workflow step."
+                    )
+                    action = f"{pkg_manager}_bump"
+                    write_output(f"{pkg_manager}_package", package_name)
+                    write_output(f"{pkg_manager}_version", patched_version)
                     write_output("alert_number", str(alert_number))
                 else:
                     print(
