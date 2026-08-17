@@ -7,7 +7,7 @@ dependencies = [
     "PyGithub==2.9.1",
     "PyYAML==6.0.3",
     "node-semver==0.9.1",
-    "packaging==26.2",
+    "packaging==26.3",
 ]
 
 [project.optional-dependencies]
