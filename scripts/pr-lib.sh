@@ -77,3 +77,78 @@ bump_alert_line() {
     echo "Bumps **${package}** to \`${version:-latest}\` to resolve [Dependabot alert #${alert}](https://github.com/${repo}/security/dependabot/${alert})."
   fi
 }
+
+# Commit a dependency bump (lockfile + package.json) via a verified commit and
+# open a PR. npm-bump.sh and yarn-bump.sh differ only in which lockfile they
+# touch, so both call this. Usage: open_bump_pr LOCKFILE
+#   env: GH_TOKEN, PACKAGE, PATCHED_VERSION, ALERT_NUMBER, REPO
+open_bump_pr() {
+  local lockfile="$1"
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+  require_token_repo
+
+  if [ -z "${PACKAGE:-}" ] || [ -z "${ALERT_NUMBER:-}" ]; then
+    echo "Error: PACKAGE and ALERT_NUMBER are required."
+    exit 1
+  fi
+
+  if git diff --quiet "$lockfile" 2>/dev/null; then
+    echo "${lockfile} unchanged after fix. Nothing to do."
+    exit 0
+  fi
+
+  local branch="blender/security-bump-${PACKAGE}"
+
+  local existing
+  existing=$(existing_open_pr "$REPO" "$branch")
+  if [ -n "$existing" ]; then
+    echo "PR #${existing} already open for ${branch}. Skipping."
+    exit 0
+  fi
+
+  local commit_msg="chore(deps): bump ${PACKAGE} to ${PATCHED_VERSION:-latest}
+
+Resolves Dependabot alert #${ALERT_NUMBER}.
+Created by BLEnder (https://github.com/mozilla/blender)"
+
+  local default_branch parent
+  default_branch=$(gh api "repos/${REPO}" --jq '.default_branch')
+  parent=$(gh api "repos/${REPO}/git/ref/heads/${default_branch}" --jq '.object.sha')
+
+  local changed_files=() file
+  for file in "$lockfile" package.json; do
+    if ! git diff --quiet "$file" 2>/dev/null; then
+      changed_files+=("$file")
+    fi
+  done
+
+  local commit_sha
+  commit_sha=$("${script_dir}/git-commit-api.sh" "$commit_msg" "$parent" "${changed_files[@]}")
+
+  create_or_update_branch "$REPO" "$branch" "$commit_sha"
+  echo "Created branch ${branch} with commit ${commit_sha}"
+
+  local run_link_md alert_line
+  run_link_md=$(run_link)
+  alert_line=$(bump_alert_line "$REPO" "$PACKAGE" "${PATCHED_VERSION:-}" "$ALERT_NUMBER")
+
+  local pr_body="## Summary
+
+${alert_line}
+
+This is a transitive dependency update. Only \`${lockfile}\` (and possibly \`package.json\`) changed.
+
+---
+*Created by ${run_link_md} via [BLEnder](https://github.com/mozilla/blender)*"
+
+  gh pr create \
+    --repo "$REPO" \
+    --head "$branch" \
+    --base "$default_branch" \
+    --title "chore(deps): bump ${PACKAGE} to ${PATCHED_VERSION:-latest}" \
+    --body "$pr_body"
+
+  echo "PR created."
+}

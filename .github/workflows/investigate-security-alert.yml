@@ -229,6 +229,30 @@ jobs:
           REPO: ${{ inputs.target_repo }}
           GH_TOKEN: ${{ steps.setup.outputs.token }}
 
+      # --- yarn transitive dependency bump (Berry v2+; see #122) ---
+      - name: Run yarn upgrade
+        id: yarn-fix
+        if: steps.post-action.outputs.action == 'yarn_bump'
+        working-directory: target
+        run: bash ${{ github.workspace }}/scripts/yarn-fix.sh
+        env:
+          YARN_PACKAGE: ${{ steps.post-action.outputs.yarn_package }}
+          YARN_VERSION: ${{ steps.post-action.outputs.yarn_version }}
+
+      - name: Create yarn bump PR
+        if: >-
+          steps.post-action.outputs.action == 'yarn_bump'
+          && steps.yarn-fix.outputs.fixed == 'true'
+          && inputs.dry_run != 'true'
+        working-directory: target
+        run: bash ${{ github.workspace }}/scripts/yarn-bump.sh
+        env:
+          PACKAGE: ${{ steps.post-action.outputs.yarn_package }}
+          PATCHED_VERSION: ${{ steps.post-action.outputs.yarn_version }}
+          ALERT_NUMBER: ${{ inputs.alert_number }}
+          REPO: ${{ inputs.target_repo }}
+          GH_TOKEN: ${{ steps.setup.outputs.token }}
+
       # --- pip transitive dependency bump (lock file only) ---
       - name: Run pip lock upgrade
         id: pip-fix

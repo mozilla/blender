@@ -399,6 +399,28 @@ def detect_pip_lock_tool(
     return None
 
 
+def detect_js_package_manager(repo) -> str | None:
+    """Detect the JS package manager from the lockfile present.
+
+    Dependabot reports npm and yarn alerts under one ecosystem
+    (``npm_and_yarn``), so the lockfile is what tells them apart.
+    Returns "npm", "yarn", "pnpm", or None if no JS lockfile is found.
+    """
+    lock_files = {
+        "package-lock.json": "npm",
+        "yarn.lock": "yarn",
+        "pnpm-lock.yaml": "pnpm",
+    }
+    for lock_file, manager in lock_files.items():
+        try:
+            repo.get_contents(lock_file)
+            print(f"  Found {lock_file} — {manager}")
+            return manager
+        except Exception:
+            continue
+    return None
+
+
 def dismiss_alert(
     repo,
     alert_number: int,
@@ -481,11 +503,22 @@ def main() -> None:
             action = "dismissed"
         elif recommended == "bump_pr":
             if ecosystem == "npm" and patched_version:
-                print("  npm ecosystem — deferring to npm_bump workflow step.")
-                action = "npm_bump"
-                write_output("npm_package", package_name)
-                write_output("npm_version", patched_version)
-                write_output("alert_number", str(alert_number))
+                pkg_manager = detect_js_package_manager(repo)
+                if pkg_manager in ("npm", "yarn"):
+                    print(
+                        f"  {pkg_manager} ecosystem — deferring to "
+                        f"{pkg_manager}_bump workflow step."
+                    )
+                    action = f"{pkg_manager}_bump"
+                    write_output(f"{pkg_manager}_package", package_name)
+                    write_output(f"{pkg_manager}_version", patched_version)
+                    write_output("alert_number", str(alert_number))
+                else:
+                    print(
+                        f"  JS package manager '{pkg_manager}' has no bump path. "
+                        "No action."
+                    )
+                    action = "noop"
             elif ecosystem == "npm":
                 print("  npm ecosystem but no patched version. Cannot bump.")
                 action = "noop"
