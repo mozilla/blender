@@ -31,23 +31,34 @@ esac
 
 yarn why "$YARN_PACKAGE" 2>/dev/null || true
 
-# Is the package still flagged by audit? (empty output = clear)
-audit_flagged() {
-  yarn npm audit --all --recursive --json 2>/dev/null \
-    | jq -rc --arg pkg "$1" 'select(.value == $pkg)' 2>/dev/null | head -c1 || true
+# Package audit state: clean | flagged | error (error = audit run failed).
+pkg_audit_state() {
+  local pkg="$1" out rc
+  out=$(yarn npm audit --all --recursive --json 2>/dev/null)
+  rc=$?
+  if [ "$rc" -eq 0 ]; then echo clean; return; fi
+  if [ -z "$out" ]; then echo error; return; fi
+  if printf '%s\n' "$out" | jq -e --arg p "$pkg" 'select(.value == $p)' >/dev/null 2>&1; then
+    echo flagged
+  else
+    echo clean
+  fi
 }
 
-# `-R` (recursive) takes the name only — a version/range is rejected. It bumps
-# every occurrence to the newest version each existing range allows.
+# -R takes the package name only (a version/range is rejected).
 echo "Running: yarn up -R ${YARN_PACKAGE} --mode=update-lockfile"
 yarn up -R "$YARN_PACKAGE" --mode=update-lockfile \
   || echo "::warning ::'yarn up -R ${YARN_PACKAGE}' failed; trying a resolution."
 
-# If the in-range bump didn't clear the advisory, the patch is out of some
-# consumer's range. Fall back to a resolutions override — but only for a
-# single-major tree: a global resolution across majors would break the other
-# majors, and scoped resolutions can't be matched reliably (see #122).
-if [ -n "$(audit_flagged "$YARN_PACKAGE")" ]; then
+state=$(pkg_audit_state "$YARN_PACKAGE")
+if [ "$state" = "error" ]; then
+  echo "::warning ::yarn npm audit failed to run — cannot verify ${YARN_PACKAGE}; treating as unremediated."
+  out fixed false
+  exit 0
+fi
+
+# Out-of-range patch: fall back to a resolutions pin, single-major trees only (#122).
+if [ "$state" = "flagged" ]; then
   majors=$(grep -A1 "^\"${YARN_PACKAGE}@" yarn.lock 2>/dev/null \
     | sed -nE 's/^ *version: "?([0-9]+).*/\1/p' | sort -u | grep -c .)
   if [ -n "${YARN_VERSION:-}" ] && [ "$majors" = "1" ]; then
@@ -55,7 +66,11 @@ if [ -n "$(audit_flagged "$YARN_PACKAGE")" ]; then
     jq --arg p "$YARN_PACKAGE" --arg v "$YARN_VERSION" \
       '.resolutions = ((.resolutions // {}) + {($p): $v})' package.json > package.json.tmp \
       && mv package.json.tmp package.json
-    yarn install --mode=update-lockfile || true
+    if ! yarn install --mode=update-lockfile; then
+      echo "::warning ::yarn install failed after pinning ${YARN_PACKAGE} — treating as unremediated."
+      out fixed false
+      exit 0
+    fi
   else
     echo "::warning ::${YARN_PACKAGE} needs a resolution but has multiple major lines (or no patched version) — manual review needed (#122)."
     out fixed false
@@ -63,9 +78,8 @@ if [ -n "$(audit_flagged "$YARN_PACKAGE")" ]; then
   fi
 fi
 
-# Final check: advisory gone, and something actually changed to open a PR from.
-if [ -n "$(audit_flagged "$YARN_PACKAGE")" ]; then
-  echo "::warning ::${YARN_PACKAGE} still flagged after remediation — manual review needed (#122)."
+if [ "$(pkg_audit_state "$YARN_PACKAGE")" != "clean" ]; then
+  echo "::warning ::${YARN_PACKAGE} not verified clear after remediation — manual review needed (#122)."
   out fixed false
   exit 0
 fi
