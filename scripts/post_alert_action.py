@@ -571,10 +571,14 @@ def main() -> None:
             dry_run,
             severity=severity.lower() if severity else "low",
         )
-        action = "private_fork"
+        if fork_repo:
+            action = "private_fork"
+            write_output("fork_repo", fork_repo)
+        else:
+            print("  No private fork available; advisory only, manual fix needed.")
+            action = "advisory_only"
         write_output("action", action)
         write_output("advisory_ghsa_id", ghsa_id)
-        write_output("fork_repo", fork_repo)
 
     write_step_summary(repo_name, alert_number, package_name, severity, action, verdict)
 

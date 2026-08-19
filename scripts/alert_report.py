@@ -32,6 +32,7 @@ def render_markdown(
         "dismissed": "Alert dismissed",
         "noop": "No action taken",
         "private_fork": "Advisory created with private fork",
+        "advisory_only": "Advisory created (manual fix needed)",
         "existing_pr": "Existing Dependabot PR found",
         "bump_pr_created": "Bump PR created",
         "npm_bump": "npm bump PR created",
@@ -80,6 +81,7 @@ def annotation_line(
         "dismissed": "alert dismissed",
         "noop": "no action taken",
         "private_fork": "advisory created with private fork",
+        "advisory_only": "advisory created (manual fix needed)",
         "npm_bump": "npm bump PR created",
         "pip_lock_bump": "pip lock bump PR created",
     }
