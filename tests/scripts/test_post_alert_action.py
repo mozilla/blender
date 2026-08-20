@@ -410,6 +410,54 @@ class TestMainFlow:
         assert "yarn_package=lodash" in outputs
         assert "yarn_version=1.0.1" in outputs
 
+    def test_affected_empty_fork_is_advisory_only(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """Affected alert with no private fork -> advisory_only, not private_fork
+        (avoids the empty-clone failure that stalled remediation)."""
+        verdict_file({**SAMPLE_VERDICT, "affected": True, "recommended_action": "private_fork"})
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        output_file = str(tmp_path / "github_output")
+        open(output_file, "w").close()
+
+        with patch(
+            "scripts.post_alert_action.create_advisory_and_fork",
+            return_value=("GHSA-x", ""),
+        ):
+            self._run_main(
+                verdict_file, tmp_path, monkeypatch, mock_repo,
+                GITHUB_OUTPUT=output_file,
+            )
+
+        outputs = open(output_file).read()
+        assert "action=advisory_only" in outputs
+        assert "advisory_ghsa_id=GHSA-x" in outputs
+        assert "fork_repo=" not in outputs
+
+    def test_affected_with_fork_is_private_fork(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """Affected alert with a fork still routes to private_fork."""
+        verdict_file({**SAMPLE_VERDICT, "affected": True, "recommended_action": "private_fork"})
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        output_file = str(tmp_path / "github_output")
+        open(output_file, "w").close()
+
+        with patch(
+            "scripts.post_alert_action.create_advisory_and_fork",
+            return_value=("GHSA-x", "owner/fork-abc"),
+        ):
+            self._run_main(
+                verdict_file, tmp_path, monkeypatch, mock_repo,
+                GITHUB_OUTPUT=output_file,
+            )
+
+        outputs = open(output_file).read()
+        assert "action=private_fork" in outputs
+        assert "fork_repo=owner/fork-abc" in outputs
+
     def test_dismiss_precedes_npm_bump_for_unaffected(
         self, verdict_file, tmp_path, monkeypatch
     ):

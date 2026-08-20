@@ -380,9 +380,10 @@ jobs:
           ALERT_PACKAGE: ${{ inputs.alert_package }}
 
       # Mark this alert as investigated so the sweep does not re-trigger it.
-      # Uses a lightweight tag on the blender repo.
+      # Runs even if a remediation step failed (!cancelled), so a failed
+      # remediation can never cause the alert to be re-investigated every sweep.
       - name: Tag alert as investigated
-        if: inputs.dry_run != 'true'
+        if: ${{ !cancelled() && inputs.dry_run != 'true' }}
         run: |
           TAG_NAME="investigated/${TARGET_REPO}/${ALERT_NUMBER}"
           git tag "$TAG_NAME"
