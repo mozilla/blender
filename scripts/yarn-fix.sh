@@ -59,8 +59,9 @@ fi
 
 # Out-of-range patch: fall back to a resolutions pin, single-major trees only (#122).
 if [ "$state" = "flagged" ]; then
-  majors=$(grep -A1 "^\"${YARN_PACKAGE}@" yarn.lock 2>/dev/null \
-    | sed -nE 's/^ *version: "?([0-9]+).*/\1/p' | sort -u | grep -c .)
+  majors=$(yarn why "$YARN_PACKAGE" --json 2>/dev/null \
+    | jq -r '.children | keys[] | capture("@npm:(?<v>[0-9]+)").v' 2>/dev/null \
+    | sort -u | grep -c .)
   if [ -n "${YARN_VERSION:-}" ] && [ "$majors" = "1" ]; then
     echo "In-range bump insufficient; pinning ${YARN_PACKAGE} to ${YARN_VERSION} via resolutions."
     jq --arg p "$YARN_PACKAGE" --arg v "$YARN_VERSION" \
