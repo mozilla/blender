@@ -590,6 +590,7 @@ def check_alerts(
         return actions
     threshold = str(inv_config.get("severity_threshold", "") or "").lower()
     min_rank = SEVERITY_RANK.get(threshold, 0)
+    max_per_sweep = int(inv_config.get("max_per_sweep", 0) or 0)
 
     url = f"/repos/{repo.full_name}/dependabot/alerts"
     data: list = []
@@ -671,6 +672,12 @@ def check_alerts(
             )
         )
 
+    if max_per_sweep and len(actions) > max_per_sweep:
+        print(
+            f"    Capping investigations {len(actions)} -> {max_per_sweep} "
+            "(investigate.max_per_sweep)"
+        )
+        actions = actions[:max_per_sweep]
     return actions
 
 
@@ -705,6 +712,11 @@ def sweep(app_id: str, private_key: str) -> list[Action]:
     return actions
 
 
+# Global safety backstop: max investigations dispatched in one sweep run
+# (across all repos), on top of the per-repo investigate.max_per_sweep.
+INVESTIGATE_TOTAL_CAP = 200
+
+
 def main() -> None:
     app_id = os.environ.get("BLENDER_APP_ID", "")
     private_key = os.environ.get("BLENDER_APP_PRIVATE_KEY", "")
@@ -718,6 +730,12 @@ def main() -> None:
         sys.exit(1)
 
     actions = sweep(app_id, private_key)
+
+    inv = [a for a in actions if a.action == "investigate"]
+    if len(inv) > INVESTIGATE_TOTAL_CAP:
+        other = [a for a in actions if a.action != "investigate"]
+        print(f"Global cap: investigations {len(inv)} -> {INVESTIGATE_TOTAL_CAP}")
+        actions = other + inv[:INVESTIGATE_TOTAL_CAP]
 
     print(f"\n=== Sweep complete: {len(actions)} action(s) ===")
     output = [a.to_dict() for a in actions]

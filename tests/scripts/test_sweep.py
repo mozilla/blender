@@ -433,6 +433,17 @@ class TestAlertDiscovery:
         assert len(investigates) == 105
         assert repo._requester.requestJsonAndCheck.call_count == 2
 
+    def test_max_per_sweep_caps_investigations(self):
+        """Per-repo max_per_sweep limits how many investigations are emitted."""
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        page = [_make_alert(n, f"pkg{n}") for n in range(1, 61)]  # 60 alerts
+        repo._requester.requestJsonAndCheck.side_effect = [({}, page)]
+        repo.get_branches.return_value = []
+
+        actions = check_alerts(repo, config={"investigate": {"max_per_sweep": 50}})
+        assert len([a for a in actions if a.action == "investigate"]) == 50
+
     def test_investigate_disabled_skips_alerts(self):
         """investigate.enabled=false -> no alerts fetched or emitted."""
         repo = MagicMock()

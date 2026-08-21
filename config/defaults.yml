@@ -21,6 +21,9 @@ investigate:
   max_budget_usd: 1.50
   severity_threshold: ""
   dismiss_unaffected: false
+  # Max investigations dispatched per repo per sweep (paces cost/concurrency;
+  # the rest are picked up on later sweeps). 0 = unlimited.
+  max_per_sweep: 50
 
 auto_engineer:
   enabled: false
