@@ -28,6 +28,7 @@ import os
 import re
 import sys
 from dataclasses import dataclass
+from urllib.parse import unquote
 
 from github import Auth, GithubIntegration
 from github.GithubException import UnknownObjectException
@@ -594,23 +595,38 @@ def check_alerts(
 
     url = f"/repos/{repo.full_name}/dependabot/alerts"
     data: list = []
-    page = 1
-    while True:
+    params = {"state": "open", "per_page": "100"}
+    seen_cursors: set = set()
+    # range() is a backstop; the seen-cursor check below stops a repeating (runaway) cursor
+    for _ in range(100):
         try:
-            _, page_data = repo._requester.requestJsonAndCheck(
-                "GET",
-                url,
-                parameters={"state": "open", "per_page": "100", "page": str(page)},
+            headers, page_data = repo._requester.requestJsonAndCheck(
+                "GET", url, parameters=params
             )
         except Exception as e:
-            print(f"    Could not fetch alerts (page {page}): {e}")
+            print(f"    Could not fetch alerts: {e}")
             break
         if not page_data:
             break
         data.extend(page_data)
-        if len(page_data) < 100:
+        # Dependabot alerts use cursor pagination — follow Link rel="next" after= (page param is unsupported)
+        nxt = re.search(r'<([^>]+)>;\s*rel="next"', headers.get("link", "") or "")
+        after = re.search(r"[?&]after=([^&]+)", nxt.group(1)) if nxt else None
+        if not after:
             break
-        page += 1
+        # unquote: the Link cursor is URL-encoded; PyGithub re-encodes params, so pass it decoded
+        cursor = unquote(after.group(1))
+        if cursor in seen_cursors:  # repeated cursor = runaway; stop before re-fetching
+            break
+        seen_cursors.add(cursor)
+        params = {"state": "open", "per_page": "100", "after": cursor}
+    else:
+        print(
+            f"    Warning: pagination hit page cap for {repo.full_name} — results may be truncated"
+        )
+
+    # Dedupe by alert number in case a misbehaving cursor re-served a page
+    data = list({a.get("number"): a for a in data}.values())
 
     if not data:
         print("    No open Dependabot alerts")
