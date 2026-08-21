@@ -433,10 +433,14 @@ def dismiss_alert(
         return
 
     url = f"/repos/{repo.full_name}/dependabot/alerts/{alert_number}"
+    # GitHub caps dismissed_comment at 280 chars; truncate to avoid a 422.
+    comment = f"{BLENDER_NAME}: {reason}"
+    if len(comment) > 280:
+        comment = comment[:277] + "..."
     payload = {
         "state": "dismissed",
         "dismissed_reason": "not_used",
-        "dismissed_comment": f"{BLENDER_NAME}: {reason}",
+        "dismissed_comment": comment,
     }
     repo._requester.requestJsonAndCheck("PATCH", url, input=payload)
     print(f"  Dismissed alert #{alert_number}")
