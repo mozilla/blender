@@ -102,6 +102,16 @@ class TestDismissAlert:
         dismiss_alert(repo, 42, "not used", dry_run=True)
         repo._requester.requestJsonAndCheck.assert_not_called()
 
+    def test_truncates_long_comment(self):
+        """GitHub caps dismissed_comment at 280 chars; a long reason must not 422."""
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        dismiss_alert(repo, 42, "x" * 500, dry_run=False)
+        args, kwargs = repo._requester.requestJsonAndCheck.call_args
+        comment = kwargs["input"]["dismissed_comment"]
+        assert len(comment) <= 280
+        assert comment.endswith("...")
+
 
 class TestRenderMarkdown:
     def test_contains_key_elements(self):
