@@ -712,9 +712,18 @@ def sweep(app_id: str, private_key: str) -> list[Action]:
     return actions
 
 
-# Global safety backstop: max investigations dispatched in one sweep run
-# (across all repos), on top of the per-repo investigate.max_per_sweep.
+# Global backstop: max investigations dispatched per sweep run (all repos).
 INVESTIGATE_TOTAL_CAP = 200
+
+
+def cap_investigations(actions: list[Action], cap: int) -> list[Action]:
+    """Cap investigate actions to `cap`, preserving all other actions."""
+    inv = [a for a in actions if a.action == "investigate"]
+    if len(inv) <= cap:
+        return actions
+    other = [a for a in actions if a.action != "investigate"]
+    print(f"Global cap: investigations {len(inv)} -> {cap}")
+    return other + inv[:cap]
 
 
 def main() -> None:
@@ -730,12 +739,7 @@ def main() -> None:
         sys.exit(1)
 
     actions = sweep(app_id, private_key)
-
-    inv = [a for a in actions if a.action == "investigate"]
-    if len(inv) > INVESTIGATE_TOTAL_CAP:
-        other = [a for a in actions if a.action != "investigate"]
-        print(f"Global cap: investigations {len(inv)} -> {INVESTIGATE_TOTAL_CAP}")
-        actions = other + inv[:INVESTIGATE_TOTAL_CAP]
+    actions = cap_investigations(actions, INVESTIGATE_TOTAL_CAP)
 
     print(f"\n=== Sweep complete: {len(actions)} action(s) ===")
     output = [a.to_dict() for a in actions]

@@ -11,6 +11,7 @@ from tests.scripts import make_branch, make_comment, make_commit, make_review, m
 
 from scripts.sweep import (
     ALLOWED_OWNERS,
+    cap_investigations,
     check_alerts,
     fetch_investigated_alerts,
     process_repo,
@@ -647,3 +648,24 @@ class TestOwnerAllowlist:
 
         mock_process.assert_not_called()
         assert actions == []
+
+
+class TestCapInvestigations:
+    def _inv(self, n):
+        return [MagicMock(action="investigate") for _ in range(n)]
+
+    def test_over_cap_keeps_cap_and_preserves_others(self):
+        others = [MagicMock(action="automerge"), MagicMock(action="fix")]
+        result = cap_investigations(self._inv(250) + others, 200)
+        assert sum(1 for a in result if a.action == "investigate") == 200
+        assert sum(1 for a in result if a.action != "investigate") == 2
+
+    def test_exact_boundary_unchanged(self):
+        actions = self._inv(200)
+        result = cap_investigations(actions, 200)
+        assert len(result) == 200
+        assert all(a.action == "investigate" for a in result)
+
+    def test_under_cap_returns_unchanged(self):
+        actions = self._inv(10) + [MagicMock(action="fix")]
+        assert cap_investigations(actions, 200) is actions
