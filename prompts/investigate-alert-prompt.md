@@ -61,7 +61,7 @@ labeled `VERDICT_JSON`. Do not write any files. Just output this block:
 {
   "affected": false,
   "confidence": "high",
-  "reason": "Brief explanation of why the repo is or is not affected",
+  "reason": "Concise reason (<=271 chars); prefixed into the dismissal comment",
   "vulnerable_paths": [],
   "recommended_action": "bump_pr"
 }
@@ -71,7 +71,7 @@ labeled `VERDICT_JSON`. Do not write any files. Just output this block:
 **Fields:**
 - `affected`: true if the vulnerability impacts this repo's code
 - `confidence`: "high", "medium", or "low"
-- `reason`: one-paragraph explanation
+- `reason`: concise explanation, **≤271 characters** — leaves room for the "BLEnder: " prefix under GitHub's 280-char dismissal-comment cap
 - `vulnerable_paths`: list of `file:line` strings where vulnerable code is called (empty if not affected)
 - `recommended_action`: one of:
   - `"existing_pr"` — a Dependabot PR already bumps this package
