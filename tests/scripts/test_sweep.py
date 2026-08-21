@@ -432,6 +432,12 @@ class TestAlertDiscovery:
         investigates = [a for a in actions if a.action == "investigate"]
         assert len(investigates) == 105
         assert repo._requester.requestJsonAndCheck.call_count == 2
+        # Verify it advanced pages (not fetching page 1 twice)
+        pages = [
+            c.kwargs["parameters"]["page"]
+            for c in repo._requester.requestJsonAndCheck.call_args_list
+        ]
+        assert pages == ["1", "2"]
 
     def test_max_per_sweep_caps_investigations(self):
         """Per-repo max_per_sweep limits how many investigations are emitted."""
