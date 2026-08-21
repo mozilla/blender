@@ -590,15 +590,27 @@ def check_alerts(
         return actions
     threshold = str(inv_config.get("severity_threshold", "") or "").lower()
     min_rank = SEVERITY_RANK.get(threshold, 0)
+    max_per_sweep = int(inv_config.get("max_per_sweep", 0) or 0)
 
     url = f"/repos/{repo.full_name}/dependabot/alerts"
-    try:
-        headers, data = repo._requester.requestJsonAndCheck(
-            "GET", url, parameters={"state": "open", "per_page": "100"}
-        )
-    except Exception as e:
-        print(f"    Could not fetch alerts: {e}")
-        return actions
+    data: list = []
+    page = 1
+    while True:
+        try:
+            _, page_data = repo._requester.requestJsonAndCheck(
+                "GET",
+                url,
+                parameters={"state": "open", "per_page": "100", "page": str(page)},
+            )
+        except Exception as e:
+            print(f"    Could not fetch alerts (page {page}): {e}")
+            break
+        if not page_data:
+            break
+        data.extend(page_data)
+        if len(page_data) < 100:
+            break
+        page += 1
 
     if not data:
         print("    No open Dependabot alerts")
@@ -660,6 +672,12 @@ def check_alerts(
             )
         )
 
+    if max_per_sweep and len(actions) > max_per_sweep:
+        print(
+            f"    Capping investigations {len(actions)} -> {max_per_sweep} "
+            "(investigate.max_per_sweep)"
+        )
+        actions = actions[:max_per_sweep]
     return actions
 
 
@@ -694,6 +712,20 @@ def sweep(app_id: str, private_key: str) -> list[Action]:
     return actions
 
 
+# Global backstop: max investigations dispatched per sweep run (all repos).
+INVESTIGATE_TOTAL_CAP = 200
+
+
+def cap_investigations(actions: list[Action], cap: int) -> list[Action]:
+    """Cap investigate actions to `cap`, preserving all other actions."""
+    inv = [a for a in actions if a.action == "investigate"]
+    if len(inv) <= cap:
+        return actions
+    other = [a for a in actions if a.action != "investigate"]
+    print(f"Global cap: investigations {len(inv)} -> {cap}")
+    return other + inv[:cap]
+
+
 def main() -> None:
     app_id = os.environ.get("BLENDER_APP_ID", "")
     private_key = os.environ.get("BLENDER_APP_PRIVATE_KEY", "")
@@ -707,6 +739,7 @@ def main() -> None:
         sys.exit(1)
 
     actions = sweep(app_id, private_key)
+    actions = cap_investigations(actions, INVESTIGATE_TOTAL_CAP)
 
     print(f"\n=== Sweep complete: {len(actions)} action(s) ===")
     output = [a.to_dict() for a in actions]

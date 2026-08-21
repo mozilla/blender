@@ -11,6 +11,7 @@ from tests.scripts import make_branch, make_comment, make_commit, make_review, m
 
 from scripts.sweep import (
     ALLOWED_OWNERS,
+    cap_investigations,
     check_alerts,
     fetch_investigated_alerts,
     process_repo,
@@ -419,6 +420,37 @@ class TestAlertDiscovery:
         assert actions[0].alert_number == 42
         assert actions[0].alert_package == "lodash"
 
+    def test_alert_discovery_paginates_beyond_100(self):
+        """Fetches every page, not just the first 100 (repos with >100 alerts)."""
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        page1 = [_make_alert(n, f"pkg{n}") for n in range(1, 101)]  # 100
+        page2 = [_make_alert(n, f"pkg{n}") for n in range(101, 106)]  # 5
+        repo._requester.requestJsonAndCheck.side_effect = [({}, page1), ({}, page2)]
+        repo.get_branches.return_value = []
+
+        actions = check_alerts(repo)
+        investigates = [a for a in actions if a.action == "investigate"]
+        assert len(investigates) == 105
+        assert repo._requester.requestJsonAndCheck.call_count == 2
+        # Verify it advanced pages (not fetching page 1 twice)
+        pages = [
+            c.kwargs["parameters"]["page"]
+            for c in repo._requester.requestJsonAndCheck.call_args_list
+        ]
+        assert pages == ["1", "2"]
+
+    def test_max_per_sweep_caps_investigations(self):
+        """Per-repo max_per_sweep limits how many investigations are emitted."""
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        page = [_make_alert(n, f"pkg{n}") for n in range(1, 61)]  # 60 alerts
+        repo._requester.requestJsonAndCheck.side_effect = [({}, page)]
+        repo.get_branches.return_value = []
+
+        actions = check_alerts(repo, config={"investigate": {"max_per_sweep": 50}})
+        assert len([a for a in actions if a.action == "investigate"]) == 50
+
     def test_investigate_disabled_skips_alerts(self):
         """investigate.enabled=false -> no alerts fetched or emitted."""
         repo = MagicMock()
@@ -616,3 +648,24 @@ class TestOwnerAllowlist:
 
         mock_process.assert_not_called()
         assert actions == []
+
+
+class TestCapInvestigations:
+    def _inv(self, n):
+        return [MagicMock(action="investigate") for _ in range(n)]
+
+    def test_over_cap_keeps_cap_and_preserves_others(self):
+        others = [MagicMock(action="automerge"), MagicMock(action="fix")]
+        result = cap_investigations(self._inv(250) + others, 200)
+        assert sum(1 for a in result if a.action == "investigate") == 200
+        assert sum(1 for a in result if a.action != "investigate") == 2
+
+    def test_exact_boundary_unchanged(self):
+        actions = self._inv(200)
+        result = cap_investigations(actions, 200)
+        assert len(result) == 200
+        assert all(a.action == "investigate" for a in result)
+
+    def test_under_cap_returns_unchanged(self):
+        actions = self._inv(10) + [MagicMock(action="fix")]
+        assert cap_investigations(actions, 200) is actions
