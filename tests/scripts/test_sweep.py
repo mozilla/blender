@@ -426,19 +426,35 @@ class TestAlertDiscovery:
         repo.full_name = "owner/repo"
         page1 = [_make_alert(n, f"pkg{n}") for n in range(1, 101)]  # 100
         page2 = [_make_alert(n, f"pkg{n}") for n in range(101, 106)]  # 5
-        repo._requester.requestJsonAndCheck.side_effect = [({}, page1), ({}, page2)]
+        # First response carries a URL-encoded cursor in the Link header; second has none.
+        link = '<https://api.github.com/x/dependabot/alerts?after=A%2Bb%3D%3D&per_page=100>; rel="next"'
+        repo._requester.requestJsonAndCheck.side_effect = [({"link": link}, page1), ({}, page2)]
         repo.get_branches.return_value = []
 
         actions = check_alerts(repo)
         investigates = [a for a in actions if a.action == "investigate"]
         assert len(investigates) == 105
         assert repo._requester.requestJsonAndCheck.call_count == 2
-        # Verify it advanced pages (not fetching page 1 twice)
-        pages = [
-            c.kwargs["parameters"]["page"]
-            for c in repo._requester.requestJsonAndCheck.call_args_list
-        ]
-        assert pages == ["1", "2"]
+        # Second request carries the cursor DECODED (PyGithub re-encodes params — no double-encoding)
+        second = repo._requester.requestJsonAndCheck.call_args_list[1].kwargs["parameters"]
+        assert second.get("after") == "A+b=="
+
+    def test_alert_discovery_bounds_runaway_pagination(self):
+        """A repeating cursor stops as soon as it recurs and emits no duplicate actions."""
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        link = '<https://api.github.com/x/dependabot/alerts?after=STUCK&per_page=100>; rel="next"'
+        # Server keeps returning the same page + the same next cursor forever.
+        repo._requester.requestJsonAndCheck.return_value = (
+            {"link": link},
+            [_make_alert(1, "pkg")],
+        )
+        repo.get_branches.return_value = []
+
+        actions = check_alerts(repo)
+        # Stops once STUCK recurs (not 100 fetches) and dedupes to a single action.
+        assert repo._requester.requestJsonAndCheck.call_count == 2
+        assert len([a for a in actions if a.action == "investigate"]) == 1
 
     def test_max_per_sweep_caps_investigations(self):
         """Per-repo max_per_sweep limits how many investigations are emitted."""
