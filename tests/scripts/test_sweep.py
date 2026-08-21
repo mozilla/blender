@@ -419,6 +419,20 @@ class TestAlertDiscovery:
         assert actions[0].alert_number == 42
         assert actions[0].alert_package == "lodash"
 
+    def test_alert_discovery_paginates_beyond_100(self):
+        """Fetches every page, not just the first 100 (repos with >100 alerts)."""
+        repo = MagicMock()
+        repo.full_name = "owner/repo"
+        page1 = [_make_alert(n, f"pkg{n}") for n in range(1, 101)]  # 100
+        page2 = [_make_alert(n, f"pkg{n}") for n in range(101, 106)]  # 5
+        repo._requester.requestJsonAndCheck.side_effect = [({}, page1), ({}, page2)]
+        repo.get_branches.return_value = []
+
+        actions = check_alerts(repo)
+        investigates = [a for a in actions if a.action == "investigate"]
+        assert len(investigates) == 105
+        assert repo._requester.requestJsonAndCheck.call_count == 2
+
     def test_investigate_disabled_skips_alerts(self):
         """investigate.enabled=false -> no alerts fetched or emitted."""
         repo = MagicMock()

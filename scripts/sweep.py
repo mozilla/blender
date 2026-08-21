@@ -592,13 +592,24 @@ def check_alerts(
     min_rank = SEVERITY_RANK.get(threshold, 0)
 
     url = f"/repos/{repo.full_name}/dependabot/alerts"
-    try:
-        headers, data = repo._requester.requestJsonAndCheck(
-            "GET", url, parameters={"state": "open", "per_page": "100"}
-        )
-    except Exception as e:
-        print(f"    Could not fetch alerts: {e}")
-        return actions
+    data: list = []
+    page = 1
+    while True:
+        try:
+            _, page_data = repo._requester.requestJsonAndCheck(
+                "GET",
+                url,
+                parameters={"state": "open", "per_page": "100", "page": str(page)},
+            )
+        except Exception as e:
+            print(f"    Could not fetch alerts (page {page}): {e}")
+            break
+        if not page_data:
+            break
+        data.extend(page_data)
+        if len(page_data) < 100:
+            break
+        page += 1
 
     if not data:
         print("    No open Dependabot alerts")
