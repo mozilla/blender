@@ -78,7 +78,7 @@ labeled `VERDICT_JSON`. Do not write any files. Just output this block:
   - `"bump_pr"` — not affected, but open a PR to bump the dependency
   - `"private_fork"` — affected, needs a fix in a private security fork
 
-**Confidence levels:**
+**Confidence levels:** (a `high`-severity not-affected verdict may be auto-dismissed only when confidence is `high`, so reserve it for genuine certainty)
 - `high`: clear evidence the package is or is not used in vulnerable ways
 - `medium`: package is used but the vulnerable code path is ambiguous
 - `low`: cannot determine with confidence

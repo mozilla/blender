@@ -343,6 +343,61 @@ class TestMainFlow:
 
         mock_repo._requester.requestJsonAndCheck.assert_not_called()
 
+    def test_dismiss_high_when_enabled_and_confident(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """High is dismissed when dismiss_high is on and confidence meets the bar."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "high"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", DISMISS_HIGH="true", ALERT_SEVERITY="high",
+        )
+
+        args = mock_repo._requester.requestJsonAndCheck.call_args
+        assert args.args[0] == "PATCH"
+        assert args.kwargs["input"]["state"] == "dismissed"
+
+    def test_dismiss_high_blocked_below_confidence(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """High is NOT dismissed when confidence is below the configured bar."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "medium"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", DISMISS_HIGH="true",
+            DISMISS_MIN_CONFIDENCE="high", ALERT_SEVERITY="high",
+        )
+
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+
+    def test_dismiss_never_critical(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """Critical is never auto-dismissed, even at high confidence with a low bar."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "high"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", DISMISS_HIGH="true",
+            DISMISS_MIN_CONFIDENCE="low", ALERT_SEVERITY="critical",
+        )
+
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+
     def test_dismiss_skips_unknown_severity(
         self, verdict_file, tmp_path, monkeypatch
     ):
