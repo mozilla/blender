@@ -76,6 +76,9 @@ outputs:
   dismiss_unaffected:
     description: 'Whether to dismiss unaffected alerts'
     value: ${{ steps.config.outputs.dismiss_unaffected }}
+  dismiss_min_confidence:
+    description: 'Minimum verdict confidence required to auto-dismiss'
+    value: ${{ steps.config.outputs.dismiss_min_confidence }}
   install_failed:
     description: 'Whether the target dependency install failed'
     value: ${{ steps.install-deps.outcome == 'failure' && 'true' || 'false' }}
@@ -128,6 +131,7 @@ runs:
           echo "install_command=$(yq '.install_command // ""' "$CONFIG_FILE")"
           echo "repo_name=$(yq '.repo_name // ""' "$CONFIG_FILE")"
           echo "dismiss_unaffected=$(yq '.investigate.dismiss_unaffected // "false"' "$CONFIG_FILE")"
+          echo "dismiss_min_confidence=$(yq '.investigate.dismiss_min_confidence // "high"' "$CONFIG_FILE")"
         } >> "$GITHUB_OUTPUT"
       env:
         CHECKOUT_PATH: ${{ inputs.checkout-path }}

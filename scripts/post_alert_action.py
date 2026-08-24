@@ -43,6 +43,7 @@ from scripts.alert_report import write_step_summary  # noqa: E402
 BLENDER_NAME = "BLEnder"
 DISMISS_BLOCKED_SEVERITIES = {"critical", "high"}
 DISMISS_UNKNOWN_SEVERITIES = {"", "unknown"}
+CONFIDENCE_RANK = {"low": 1, "medium": 2, "high": 3}
 VERDICT_FILE = ".blender-alert-verdict.json"
 REQUIRED_KEYS = {
     "affected",
@@ -51,6 +52,24 @@ REQUIRED_KEYS = {
     "vulnerable_paths",
     "recommended_action",
 }
+
+
+def dismiss_allowed(
+    enabled: bool,
+    severity: str,
+    confidence: str,
+    min_confidence: str,
+) -> bool:
+    """Whether a not-affected alert may be auto-dismissed.
+
+    Below the confidence bar is never dismissed, at any severity. Severity
+    scope (which severities are eligible at all) is handled separately.
+    """
+    if not enabled or severity in DISMISS_UNKNOWN_SEVERITIES:
+        return False
+    if severity in DISMISS_BLOCKED_SEVERITIES:
+        return False
+    return CONFIDENCE_RANK.get(confidence, 0) >= CONFIDENCE_RANK.get(min_confidence, 3)
 
 
 def load_verdict() -> dict | None:
@@ -460,6 +479,7 @@ def main() -> None:
         "1",
         "yes",
     )
+    dismiss_min_confidence = os.environ.get("DISMISS_MIN_CONFIDENCE", "high").lower()
 
     if not token or not repo_name:
         print("Error: GH_TOKEN and REPO are required.")
@@ -492,17 +512,19 @@ def main() -> None:
     if not affected:
         # Check for an existing PR (Dependabot or BLEnder) that bumps this package
         existing_pr = find_existing_bump_pr(repo, package_name)
+        severity_l = severity.lower()
+        confidence = str(verdict.get("confidence", "")).lower()
 
         if existing_pr:
             print(f"  Existing PR #{existing_pr} covers this package.")
             comment_on_pr(repo, existing_pr, reason, dry_run)
             action = "existing_pr"
-        elif (
-            dismiss_enabled
-            and severity.lower() not in DISMISS_BLOCKED_SEVERITIES
-            and severity.lower() not in DISMISS_UNKNOWN_SEVERITIES
+        elif dismiss_allowed(
+            dismiss_enabled, severity_l, confidence, dismiss_min_confidence
         ):
-            print("  Unaffected + dismiss enabled (low/medium). Dismissing alert.")
+            print(
+                f"  Unaffected + dismiss allowed ({severity_l}, confidence={confidence}). Dismissing alert."
+            )
             dismiss_alert(repo, alert_number, reason, dry_run)
             action = "dismissed"
         elif recommended == "bump_pr":
@@ -558,10 +580,15 @@ def main() -> None:
                     else:
                         action = "noop"
         elif dismiss_enabled:
-            print(
-                f"  Unaffected but severity is {severity}."
-                " Recommend manual review before dismissing."
-            )
+            if (
+                severity_l in DISMISS_BLOCKED_SEVERITIES
+                or severity_l in DISMISS_UNKNOWN_SEVERITIES
+            ):
+                print(f"  Not dismissed: severity {severity_l} needs manual review.")
+            else:
+                print(
+                    f"  Not dismissed: confidence {confidence} below required {dismiss_min_confidence}."
+                )
             action = "noop"
         else:
             action = "noop"

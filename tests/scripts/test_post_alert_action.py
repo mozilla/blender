@@ -327,6 +327,60 @@ class TestMainFlow:
             },
         )
 
+    def test_dismiss_blocked_below_confidence(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """Low-confidence not-affected verdicts are never dismissed (default bar=high)."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "low"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
+        )
+
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+
+    def test_dismiss_medium_confidence_blocked_by_default_bar(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """Default bar is high, so a medium-confidence verdict does not dismiss."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "medium"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
+        )
+
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+
+    def test_dismiss_confidence_bar_configurable(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """Lowering the bar to medium lets a medium-confidence verdict dismiss."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "medium"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
+            DISMISS_MIN_CONFIDENCE="medium",
+        )
+
+        args = mock_repo._requester.requestJsonAndCheck.call_args
+        assert args.args[0] == "PATCH"
+        assert args.kwargs["input"]["state"] == "dismissed"
+
     def test_dismiss_skips_high_severity(
         self, verdict_file, tmp_path, monkeypatch
     ):
