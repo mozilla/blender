@@ -23,7 +23,7 @@ investigate:
   dismiss_unaffected: false
   # Minimum verdict confidence required to auto-dismiss: low | medium | high
   # (a confidence floor for every dismissal; which severities are dismissable is
-  # separate — high/critical are not auto-dismissed regardless of this value)
+  # separate)
   dismiss_min_confidence: high
   # Max investigations per repo per sweep; the rest drain on later sweeps. 0 = unlimited.
   max_per_sweep: 50

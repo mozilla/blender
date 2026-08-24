@@ -63,7 +63,7 @@ def dismiss_allowed(
     """Whether a not-affected alert may be auto-dismissed.
 
     Below the confidence bar is never dismissed, at any severity. Severity
-    scope (which severities are eligible at all) is handled separately.
+    scope is handled separately.
     """
     if not enabled or severity in DISMISS_UNKNOWN_SEVERITIES:
         return False
