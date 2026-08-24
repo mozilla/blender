@@ -480,6 +480,12 @@ def main() -> None:
         "yes",
     )
     dismiss_min_confidence = os.environ.get("DISMISS_MIN_CONFIDENCE", "high").lower()
+    if dismiss_min_confidence not in CONFIDENCE_RANK:
+        print(
+            f"  Unrecognized DISMISS_MIN_CONFIDENCE={dismiss_min_confidence!r}; "
+            "defaulting to 'high'."
+        )
+        dismiss_min_confidence = "high"
 
     if not token or not repo_name:
         print("Error: GH_TOKEN and REPO are required.")
@@ -532,7 +538,7 @@ def main() -> None:
                 note = f"not dismissed: severity {severity_l} needs manual review"
             else:
                 note = (
-                    f"not dismissed: confidence {confidence} "
+                    f"not dismissed: confidence {confidence or 'unknown'} "
                     f"below required {dismiss_min_confidence}"
                 )
 

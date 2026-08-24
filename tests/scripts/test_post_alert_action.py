@@ -392,6 +392,43 @@ class TestMainFlow:
         assert args.args[0] == "PATCH"
         assert args.kwargs["input"]["state"] == "dismissed"
 
+    def test_empty_confidence_note_is_readable(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """An empty confidence value renders a readable note, not a blank."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": ""}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        summary_file = self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
+        )
+
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+        assert "confidence unknown below required high" in open(summary_file).read()
+
+    def test_invalid_min_confidence_falls_back_to_high(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """An unrecognized DISMISS_MIN_CONFIDENCE defaults to the strict 'high' bar."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "medium"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
+            DISMISS_MIN_CONFIDENCE="hgih",  # typo -> falls back to high
+        )
+
+        # medium is below the fallback 'high' bar, so nothing is dismissed
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+
     def test_dismiss_skips_high_severity(
         self, verdict_file, tmp_path, monkeypatch
     ):
