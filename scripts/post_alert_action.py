@@ -508,6 +508,7 @@ def main() -> None:
     print(f"  Reason: {verdict.get('reason', '(none)')}")
 
     reason = verdict.get("reason", "(none)")
+    note = ""  # extra context for the step summary (e.g. why a dismissal was skipped)
 
     if not affected:
         # Check for an existing PR (Dependabot or BLEnder) that bumps this package
@@ -584,11 +585,13 @@ def main() -> None:
                 severity_l in DISMISS_BLOCKED_SEVERITIES
                 or severity_l in DISMISS_UNKNOWN_SEVERITIES
             ):
-                print(f"  Not dismissed: severity {severity_l} needs manual review.")
+                note = f"not dismissed: severity {severity_l} needs manual review"
             else:
-                print(
-                    f"  Not dismissed: confidence {confidence} below required {dismiss_min_confidence}."
+                note = (
+                    f"not dismissed: confidence {confidence} "
+                    f"below required {dismiss_min_confidence}"
                 )
+            print(f"  {note}.")
             action = "noop"
         else:
             action = "noop"
@@ -611,7 +614,9 @@ def main() -> None:
         write_output("action", action)
         write_output("advisory_ghsa_id", ghsa_id)
 
-    write_step_summary(repo_name, alert_number, package_name, severity, action, verdict)
+    write_step_summary(
+        repo_name, alert_number, package_name, severity, action, verdict, note
+    )
 
 
 def write_output(key: str, value: str) -> None:
