@@ -516,6 +516,26 @@ def main() -> None:
         severity_l = severity.lower()
         confidence = str(verdict.get("confidence", "")).lower()
 
+        # If dismissal is enabled but blocked (severity or confidence), record why —
+        # shown in the summary whether we then bump or no-op.
+        if (
+            dismiss_enabled
+            and not existing_pr
+            and not dismiss_allowed(
+                dismiss_enabled, severity_l, confidence, dismiss_min_confidence
+            )
+        ):
+            if (
+                severity_l in DISMISS_BLOCKED_SEVERITIES
+                or severity_l in DISMISS_UNKNOWN_SEVERITIES
+            ):
+                note = f"not dismissed: severity {severity_l} needs manual review"
+            else:
+                note = (
+                    f"not dismissed: confidence {confidence} "
+                    f"below required {dismiss_min_confidence}"
+                )
+
         if existing_pr:
             print(f"  Existing PR #{existing_pr} covers this package.")
             comment_on_pr(repo, existing_pr, reason, dry_run)
@@ -581,16 +601,6 @@ def main() -> None:
                     else:
                         action = "noop"
         elif dismiss_enabled:
-            if (
-                severity_l in DISMISS_BLOCKED_SEVERITIES
-                or severity_l in DISMISS_UNKNOWN_SEVERITIES
-            ):
-                note = f"not dismissed: severity {severity_l} needs manual review"
-            else:
-                note = (
-                    f"not dismissed: confidence {confidence} "
-                    f"below required {dismiss_min_confidence}"
-                )
             print(f"  {note}.")
             action = "noop"
         else:

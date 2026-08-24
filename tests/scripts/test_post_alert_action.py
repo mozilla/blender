@@ -425,6 +425,31 @@ class TestMainFlow:
 
         mock_repo._requester.requestJsonAndCheck.assert_not_called()
 
+    def test_confidence_note_preserved_on_bump_fallback(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """A below-bar alert that recommends bump_pr still records the confidence note."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "bump_pr", "confidence": "low"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        output_file = str(tmp_path / "github_output")
+        open(output_file, "w").close()
+
+        summary_file = self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
+            ALERT_ECOSYSTEM="npm", ALERT_PATCHED_VERSION="1.0.1",
+            GITHUB_OUTPUT=output_file,
+        )
+
+        # Bumped (not dismissed) because confidence was below the bar...
+        assert "action=npm_bump" in open(output_file).read()
+        # ...and the summary still explains why it wasn't dismissed (#143).
+        assert "below required high" in open(summary_file).read()
+
     def test_npm_bump_outputs_action(
         self, verdict_file, tmp_path, monkeypatch
     ):
