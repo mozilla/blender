@@ -535,11 +535,14 @@ def main() -> None:
                 severity_l in DISMISS_BLOCKED_SEVERITIES
                 or severity_l in DISMISS_UNKNOWN_SEVERITIES
             ):
-                note = f"not dismissed: severity {severity_l} needs manual review"
+                note = (
+                    f"not dismissed. severity: {severity_l or 'unknown'}. "
+                    "needs manual review"
+                )
             else:
                 note = (
-                    f"not dismissed: confidence {confidence or 'unknown'} "
-                    f"below required {dismiss_min_confidence}"
+                    f"not dismissed. confidence: {confidence or 'unknown'}. "
+                    f"below required: {dismiss_min_confidence}"
                 )
 
         if existing_pr:

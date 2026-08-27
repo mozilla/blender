@@ -127,10 +127,10 @@ class TestRenderMarkdown:
     def test_note_renders_when_present(self):
         result = render_markdown(
             "owner/repo", 42, "lodash", "low", "noop", SAMPLE_VERDICT,
-            note="not dismissed: confidence low below required high",
+            note="not dismissed. confidence: low. below required: high",
         )
         assert "**Note**" in result
-        assert "below required high" in result
+        assert "below required: high" in result
 
     def test_affected_redacts_details(self):
         verdict = {
@@ -370,7 +370,7 @@ class TestMainFlow:
         mock_repo._requester.requestJsonAndCheck.assert_not_called()
         # The skip reason must reach the step summary, not just the job log (#143).
         summary = open(summary_file).read()
-        assert "below required high" in summary
+        assert "below required: high" in summary
 
     def test_dismiss_confidence_bar_configurable(
         self, verdict_file, tmp_path, monkeypatch
@@ -408,7 +408,7 @@ class TestMainFlow:
         )
 
         mock_repo._requester.requestJsonAndCheck.assert_not_called()
-        assert "confidence unknown below required high" in open(summary_file).read()
+        assert "confidence: unknown. below required: high" in open(summary_file).read()
 
     def test_invalid_min_confidence_falls_back_to_high(
         self, verdict_file, tmp_path, monkeypatch
@@ -485,7 +485,7 @@ class TestMainFlow:
         # Bumped (not dismissed) because confidence was below the bar...
         assert "action=npm_bump" in open(output_file).read()
         # ...and the summary still explains why it wasn't dismissed (#143).
-        assert "below required high" in open(summary_file).read()
+        assert "below required: high" in open(summary_file).read()
 
     def test_npm_bump_outputs_action(
         self, verdict_file, tmp_path, monkeypatch
