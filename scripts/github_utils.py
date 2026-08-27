@@ -10,6 +10,9 @@ from github.PullRequest import PullRequest
 
 BOT_LOGIN = "mozilla-blender[bot]"
 
+# Dependabot alert severities, ranked low to high.
+SEVERITY_RANK = {"low": 1, "medium": 2, "high": 3, "critical": 4}
+
 
 def is_bot(login: str) -> bool:
     """True if the login belongs to a bot account.

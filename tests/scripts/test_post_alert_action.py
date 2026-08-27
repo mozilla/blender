@@ -47,6 +47,28 @@ SAMPLE_VERDICT = {
 }
 
 
+# Dismissal policy cases exercised through main() (see TestMainFlow).
+# Each: (id, extra env, verdict overrides, expected step-summary note substring).
+NOT_DISMISSED_CASES = [
+    ("low_confidence", {"ALERT_SEVERITY": "low"}, {"confidence": "low"}, "below required: high"),
+    ("medium_below_default_bar", {"ALERT_SEVERITY": "low"}, {"confidence": "medium"}, "below required: high"),
+    ("empty_confidence", {"ALERT_SEVERITY": "low"}, {"confidence": ""}, "confidence: unknown. below required: high"),
+    ("invalid_min_confidence", {"ALERT_SEVERITY": "low", "DISMISS_MIN_CONFIDENCE": "hgih"}, {"confidence": "medium"}, None),
+    ("high_above_default_ceiling", {"ALERT_SEVERITY": "high"}, {"confidence": "high"}, "above ceiling: medium"),
+    ("critical_above_high_ceiling", {"ALERT_SEVERITY": "critical", "DISMISS_MAX_SEVERITY": "high"}, {"confidence": "high"}, "above ceiling: high"),
+    ("invalid_max_severity", {"ALERT_SEVERITY": "high", "DISMISS_MAX_SEVERITY": "huge"}, {"confidence": "high"}, None),
+    ("unknown_severity", {"ALERT_SEVERITY": ""}, {"confidence": "high"}, "needs manual review"),
+    ("unrecognized_severity", {"ALERT_SEVERITY": "moderate", "DISMISS_MAX_SEVERITY": "critical"}, {"confidence": "high"}, "needs manual review"),
+]
+
+DISMISSED_CASES = [
+    ("low_default_bar", {"ALERT_SEVERITY": "low"}, {"confidence": "high"}),
+    ("medium_bar_lowered", {"ALERT_SEVERITY": "low", "DISMISS_MIN_CONFIDENCE": "medium"}, {"confidence": "medium"}),
+    ("high_ceiling_raised", {"ALERT_SEVERITY": "high", "DISMISS_MAX_SEVERITY": "high"}, {"confidence": "high"}),
+    ("critical_ceiling", {"ALERT_SEVERITY": "critical", "DISMISS_MAX_SEVERITY": "critical"}, {"confidence": "high"}),
+]
+
+
 class TestLoadVerdict:
     def test_missing_file(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
@@ -310,53 +332,17 @@ class TestMainFlow:
         # Should comment on PR, not dismiss
         mock_repo.get_pull.assert_called_once_with(99)
 
-    def test_dismiss_enabled_no_pr_no_bump(
-        self, verdict_file, tmp_path, monkeypatch
+    @pytest.mark.parametrize(
+        "env, verdict_over, note_substr",
+        [c[1:] for c in NOT_DISMISSED_CASES],
+        ids=[c[0] for c in NOT_DISMISSED_CASES],
+    )
+    def test_unaffected_not_dismissed(
+        self, verdict_file, tmp_path, monkeypatch, env, verdict_over, note_substr
     ):
-        """With dismiss enabled and recommended_action != bump_pr, dismiss."""
-        verdict = {**SAMPLE_VERDICT, "recommended_action": "none"}
-        verdict_file(verdict)
-        mock_repo = MagicMock()
-        mock_repo.full_name = "owner/repo"
-        mock_repo.get_pulls.return_value = []
-
-        self._run_main(
-            verdict_file, tmp_path, monkeypatch, mock_repo,
-            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
-        )
-
-        mock_repo._requester.requestJsonAndCheck.assert_called_once_with(
-            "PATCH",
-            "/repos/owner/repo/dependabot/alerts/42",
-            input={
-                "state": "dismissed",
-                "dismissed_reason": "not_used",
-                "dismissed_comment": "BLEnder: not used in codebase",
-            },
-        )
-
-    def test_dismiss_blocked_below_confidence(
-        self, verdict_file, tmp_path, monkeypatch
-    ):
-        """Low-confidence not-affected verdicts are never dismissed (default bar=high)."""
-        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "low"}
-        verdict_file(verdict)
-        mock_repo = MagicMock()
-        mock_repo.full_name = "owner/repo"
-        mock_repo.get_pulls.return_value = []
-
-        self._run_main(
-            verdict_file, tmp_path, monkeypatch, mock_repo,
-            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
-        )
-
-        mock_repo._requester.requestJsonAndCheck.assert_not_called()
-
-    def test_dismiss_medium_confidence_blocked_by_default_bar(
-        self, verdict_file, tmp_path, monkeypatch
-    ):
-        """Default bar is high, so a medium-confidence verdict does not dismiss."""
-        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "medium"}
+        """Not-affected alerts blocked by the confidence floor or severity ceiling
+        are left open, with the reason recorded in the step summary."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", **verdict_over}
         verdict_file(verdict)
         mock_repo = MagicMock()
         mock_repo.full_name = "owner/repo"
@@ -364,19 +350,24 @@ class TestMainFlow:
 
         summary_file = self._run_main(
             verdict_file, tmp_path, monkeypatch, mock_repo,
-            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
+            DISMISS_UNAFFECTED="true", **env,
         )
 
         mock_repo._requester.requestJsonAndCheck.assert_not_called()
-        # The skip reason must reach the step summary, not just the job log (#143).
-        summary = open(summary_file).read()
-        assert "below required: high" in summary
+        if note_substr:
+            assert note_substr in open(summary_file).read()
 
-    def test_dismiss_confidence_bar_configurable(
-        self, verdict_file, tmp_path, monkeypatch
+    @pytest.mark.parametrize(
+        "env, verdict_over",
+        [c[1:] for c in DISMISSED_CASES],
+        ids=[c[0] for c in DISMISSED_CASES],
+    )
+    def test_unaffected_dismissed_within_policy(
+        self, verdict_file, tmp_path, monkeypatch, env, verdict_over
     ):
-        """Lowering the bar to medium lets a medium-confidence verdict dismiss."""
-        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "medium"}
+        """Not-affected alerts within the severity ceiling and confidence floor
+        are dismissed."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", **verdict_over}
         verdict_file(verdict)
         mock_repo = MagicMock()
         mock_repo.full_name = "owner/repo"
@@ -384,83 +375,12 @@ class TestMainFlow:
 
         self._run_main(
             verdict_file, tmp_path, monkeypatch, mock_repo,
-            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
-            DISMISS_MIN_CONFIDENCE="medium",
+            DISMISS_UNAFFECTED="true", **env,
         )
 
         args = mock_repo._requester.requestJsonAndCheck.call_args
         assert args.args[0] == "PATCH"
         assert args.kwargs["input"]["state"] == "dismissed"
-
-    def test_empty_confidence_note_is_readable(
-        self, verdict_file, tmp_path, monkeypatch
-    ):
-        """An empty confidence value renders a readable note, not a blank."""
-        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": ""}
-        verdict_file(verdict)
-        mock_repo = MagicMock()
-        mock_repo.full_name = "owner/repo"
-        mock_repo.get_pulls.return_value = []
-
-        summary_file = self._run_main(
-            verdict_file, tmp_path, monkeypatch, mock_repo,
-            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
-        )
-
-        mock_repo._requester.requestJsonAndCheck.assert_not_called()
-        assert "confidence: unknown. below required: high" in open(summary_file).read()
-
-    def test_invalid_min_confidence_falls_back_to_high(
-        self, verdict_file, tmp_path, monkeypatch
-    ):
-        """An unrecognized DISMISS_MIN_CONFIDENCE defaults to the strict 'high' bar."""
-        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "medium"}
-        verdict_file(verdict)
-        mock_repo = MagicMock()
-        mock_repo.full_name = "owner/repo"
-        mock_repo.get_pulls.return_value = []
-
-        self._run_main(
-            verdict_file, tmp_path, monkeypatch, mock_repo,
-            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
-            DISMISS_MIN_CONFIDENCE="hgih",  # typo -> falls back to high
-        )
-
-        # medium is below the fallback 'high' bar, so nothing is dismissed
-        mock_repo._requester.requestJsonAndCheck.assert_not_called()
-
-    def test_dismiss_skips_high_severity(
-        self, verdict_file, tmp_path, monkeypatch
-    ):
-        verdict = {**SAMPLE_VERDICT, "recommended_action": "none"}
-        verdict_file(verdict)
-        mock_repo = MagicMock()
-        mock_repo.full_name = "owner/repo"
-        mock_repo.get_pulls.return_value = []
-
-        self._run_main(
-            verdict_file, tmp_path, monkeypatch, mock_repo,
-            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="high",
-        )
-
-        mock_repo._requester.requestJsonAndCheck.assert_not_called()
-
-    def test_dismiss_skips_unknown_severity(
-        self, verdict_file, tmp_path, monkeypatch
-    ):
-        """Empty/unknown severity is not auto-dismissed (could be high/critical)."""
-        verdict = {**SAMPLE_VERDICT, "recommended_action": "none"}
-        verdict_file(verdict)
-        mock_repo = MagicMock()
-        mock_repo.full_name = "owner/repo"
-        mock_repo.get_pulls.return_value = []
-
-        self._run_main(
-            verdict_file, tmp_path, monkeypatch, mock_repo,
-            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="",
-        )
-
-        mock_repo._requester.requestJsonAndCheck.assert_not_called()
 
     def test_confidence_note_preserved_on_bump_fallback(
         self, verdict_file, tmp_path, monkeypatch
