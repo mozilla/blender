@@ -534,11 +534,11 @@ def main() -> None:
     if not affected:
         # Check for an existing PR (Dependabot or BLEnder) that bumps this package
         existing_pr = find_existing_bump_pr(repo, package_name)
-        severity_l = severity.lower()
+        severity_lower = severity.lower()
         confidence = str(verdict.get("confidence", "")).lower()
         allowed = dismiss_allowed(
             dismiss_enabled,
-            severity_l,
+            severity_lower,
             confidence,
             dismiss_min_confidence,
             dismiss_max_severity,
@@ -547,14 +547,14 @@ def main() -> None:
         # If dismissal is enabled but blocked (severity or confidence), record why —
         # shown in the summary whether we then bump or no-op.
         if dismiss_enabled and not existing_pr and not allowed:
-            if severity_l not in SEVERITY_RANK:
+            if severity_lower not in SEVERITY_RANK:
                 note = (
-                    f"not dismissed. severity: {severity_l or 'unknown'}. "
+                    f"not dismissed. severity: {severity_lower or 'unknown'}. "
                     "needs manual review"
                 )
-            elif severity_over_ceiling(severity_l, dismiss_max_severity):
+            elif severity_over_ceiling(severity_lower, dismiss_max_severity):
                 note = (
-                    f"not dismissed. severity: {severity_l}. "
+                    f"not dismissed. severity: {severity_lower}. "
                     f"above ceiling: {dismiss_max_severity}"
                 )
             else:
@@ -569,7 +569,7 @@ def main() -> None:
             action = "existing_pr"
         elif allowed:
             print(
-                f"  Unaffected + dismiss allowed ({severity_l}, confidence={confidence}). Dismissing alert."
+                f"  Unaffected + dismiss allowed ({severity_lower}, confidence={confidence}). Dismissing alert."
             )
             dismiss_alert(repo, alert_number, reason, dry_run)
             action = "dismissed"
