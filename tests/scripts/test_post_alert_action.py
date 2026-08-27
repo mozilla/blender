@@ -445,6 +445,100 @@ class TestMainFlow:
 
         mock_repo._requester.requestJsonAndCheck.assert_not_called()
 
+    def test_dismiss_high_when_ceiling_raised(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """High is dismissed when the ceiling is raised to high and confidence clears the bar."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "high"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="high",
+            DISMISS_MAX_SEVERITY="high",
+        )
+
+        args = mock_repo._requester.requestJsonAndCheck.call_args
+        assert args.args[0] == "PATCH"
+        assert args.kwargs["input"]["state"] == "dismissed"
+
+    def test_dismiss_critical_when_ceiling_is_critical(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """Critical is dismissable only when the ceiling is explicitly critical."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "high"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="critical",
+            DISMISS_MAX_SEVERITY="critical",
+        )
+
+        assert mock_repo._requester.requestJsonAndCheck.call_args.args[0] == "PATCH"
+
+    def test_critical_not_dismissed_below_ceiling(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """Critical stays open when the ceiling is only high; the reason lands in the summary."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "high"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        summary_file = self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="critical",
+            DISMISS_MAX_SEVERITY="high",
+        )
+
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+        assert "above ceiling: high" in open(summary_file).read()
+
+    def test_invalid_max_severity_falls_back_to_medium(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """An unrecognized DISMISS_MAX_SEVERITY defaults to 'medium' (high not dismissed)."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "high"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="high",
+            DISMISS_MAX_SEVERITY="huge",  # typo -> falls back to medium
+        )
+
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+
+    def test_unrecognized_severity_not_dismissed(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """A non-canonical severity is never dismissed and reads as manual-review, not 'above ceiling'."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "high"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        summary_file = self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="moderate",
+            DISMISS_MAX_SEVERITY="critical",
+        )
+
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+        assert "needs manual review" in open(summary_file).read()
+
     def test_dismiss_skips_unknown_severity(
         self, verdict_file, tmp_path, monkeypatch
     ):

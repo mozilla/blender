@@ -182,6 +182,7 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
           DISMISS_UNAFFECTED: ${{ steps.setup.outputs.dismiss_unaffected }}
           DISMISS_MIN_CONFIDENCE: ${{ steps.setup.outputs.dismiss_min_confidence }}
+          DISMISS_MAX_SEVERITY: ${{ steps.setup.outputs.dismiss_max_severity }}
 
       # --- npm transitive dependency bump (lock file only) ---
       - name: Run npm audit fix

@@ -37,10 +37,14 @@ from github.Repository import Repository
 
 try:
     from scripts.config_utils import load_repo_config
-    from scripts.github_utils import has_codeowner_approval, is_bot
+    from scripts.github_utils import SEVERITY_RANK, has_codeowner_approval, is_bot
 except ImportError:
     from config_utils import load_repo_config  # type: ignore[no-redef]
-    from github_utils import has_codeowner_approval, is_bot  # type: ignore[no-redef]
+    from github_utils import (  # type: ignore[no-redef]
+        SEVERITY_RANK,
+        has_codeowner_approval,
+        is_bot,
+    )
 
 BOT_LOGIN = "mozilla-blender[bot]"
 
@@ -55,10 +59,6 @@ ALLOWED_OWNERS = frozenset(
 BLENDER_REPO = "mozilla/blender"
 INVESTIGATED_TAG_PREFIX = "investigated/"
 _INVESTIGATED_TAG_RE = re.compile(r"^investigated/(.+)/(\d+)$")
-
-# Dependabot alert severities, ranked low to high. Used to skip alerts
-# below a repo's configured investigate.severity_threshold.
-SEVERITY_RANK = {"low": 1, "medium": 2, "high": 3, "critical": 4}
 
 
 AUTO_ENGINEER_LABEL = "blender:auto-engineer"

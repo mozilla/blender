@@ -5,7 +5,7 @@ Reads .blender-alert-verdict.json and takes the appropriate action:
 
   unaffected + existing PR       -> comment on the PR, let other workflows handle
   unaffected + no PR             -> bump via lock tool or create PR
-  unaffected + dismiss enabled   -> dismiss the alert (low/medium only)
+  unaffected + dismiss enabled   -> dismiss if severity <= ceiling and confidence >= floor
   affected                       -> create advisory with private fork
 
 Writes a summary to $GITHUB_STEP_SUMMARY and emits an annotation.
@@ -19,7 +19,9 @@ Environment variables:
   ALERT_SEVERITY        -- Alert severity (optional, for summary)
   ALERT_PATCHED_VERSION -- Version to bump to (optional)
   DRY_RUN               -- Set to "true" to skip mutations (default: false)
-  DISMISS_UNAFFECTED    -- Set to "true" to dismiss unaffected alerts
+  DISMISS_UNAFFECTED     -- Set to "true" to dismiss unaffected alerts
+  DISMISS_MIN_CONFIDENCE -- Min confidence to dismiss: low|medium|high (default high)
+  DISMISS_MAX_SEVERITY   -- Highest severity to dismiss: low|medium|high|critical (default medium)
 """
 
 from __future__ import annotations
@@ -39,10 +41,9 @@ if _repo_root not in sys.path:
 from github import Auth, Github  # noqa: E402
 
 from scripts.alert_report import write_step_summary  # noqa: E402
+from scripts.github_utils import SEVERITY_RANK  # noqa: E402
 
 BLENDER_NAME = "BLEnder"
-DISMISS_BLOCKED_SEVERITIES = {"critical", "high"}
-DISMISS_UNKNOWN_SEVERITIES = {"", "unknown"}
 CONFIDENCE_RANK = {"low": 1, "medium": 2, "high": 3}
 VERDICT_FILE = ".blender-alert-verdict.json"
 REQUIRED_KEYS = {
@@ -54,20 +55,27 @@ REQUIRED_KEYS = {
 }
 
 
+def severity_over_ceiling(severity: str, max_severity: str) -> bool:
+    """True if severity is unrecognized or ranks above the dismissal ceiling.
+
+    Unrecognized severities map to rank 99 so they are never auto-dismissed.
+    """
+    return SEVERITY_RANK.get(severity, 99) > SEVERITY_RANK.get(max_severity, 0)
+
+
 def dismiss_allowed(
     enabled: bool,
     severity: str,
     confidence: str,
     min_confidence: str,
+    max_severity: str,
 ) -> bool:
     """Whether a not-affected alert may be auto-dismissed.
 
-    Below the confidence bar is never dismissed, at any severity. Severity
-    scope is handled separately.
+    Dismissed only when severity is recognized and at or below the configured
+    ceiling and the verdict confidence meets the configured floor.
     """
-    if not enabled or severity in DISMISS_UNKNOWN_SEVERITIES:
-        return False
-    if severity in DISMISS_BLOCKED_SEVERITIES:
+    if not enabled or severity_over_ceiling(severity, max_severity):
         return False
     return CONFIDENCE_RANK.get(confidence, 0) >= CONFIDENCE_RANK.get(min_confidence, 3)
 
@@ -486,6 +494,13 @@ def main() -> None:
             "defaulting to 'high'."
         )
         dismiss_min_confidence = "high"
+    dismiss_max_severity = os.environ.get("DISMISS_MAX_SEVERITY", "medium").lower()
+    if dismiss_max_severity not in SEVERITY_RANK:
+        print(
+            f"  Unrecognized DISMISS_MAX_SEVERITY={dismiss_max_severity!r}; "
+            "defaulting to 'medium'."
+        )
+        dismiss_max_severity = "medium"
 
     if not token or not repo_name:
         print("Error: GH_TOKEN and REPO are required.")
@@ -521,23 +536,26 @@ def main() -> None:
         existing_pr = find_existing_bump_pr(repo, package_name)
         severity_l = severity.lower()
         confidence = str(verdict.get("confidence", "")).lower()
+        allowed = dismiss_allowed(
+            dismiss_enabled,
+            severity_l,
+            confidence,
+            dismiss_min_confidence,
+            dismiss_max_severity,
+        )
 
         # If dismissal is enabled but blocked (severity or confidence), record why —
         # shown in the summary whether we then bump or no-op.
-        if (
-            dismiss_enabled
-            and not existing_pr
-            and not dismiss_allowed(
-                dismiss_enabled, severity_l, confidence, dismiss_min_confidence
-            )
-        ):
-            if (
-                severity_l in DISMISS_BLOCKED_SEVERITIES
-                or severity_l in DISMISS_UNKNOWN_SEVERITIES
-            ):
+        if dismiss_enabled and not existing_pr and not allowed:
+            if severity_l not in SEVERITY_RANK:
                 note = (
                     f"not dismissed. severity: {severity_l or 'unknown'}. "
                     "needs manual review"
+                )
+            elif severity_over_ceiling(severity_l, dismiss_max_severity):
+                note = (
+                    f"not dismissed. severity: {severity_l}. "
+                    f"above ceiling: {dismiss_max_severity}"
                 )
             else:
                 note = (
@@ -549,9 +567,7 @@ def main() -> None:
             print(f"  Existing PR #{existing_pr} covers this package.")
             comment_on_pr(repo, existing_pr, reason, dry_run)
             action = "existing_pr"
-        elif dismiss_allowed(
-            dismiss_enabled, severity_l, confidence, dismiss_min_confidence
-        ):
+        elif allowed:
             print(
                 f"  Unaffected + dismiss allowed ({severity_l}, confidence={confidence}). Dismissing alert."
             )
