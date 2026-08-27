@@ -124,6 +124,14 @@ class TestRenderMarkdown:
         assert "not used in codebase" in result
         assert "dismissed" in result.lower()
 
+    def test_note_renders_when_present(self):
+        result = render_markdown(
+            "owner/repo", 42, "lodash", "low", "noop", SAMPLE_VERDICT,
+            note="not dismissed. confidence: low. below required: high",
+        )
+        assert "**Note**" in result
+        assert "below required: high" in result
+
     def test_affected_redacts_details(self):
         verdict = {
             "affected": True,
@@ -327,6 +335,100 @@ class TestMainFlow:
             },
         )
 
+    def test_dismiss_blocked_below_confidence(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """Low-confidence not-affected verdicts are never dismissed (default bar=high)."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "low"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
+        )
+
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+
+    def test_dismiss_medium_confidence_blocked_by_default_bar(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """Default bar is high, so a medium-confidence verdict does not dismiss."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "medium"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        summary_file = self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
+        )
+
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+        # The skip reason must reach the step summary, not just the job log (#143).
+        summary = open(summary_file).read()
+        assert "below required: high" in summary
+
+    def test_dismiss_confidence_bar_configurable(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """Lowering the bar to medium lets a medium-confidence verdict dismiss."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "medium"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
+            DISMISS_MIN_CONFIDENCE="medium",
+        )
+
+        args = mock_repo._requester.requestJsonAndCheck.call_args
+        assert args.args[0] == "PATCH"
+        assert args.kwargs["input"]["state"] == "dismissed"
+
+    def test_empty_confidence_note_is_readable(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """An empty confidence value renders a readable note, not a blank."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": ""}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        summary_file = self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
+        )
+
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+        assert "confidence: unknown. below required: high" in open(summary_file).read()
+
+    def test_invalid_min_confidence_falls_back_to_high(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """An unrecognized DISMISS_MIN_CONFIDENCE defaults to the strict 'high' bar."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "none", "confidence": "medium"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
+            DISMISS_MIN_CONFIDENCE="hgih",  # typo -> falls back to high
+        )
+
+        # medium is below the fallback 'high' bar, so nothing is dismissed
+        mock_repo._requester.requestJsonAndCheck.assert_not_called()
+
     def test_dismiss_skips_high_severity(
         self, verdict_file, tmp_path, monkeypatch
     ):
@@ -359,6 +461,31 @@ class TestMainFlow:
         )
 
         mock_repo._requester.requestJsonAndCheck.assert_not_called()
+
+    def test_confidence_note_preserved_on_bump_fallback(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """A below-bar alert that recommends bump_pr still records the confidence note."""
+        verdict = {**SAMPLE_VERDICT, "recommended_action": "bump_pr", "confidence": "low"}
+        verdict_file(verdict)
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = []
+
+        output_file = str(tmp_path / "github_output")
+        open(output_file, "w").close()
+
+        summary_file = self._run_main(
+            verdict_file, tmp_path, monkeypatch, mock_repo,
+            DISMISS_UNAFFECTED="true", ALERT_SEVERITY="low",
+            ALERT_ECOSYSTEM="npm", ALERT_PATCHED_VERSION="1.0.1",
+            GITHUB_OUTPUT=output_file,
+        )
+
+        # Bumped (not dismissed) because confidence was below the bar...
+        assert "action=npm_bump" in open(output_file).read()
+        # ...and the summary still explains why it wasn't dismissed (#143).
+        assert "below required: high" in open(summary_file).read()
 
     def test_npm_bump_outputs_action(
         self, verdict_file, tmp_path, monkeypatch

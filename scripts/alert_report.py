@@ -13,6 +13,7 @@ def render_markdown(
     severity: str,
     action: str,
     verdict: dict,
+    note: str = "",
 ) -> str:
     """Build a markdown summary for GitHub step summary."""
     affected = verdict.get("affected", False)
@@ -51,6 +52,10 @@ def render_markdown(
         f"| **Confidence** | {confidence} |",
         f"| **Action** | {action_text} |",
         f"| **Package** | {package} |",
+    ]
+    if note:
+        lines.append(f"| **Note** | {note} |")
+    lines += [
         "",
         "### Analysis",
         "",
@@ -98,6 +103,7 @@ def write_step_summary(
     severity: str,
     action: str,
     verdict: dict,
+    note: str = "",
 ) -> None:
     """Write markdown summary to $GITHUB_STEP_SUMMARY and emit an annotation."""
     import os
@@ -105,7 +111,7 @@ def write_step_summary(
     summary_file = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary_file:
         md = render_markdown(
-            repo_name, alert_number, package, severity, action, verdict
+            repo_name, alert_number, package, severity, action, verdict, note
         )
         with open(summary_file, "a") as f:
             f.write(md)
