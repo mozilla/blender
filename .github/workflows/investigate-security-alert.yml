@@ -238,8 +238,8 @@ jobs:
         working-directory: target
         run: bash ${{ github.workspace }}/scripts/yarn-fix.sh
         env:
-          YARN_PACKAGE: ${{ steps.post-action.outputs.yarn_package }}
-          YARN_VERSION: ${{ steps.post-action.outputs.yarn_version }}
+          BUMP_PACKAGE: ${{ steps.post-action.outputs.yarn_package }}
+          BUMP_VERSION: ${{ steps.post-action.outputs.yarn_version }}
 
       - name: Create yarn bump PR
         if: >-
