@@ -38,7 +38,7 @@ jobs:
 
       - name: Setup target repo
         id: setup
-        uses: ./.github/actions/setup-target
+        uses: ./.github/actions/setup-target  # zizmor: ignore[self-repository]
         with:
           target-repo: ${{ inputs.target_repo }}
           app-id: ${{ secrets.BLENDER_APP_ID }}
