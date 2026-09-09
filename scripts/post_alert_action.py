@@ -44,6 +44,8 @@ from scripts.alert_report import write_step_summary  # noqa: E402
 from scripts.github_utils import SEVERITY_RANK  # noqa: E402
 
 BLENDER_NAME = "BLEnder"
+# Hidden marker so BLEnder can find and update its own investigate comment.
+COMMENT_MARKER = "<!-- blender-investigated -->"
 CONFIDENCE_RANK = {"low": 1, "medium": 2, "high": 3}
 VERDICT_FILE = ".blender-alert-verdict.json"
 REQUIRED_KEYS = {
@@ -203,19 +205,31 @@ def comment_on_pr(
     reason: str,
     dry_run: bool,
 ) -> None:
-    """Comment on a PR with BLEnder's investigation results."""
+    """Comment on a PR with BLEnder's investigation results.
+
+    Upserts: if BLEnder already left an investigate comment on this PR, edit it
+    in place rather than adding a duplicate. This keeps one current comment per
+    PR — no spam when several alerts share a package, and a re-investigation
+    refreshes the comment instead of piling on (or going silent).
+    """
     run_link = _run_url()
     investigated = f"[investigated]({run_link})" if run_link else "investigated"
     body = (
         f"**{BLENDER_NAME} {investigated}:** This dependency has an open "
         f"security alert, but the repo is **not affected**.\n\n> {reason}\n\n"
-        "This PR can be reviewed and merged as a normal dependency update."
+        "This PR can be reviewed and merged as a normal dependency update.\n"
+        f"{COMMENT_MARKER}"
     )
     if dry_run:
         print(f"  DRY_RUN: would comment on PR #{pr_number}")
         return
 
     pr = repo.get_pull(pr_number)
+    for comment in pr.get_issue_comments():
+        if COMMENT_MARKER in (comment.body or ""):
+            comment.edit(body)
+            print(f"  Updated existing BLEnder comment on PR #{pr_number}")
+            return
     pr.create_issue_comment(body)
     print(f"  Commented on PR #{pr_number}")
 

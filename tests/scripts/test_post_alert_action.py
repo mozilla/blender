@@ -282,6 +282,7 @@ class TestMainFlow:
         mock_repo = MagicMock()
         mock_repo.full_name = "owner/repo"
         mock_repo.get_pulls.return_value = [mock_pr]
+        mock_repo.get_pull.return_value.get_issue_comments.return_value = []
 
         summary_file = self._run_main(
             verdict_file, tmp_path, monkeypatch, mock_repo
@@ -291,6 +292,27 @@ class TestMainFlow:
         mock_repo.get_pull.return_value.create_issue_comment.assert_called_once()
         content = open(summary_file).read()
         assert "Existing" in content
+
+    def test_existing_pr_updates_prior_comment(
+        self, verdict_file, tmp_path, monkeypatch
+    ):
+        """A second alert on the same PR edits BLEnder's comment, not duplicate it."""
+        verdict_file(SAMPLE_VERDICT)
+        mock_pr = MagicMock()
+        mock_pr.number = 99
+        mock_pr.title = "Bump lodash from 4.17.20 to 4.17.21"
+        mock_pr.user.login = "dependabot[bot]"
+        mock_repo = MagicMock()
+        mock_repo.full_name = "owner/repo"
+        mock_repo.get_pulls.return_value = [mock_pr]
+        prior = MagicMock()
+        prior.body = "**BLEnder investigated:** ...\n<!-- blender-investigated -->"
+        mock_repo.get_pull.return_value.get_issue_comments.return_value = [prior]
+
+        self._run_main(verdict_file, tmp_path, monkeypatch, mock_repo)
+
+        prior.edit.assert_called_once()
+        mock_repo.get_pull.return_value.create_issue_comment.assert_not_called()
 
     def test_existing_pr_dry_run_skips_comment(
         self, verdict_file, tmp_path, monkeypatch
