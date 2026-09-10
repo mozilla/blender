@@ -114,8 +114,8 @@ open_bump_pr() {
   local commit_msg="chore(deps): bump ${PACKAGE} to ${target}
 
 Resolves Dependabot alert #${ALERT_NUMBER}. The bump installs the highest
-version satisfying the range (>= the advisory's minimum fix); see the lockfile
-diff for the exact resolved version.
+version satisfying the dependency range; the title uses >=<min> when the
+advisory provides a minimum patched version — see the lockfile diff for the exact resolved version.
 Created by BLEnder (https://github.com/mozilla/blender)"
 
   local default_branch parent
