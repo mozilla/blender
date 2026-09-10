@@ -78,6 +78,11 @@ bump_alert_line() {
   fi
 }
 
+# Echo the bump version string: ">=<min>" when a patched version is known, else "latest".
+bump_target() {
+  if [ -n "${PATCHED_VERSION:-}" ]; then echo ">=${PATCHED_VERSION}"; else echo "latest"; fi
+}
+
 # Commit a dependency bump (lockfile + package.json) via a verified commit and
 # open a PR. npm-bump.sh and yarn-bump.sh differ only in which lockfile they
 # touch, so both call this. Usage: open_bump_pr LOCKFILE
@@ -108,9 +113,14 @@ open_bump_pr() {
     exit 0
   fi
 
-  local commit_msg="chore(deps): bump ${PACKAGE} to ${PATCHED_VERSION:-latest}
+  local target
+  target=$(bump_target)
 
-Resolves Dependabot alert #${ALERT_NUMBER}.
+  local commit_msg="chore(deps): bump ${PACKAGE} to ${target}
+
+Resolves Dependabot alert #${ALERT_NUMBER}. The bump installs the highest
+version satisfying the dependency range; the title uses >=<min> when the
+advisory provides a minimum patched version — see the lockfile diff for the exact resolved version.
 Created by BLEnder (https://github.com/mozilla/blender)"
 
   local default_branch parent
@@ -132,7 +142,7 @@ Created by BLEnder (https://github.com/mozilla/blender)"
 
   local run_link_md alert_line
   run_link_md=$(run_link)
-  alert_line=$(bump_alert_line "$REPO" "$PACKAGE" "${PATCHED_VERSION:-}" "$ALERT_NUMBER")
+  alert_line=$(bump_alert_line "$REPO" "$PACKAGE" "$target" "$ALERT_NUMBER")
 
   local pr_body="## Summary
 
@@ -147,7 +157,7 @@ This is a transitive dependency update. Only \`${lockfile}\` (and possibly \`pac
     --repo "$REPO" \
     --head "$branch" \
     --base "$default_branch" \
-    --title "chore(deps): bump ${PACKAGE} to ${PATCHED_VERSION:-latest}" \
+    --title "chore(deps): bump ${PACKAGE} to ${target}" \
     --body "$pr_body"
 
   echo "PR created."

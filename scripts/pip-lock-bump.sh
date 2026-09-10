@@ -65,9 +65,12 @@ if [ -n "$EXISTING_PR" ]; then
   exit 0
 fi
 
-COMMIT_MSG="chore(deps): bump ${PACKAGE} to ${PATCHED_VERSION:-latest}
+TARGET=$(bump_target)
+COMMIT_MSG="chore(deps): bump ${PACKAGE} to ${TARGET}
 
-Resolves Dependabot alert #${ALERT_NUMBER}.
+Resolves Dependabot alert #${ALERT_NUMBER}. The bump installs the highest
+version satisfying the dependency range; the title uses >=<min> when the
+advisory provides a minimum patched version — see the lock files for the exact resolved version.
 Created by BLEnder (https://github.com/mozilla/blender)"
 
 DEFAULT_BRANCH=$(gh api "repos/${REPO}" --jq '.default_branch')
@@ -82,7 +85,7 @@ echo "Created branch ${BRANCH_NAME} with commit ${COMMIT_SHA}"
 
 # Build PR body
 RUN_LINK=$(run_link)
-ALERT_LINE=$(bump_alert_line "$REPO" "$PACKAGE" "${PATCHED_VERSION:-}" "$ALERT_NUMBER")
+ALERT_LINE=$(bump_alert_line "$REPO" "$PACKAGE" "$TARGET" "$ALERT_NUMBER")
 
 PR_BODY="## Summary
 
@@ -93,7 +96,7 @@ This is a transitive dependency update via \`${PIP_LOCK_TOOL}\`. Only lock files
 ---
 *Created by ${RUN_LINK} via [BLEnder](https://github.com/mozilla/blender)*"
 
-PR_TITLE="chore(deps): bump ${PACKAGE} to ${PATCHED_VERSION:-latest}"
+PR_TITLE="chore(deps): bump ${PACKAGE} to ${TARGET}"
 
 gh pr create \
   --repo "$REPO" \
