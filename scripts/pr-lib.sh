@@ -78,6 +78,11 @@ bump_alert_line() {
   fi
 }
 
+# Echo the bump version string: ">=<min>" when a patched version is known, else "latest".
+bump_target() {
+  if [ -n "${PATCHED_VERSION:-}" ]; then echo ">=${PATCHED_VERSION}"; else echo "latest"; fi
+}
+
 # Commit a dependency bump (lockfile + package.json) via a verified commit and
 # open a PR. npm-bump.sh and yarn-bump.sh differ only in which lockfile they
 # touch, so both call this. Usage: open_bump_pr LOCKFILE
@@ -108,8 +113,8 @@ open_bump_pr() {
     exit 0
   fi
 
-  local target="latest"
-  [ -n "${PATCHED_VERSION:-}" ] && target=">=${PATCHED_VERSION}"
+  local target
+  target=$(bump_target)
 
   local commit_msg="chore(deps): bump ${PACKAGE} to ${target}
 
