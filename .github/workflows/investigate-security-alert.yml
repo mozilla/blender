@@ -388,7 +388,14 @@ jobs:
         if: ${{ !cancelled() && inputs.dry_run != 'true' }}
         run: |
           TAG_NAME="investigated/${TARGET_REPO}/${ALERT_NUMBER}"
-          git tag "$TAG_NAME"
+          if [ -f target/.blender-alert-verdict.json ] && \
+             git -c user.name=BLEnder -c user.email=blender@users.noreply.github.com \
+                 tag -a "$TAG_NAME" -F target/.blender-alert-verdict.json; then
+            echo "Tagged $TAG_NAME with verdict."
+          else
+            git tag "$TAG_NAME"
+            echo "Tagged $TAG_NAME (lightweight)."
+          fi
           git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG_NAME"
         env:
           TARGET_REPO: ${{ inputs.target_repo }}
