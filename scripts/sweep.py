@@ -390,6 +390,7 @@ def _issue_number_from_branch(branch: str) -> int:
 def process_repo(
     repo: Repository,
     investigated: set[tuple[str, int]] | None = None,
+    open_alerts: dict[str, set[int]] | None = None,
 ) -> list[Action]:
     """Check a single repo for actionable Dependabot PRs."""
     actions: list[Action] = []
@@ -519,7 +520,10 @@ def process_repo(
     # Check Dependabot security alerts
     try:
         alert_actions = check_alerts(
-            repo, investigated=investigated, config=repo_config
+            repo,
+            investigated=investigated,
+            config=repo_config,
+            open_alerts=open_alerts,
         )
         actions.extend(alert_actions)
     except Exception as e:
@@ -549,9 +553,8 @@ def fetch_investigated_alerts(
 ) -> set[tuple[str, int]]:
     """Return (repo, alert_number) pairs already investigated.
 
-    Reads lightweight tags on the blender repo. Each successful
+    Reads ``investigated/*`` tags on the blender repo; each successful
     investigation creates a tag like ``investigated/{repo}/{number}``.
-    One API call fetches all tags.
     """
     investigated: set[tuple[str, int]] = set()
 
@@ -570,10 +573,99 @@ def fetch_investigated_alerts(
     return investigated
 
 
+def prune_investigated_tags(
+    integration: GithubIntegration,
+    investigated: set[tuple[str, int]],
+    open_alerts: dict[str, set[int]],
+    dry_run: bool = False,
+) -> list[tuple[str, int]]:
+    """Delete ``investigated/*`` tags whose alert has closed.
+
+    Prunes a tag only when its repo is in ``open_alerts`` and the alert number
+    is absent from that repo's open set.
+    """
+    to_prune = sorted(
+        (repo, number)
+        for (repo, number) in investigated
+        if repo in open_alerts and number not in open_alerts[repo]
+    )
+    if not to_prune:
+        print("  No investigated tags to prune.")
+        return []
+
+    if dry_run:
+        for repo, number in to_prune:
+            print(f"  DRY_RUN: would prune investigated/{repo}/{number}")
+        return to_prune
+
+    try:
+        install = integration.get_repo_installation("mozilla", "blender")
+        gh = integration.get_github_for_installation(install.id)
+        blender = gh.get_repo(BLENDER_REPO)
+    except Exception as e:
+        print(f"  Could not prune tags (blender repo unavailable): {e}")
+        return []
+
+    pruned: list[tuple[str, int]] = []
+    for repo, number in to_prune:
+        tag = f"investigated/{repo}/{number}"
+        try:
+            blender.get_git_ref(f"tags/{tag}").delete()
+            pruned.append((repo, number))
+            print(f"  Pruned {tag} (alert closed)")
+        except Exception as e:
+            print(f"  Could not prune {tag}: {e}")
+
+    print(f"  Pruned {len(pruned)} investigated tag(s).")
+    return pruned
+
+
+def _dedupe_alerts(data: list) -> list:
+    """Dedupe alerts by number, in case a misbehaving cursor re-served a page."""
+    return list({a.get("number"): a for a in data}.values())
+
+
+def _fetch_open_alerts(repo: Repository) -> tuple[list, bool]:
+    """Fetch a repo's open Dependabot alerts via cursor pagination.
+
+    Returns (alerts, complete). complete is False when a request error, a
+    repeating (runaway) cursor, or the page-count backstop cut pagination short.
+    """
+    url = f"/repos/{repo.full_name}/dependabot/alerts"
+    params = {"state": "open", "per_page": "100"}
+    data: list = []
+    seen_cursors: set = set()
+    for _ in range(100):  # backstop; the seen-cursor check stops a runaway cursor
+        try:
+            headers, page_data = repo._requester.requestJsonAndCheck(
+                "GET", url, parameters=params
+            )
+        except Exception as e:
+            print(f"    Could not fetch alerts: {e}")
+            return _dedupe_alerts(data), False
+        if not page_data:
+            return _dedupe_alerts(data), True
+        data.extend(page_data)
+        nxt = re.search(r'<([^>]+)>;\s*rel="next"', headers.get("link", "") or "")
+        after = re.search(r"[?&]after=([^&]+)", nxt.group(1)) if nxt else None
+        if not after:
+            return _dedupe_alerts(data), True
+        cursor = unquote(after.group(1))  # decoded; PyGithub re-encodes params
+        if cursor in seen_cursors:
+            return _dedupe_alerts(data), False
+        seen_cursors.add(cursor)
+        params = {"state": "open", "per_page": "100", "after": cursor}
+    print(
+        f"    Warning: pagination hit page cap for {repo.full_name} — results may be truncated"
+    )
+    return _dedupe_alerts(data), False
+
+
 def check_alerts(
     repo: Repository,
     investigated: set[tuple[str, int]] | None = None,
     config: dict | None = None,
+    open_alerts: dict[str, set[int]] | None = None,
 ) -> list[Action]:
     """Check for open Dependabot security alerts and emit investigate actions.
 
@@ -593,40 +685,10 @@ def check_alerts(
     min_rank = SEVERITY_RANK.get(threshold, 0)
     max_per_sweep = int(inv_config.get("max_per_sweep", 0) or 0)
 
-    url = f"/repos/{repo.full_name}/dependabot/alerts"
-    data: list = []
-    params = {"state": "open", "per_page": "100"}
-    seen_cursors: set = set()
-    # range() is a backstop; the seen-cursor check below stops a repeating (runaway) cursor
-    for _ in range(100):
-        try:
-            headers, page_data = repo._requester.requestJsonAndCheck(
-                "GET", url, parameters=params
-            )
-        except Exception as e:
-            print(f"    Could not fetch alerts: {e}")
-            break
-        if not page_data:
-            break
-        data.extend(page_data)
-        # Dependabot alerts use cursor pagination — follow Link rel="next" after= (page param is unsupported)
-        nxt = re.search(r'<([^>]+)>;\s*rel="next"', headers.get("link", "") or "")
-        after = re.search(r"[?&]after=([^&]+)", nxt.group(1)) if nxt else None
-        if not after:
-            break
-        # unquote: the Link cursor is URL-encoded; PyGithub re-encodes params, so pass it decoded
-        cursor = unquote(after.group(1))
-        if cursor in seen_cursors:  # repeated cursor = runaway; stop before re-fetching
-            break
-        seen_cursors.add(cursor)
-        params = {"state": "open", "per_page": "100", "after": cursor}
-    else:
-        print(
-            f"    Warning: pagination hit page cap for {repo.full_name} — results may be truncated"
-        )
+    data, complete = _fetch_open_alerts(repo)
 
-    # Dedupe by alert number in case a misbehaving cursor re-served a page
-    data = list({a.get("number"): a for a in data}.values())
+    if open_alerts is not None and complete:
+        open_alerts[repo.full_name] = {a.get("number") for a in data}
 
     if not data:
         print("    No open Dependabot alerts")
@@ -697,7 +759,7 @@ def check_alerts(
     return actions
 
 
-def sweep(app_id: str, private_key: str) -> list[Action]:
+def sweep(app_id: str, private_key: str, dry_run: bool = False) -> list[Action]:
     """Run the sweep. Returns a list of actions to take."""
     auth = Auth.AppAuth(int(app_id), private_key)
     integration = GithubIntegration(auth=auth)
@@ -710,6 +772,9 @@ def sweep(app_id: str, private_key: str) -> list[Action]:
     print("Discovering installations...")
     install_repos = discover_repos(integration)
 
+    # Repo -> open alert numbers, filled by check_alerts, consumed by prune below.
+    open_alerts: dict[str, set[int]] = {}
+
     for install_id, repos in install_repos:
         print(f"\nInstallation {install_id}: {len(repos)} repo(s)")
 
@@ -720,10 +785,17 @@ def sweep(app_id: str, private_key: str) -> list[Action]:
                 continue
             print(f"\n  Checking {repo.full_name}...")
             try:
-                actions.extend(process_repo(repo, investigated=investigated))
+                actions.extend(
+                    process_repo(
+                        repo, investigated=investigated, open_alerts=open_alerts
+                    )
+                )
             except Exception as e:
                 print(f"    Error processing {repo.full_name}: {e}")
                 continue
+
+    print("\nPruning investigated tags for closed alerts...")
+    prune_investigated_tags(integration, investigated, open_alerts, dry_run=dry_run)
 
     return actions
 
@@ -754,7 +826,7 @@ def main() -> None:
         print("Error: BLENDER_APP_PRIVATE_KEY is required.")
         sys.exit(1)
 
-    actions = sweep(app_id, private_key)
+    actions = sweep(app_id, private_key, dry_run=dry_run)
     actions = cap_investigations(actions, INVESTIGATE_TOTAL_CAP)
 
     print(f"\n=== Sweep complete: {len(actions)} action(s) ===")

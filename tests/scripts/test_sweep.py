@@ -15,6 +15,7 @@ from scripts.sweep import (
     check_alerts,
     fetch_investigated_alerts,
     process_repo,
+    prune_investigated_tags,
     sweep,
 )
 
@@ -451,10 +452,12 @@ class TestAlertDiscovery:
         )
         repo.get_branches.return_value = []
 
-        actions = check_alerts(repo)
+        open_alerts: dict = {}
+        actions = check_alerts(repo, open_alerts=open_alerts)
         # Stops once STUCK recurs (not 100 fetches) and dedupes to a single action.
         assert repo._requester.requestJsonAndCheck.call_count == 2
         assert len([a for a in actions if a.action == "investigate"]) == 1
+        assert open_alerts == {}  # incomplete fetch -> repo not recorded
 
     def test_max_per_sweep_caps_investigations(self):
         """Per-repo max_per_sweep limits how many investigations are emitted."""
@@ -685,3 +688,128 @@ class TestCapInvestigations:
     def test_under_cap_returns_unchanged(self):
         actions = self._inv(10) + [MagicMock(action="fix")]
         assert cap_investigations(actions, 200) is actions
+
+
+# --- open-alerts recording (feeds tag pruning) ---
+
+
+def _alert_repo():
+    repo = MagicMock()
+    repo.full_name = "mozilla/fxa"
+    repo.get_branches.return_value = []
+    return repo
+
+
+class TestOpenAlertsRecording:
+    def test_records_open_alert_numbers_on_success(self):
+        repo = _alert_repo()
+        repo._requester.requestJsonAndCheck.return_value = (
+            {},
+            [_make_alert(1, "a"), _make_alert(2, "b")],
+        )
+        open_alerts: dict = {}
+        check_alerts(repo, open_alerts=open_alerts)
+        assert open_alerts == {"mozilla/fxa": {1, 2}}
+
+    def test_records_empty_set_when_no_open_alerts(self):
+        """Zero open alerts records an empty set (all the repo's tags prunable)."""
+        repo = _alert_repo()
+        repo._requester.requestJsonAndCheck.return_value = ({}, [])
+        open_alerts: dict = {}
+        check_alerts(repo, open_alerts=open_alerts)
+        assert open_alerts == {"mozilla/fxa": set()}
+
+    def test_does_not_record_on_fetch_error(self):
+        repo = _alert_repo()
+        repo._requester.requestJsonAndCheck.side_effect = RuntimeError("boom")
+        open_alerts: dict = {}
+        check_alerts(repo, open_alerts=open_alerts)
+        assert open_alerts == {}
+
+    def test_does_not_record_on_truncated_pagination(self):
+        """Hitting the page cap = incomplete fetch -> repo not recorded."""
+        import itertools
+
+        counter = itertools.count(1)
+
+        def paging(*args, **kwargs):
+            n = next(counter)
+            link = (
+                f"<https://api.github.com/x/dependabot/alerts?after=CUR{n}"
+                '&per_page=100>; rel="next"'
+            )
+            return ({"link": link}, [_make_alert(n, f"pkg{n}")])
+
+        repo = _alert_repo()
+        repo._requester.requestJsonAndCheck.side_effect = paging
+        open_alerts: dict = {}
+        check_alerts(repo, open_alerts=open_alerts)
+        assert open_alerts == {}
+
+
+# --- prune_investigated_tags ---
+
+
+def _prune_integration(blender):
+    integration = MagicMock()
+    integration.get_repo_installation.return_value = MagicMock()
+    gh = MagicMock()
+    integration.get_github_for_installation.return_value = gh
+    gh.get_repo.return_value = blender
+    return integration
+
+
+class TestPruneInvestigatedTags:
+    def test_prunes_tag_when_alert_closed(self):
+        """Investigated alert absent from the repo's open set -> tag deleted."""
+        blender = MagicMock()
+        integration = _prune_integration(blender)
+        investigated = {("mozilla/fxa", 7), ("mozilla/fxa", 9)}
+        open_alerts = {"mozilla/fxa": {9}}  # 7 closed, 9 still open
+
+        pruned = prune_investigated_tags(integration, investigated, open_alerts)
+
+        assert pruned == [("mozilla/fxa", 7)]
+        blender.get_git_ref.assert_called_once_with(
+            "tags/investigated/mozilla/fxa/7"
+        )
+        blender.get_git_ref.return_value.delete.assert_called_once()
+
+    def test_keeps_tag_for_repo_not_fetched(self):
+        """Repo absent from open_alerts (fetch failed) -> its tags are untouched."""
+        blender = MagicMock()
+        integration = _prune_integration(blender)
+
+        pruned = prune_investigated_tags(
+            integration, {("mozilla/fxa", 7)}, {}
+        )
+
+        assert pruned == []
+        blender.get_git_ref.assert_not_called()
+
+    def test_dry_run_deletes_nothing(self):
+        blender = MagicMock()
+        integration = _prune_integration(blender)
+
+        pruned = prune_investigated_tags(
+            integration, {("mozilla/fxa", 7)}, {"mozilla/fxa": set()}, dry_run=True
+        )
+
+        assert pruned == [("mozilla/fxa", 7)]
+        blender.get_git_ref.assert_not_called()
+
+    def test_delete_error_does_not_abort_others(self):
+        blender = MagicMock()
+        integration = _prune_integration(blender)
+        ref_bad = MagicMock()
+        ref_bad.delete.side_effect = RuntimeError("no perms")
+        ref_ok = MagicMock()
+        blender.get_git_ref.side_effect = [ref_bad, ref_ok]
+
+        pruned = prune_investigated_tags(
+            integration,
+            {("mozilla/fxa", 7), ("mozilla/fxa", 8)},
+            {"mozilla/fxa": set()},
+        )
+
+        assert len(pruned) == 1  # the successful delete only
