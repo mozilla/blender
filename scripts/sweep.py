@@ -131,7 +131,7 @@ def check_pr_status(repo: Repository, pr: PullRequest) -> str | None:
     for check in commit.get_check_runs():
         if check.status != "completed":
             pending += 1
-        elif check.conclusion not in ("success", "skipped", "neutral"):
+        elif check.conclusion not in ("success", "skipped", "neutral", "cancelled"):
             failing += 1
 
     combined_status = commit.get_combined_status()
@@ -430,6 +430,10 @@ def process_repo(
 
         if result is None:
             print(f"    PR #{pr.number}: checks pending, skipping")
+            continue
+
+        if result == "fix" and pr in blender_bump_prs:
+            print(f"    PR #{pr.number}: BLEnder bump PR with failing CI, skipping fix")
             continue
 
         if result == "fix":

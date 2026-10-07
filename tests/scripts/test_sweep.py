@@ -13,6 +13,7 @@ from scripts.sweep import (
     ALLOWED_OWNERS,
     cap_investigations,
     check_alerts,
+    check_pr_status,
     fetch_investigated_alerts,
     process_repo,
     prune_investigated_tags,
@@ -324,11 +325,10 @@ class TestBlenderBumpPR:
         assert len(actions) == 1
         assert actions[0].action == "automerge"
 
-    def test_failing_blender_bump_dispatches_fix(self):
-        """Failing BLEnder bump PR -> dispatch fix."""
+    def test_failing_blender_bump_skips_fix(self):
+        """Failing BLEnder bump PR -> no fix (the fix workflow is Dependabot-only)."""
         actions = _run_sweep([_make_blender_bump_pr(21, "failing")])
-        assert len(actions) == 1
-        assert actions[0].action == "fix"
+        assert actions == []
 
     def test_pending_blender_bump_skips(self):
         """Pending BLEnder bump PR -> skip."""
@@ -348,6 +348,29 @@ class TestBlenderBumpPR:
         pr.head.ref = "sneaky/security-bump-foo"
         actions = _run_sweep([(pr, status)])
         assert actions == []
+
+
+# --- check_pr_status ---
+
+
+def _status_repo(*conclusions: str) -> MagicMock:
+    repo = MagicMock()
+    commit = repo.get_commit.return_value
+    commit.get_check_runs.return_value = [
+        MagicMock(status="completed", conclusion=c) for c in conclusions
+    ]
+    commit.get_combined_status.return_value.statuses = []
+    return repo
+
+
+class TestCheckPrStatus:
+    def test_cancelled_check_is_not_a_failure(self):
+        repo = _status_repo("success", "cancelled")
+        assert check_pr_status(repo, MagicMock()) == "automerge"
+
+    def test_failed_check_is_a_failure(self):
+        repo = _status_repo("success", "failure")
+        assert check_pr_status(repo, MagicMock()) == "fix"
 
 
 # --- CI-pending PRs ---
