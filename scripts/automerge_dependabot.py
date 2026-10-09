@@ -362,6 +362,7 @@ def gate_ci(repo: Repository, sha: str) -> None:
             "success",
             "skipped",
             "neutral",
+            "cancelled",
         ):
             failing += 1
 
