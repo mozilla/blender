@@ -236,7 +236,7 @@ jobs:
         id: yarn-fix
         if: steps.post-action.outputs.action == 'yarn_bump'
         working-directory: target
-        run: bash ${{ github.workspace }}/scripts/yarn-fix.sh
+        run: python3 ${{ github.workspace }}/scripts/yarn_fix.py
         env:
           BUMP_PACKAGE: ${{ steps.post-action.outputs.yarn_package }}
           BUMP_VERSION: ${{ steps.post-action.outputs.yarn_version }}
