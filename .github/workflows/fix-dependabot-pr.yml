@@ -185,8 +185,11 @@ jobs:
           && steps.commit.outputs.pushed != 'true'
         working-directory: target
         run: |
-          gh pr comment "$PR_NUMBER" \
-            --body "BLEnder could not fix this PR automatically. [Workflow run](${RUN_URL})"
+          BODY="BLEnder could not fix this PR automatically. [Workflow run](${RUN_URL})"
+          if [ -s .blender-fail-reason ] && [ ! -L .blender-fail-reason ]; then
+            BODY="${BODY}"$'\n\n'"$(sed -e 's/@/@ /g' -e 's/^/> /' .blender-fail-reason)"
+          fi
+          gh pr comment "$PR_NUMBER" --body "$BODY"
         env:
           GH_TOKEN: ${{ steps.setup.outputs.token }}
           PR_NUMBER: ${{ inputs.pr_number }}

@@ -20,6 +20,7 @@ set -euo pipefail
 
 BLENDER_DIR="${BLENDER_DIR:-.blender}"
 BLENDER_MODE="${BLENDER_MODE:-fix}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
   echo "Error: ANTHROPIC_API_KEY is required."
@@ -113,6 +114,17 @@ claude \
   < .blender-prompt \
   > "$CLAUDE_LOG" 2>&1 \
   || claude_exit=$?
+rm -rf -- .blender-fail-reason
+
+# Save the end of Claude's final answer to .blender-fail-reason.
+save_fail_reason() {
+  if [ "${CLAUDE_VERBOSE:-false}" = "true" ]; then
+    python3 "${SCRIPT_DIR}/extract_alert_verdict.py" --final-text "$CLAUDE_LOG"
+  else
+    cat "$CLAUDE_LOG"
+  fi | grep -vF -e "$PROMPT_NONCE" -e "$ANTHROPIC_API_KEY" | tail -c 1500 | iconv -c -f UTF-8 -t UTF-8 > .blender-fail-reason || true
+  cat .blender-fail-reason
+}
 
 # Print output summary. Full log only when CLAUDE_VERBOSE=true.
 line_count=$(wc -l < "$CLAUDE_LOG")
@@ -129,6 +141,7 @@ else
 fi
 if [ "$claude_exit" -ne 0 ]; then
   echo "Claude exited with code ${claude_exit} (likely hit max-turns or budget)."
+  echo "Claude stopped before finishing, most likely at its turn or budget limit." > .blender-fail-reason
   # In read-only modes, a non-zero exit is not fatal — post steps handle missing output
   if [ "$BLENDER_MODE" = "major" ] || [ "$BLENDER_MODE" = "investigate" ] || [ "$BLENDER_MODE" = "plan" ] || [ "$BLENDER_MODE" = "self-review" ]; then
     echo "Continuing to post step (verdict may be missing)."
@@ -215,6 +228,7 @@ if [ "$BLENDER_MODE" = "major" ]; then
     echo "Verdict file validated."
   else
     echo "No verdict file produced. Post-review will handle this."
+    save_fail_reason
   fi
 
   exit 0
@@ -231,7 +245,6 @@ if [ "$BLENDER_MODE" = "plan" ]; then
   fi
 
   echo "Extracting plan from Claude output..."
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   if python3 "${SCRIPT_DIR}/extract_plan.py" "$CLAUDE_LOG" PLAN_MD .blender-plan.md; then
     echo "Plan file written from Claude output."
   else
@@ -252,7 +265,6 @@ if [ "$BLENDER_MODE" = "self-review" ]; then
   fi
 
   echo "Extracting self-review from Claude output..."
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   if python3 "${SCRIPT_DIR}/extract_plan.py" "$CLAUDE_LOG" SELF_REVIEW_MD .blender-self-review.md; then
     echo "Self-review file written from Claude output."
   else
@@ -277,7 +289,6 @@ if [ "$BLENDER_MODE" = "investigate" ]; then
   # output a ```VERDICT_JSON fenced block in its final response.
   # We extract that block and write the file here, outside the sandbox.
   echo "Extracting verdict from Claude output..."
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   if python3 "${SCRIPT_DIR}/extract_alert_verdict.py" "$CLAUDE_LOG"; then
     echo "Verdict file written from Claude output."
   else
@@ -296,6 +307,7 @@ FORBIDDEN_PATHS="${BLENDER_FORBIDDEN_PATHS:-.github/ .env .circleci/}"
 for forbidden in $FORBIDDEN_PATHS; do
   if git diff --name-only | grep -q "^${forbidden}"; then
     echo "ABORT: Changes detected in forbidden path: ${forbidden}"
+    echo "The fix needs changes under ${forbidden}, which BLEnder is not allowed to edit." > .blender-fail-reason
     git checkout -- .
     exit 1
   fi
@@ -317,6 +329,7 @@ fi
 if git diff --quiet && git diff --cached --quiet; then
   echo ""
   echo "No file changes produced. Claude could not fix this automatically."
+  save_fail_reason
   exit 0
 fi
 
