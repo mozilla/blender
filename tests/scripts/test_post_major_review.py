@@ -121,3 +121,48 @@ def test_safe_verdict_posts_comment_when_automerge_fails(
     pr.create_issue_comment.assert_called_once()
     comment_text = pr.create_issue_comment.call_args.args[0]
     assert "auto-merge could not be enabled" in comment_text
+
+
+@patch("scripts.post_major_review.Github")
+def test_no_verdict_comment_includes_fail_reason(mock_gh_cls, monkeypatch, tmp_path):
+    (tmp_path / ".blender-fail-reason").write_text("Claude hit its turn limit.\n")
+
+    monkeypatch.setenv("PR_NUMBER", "10")
+    monkeypatch.setenv("REPO", "owner/repo")
+    monkeypatch.setenv("GH_TOKEN", "fake-token")
+    monkeypatch.setenv("DRY_RUN", "false")
+    monkeypatch.chdir(tmp_path)
+
+    pr = MagicMock()
+    pr.get_issue_comments.return_value = []
+    mock_gh_cls.return_value.get_repo.return_value.get_pull.return_value = pr
+
+    main()
+
+    comment_text = pr.create_issue_comment.call_args.args[0]
+    assert comment_text == (
+        Verdict.NO_VERDICT.comment("— manual review needed.")
+        + "\n\n> Claude hit its turn limit."
+    )
+
+
+@patch("scripts.post_major_review.Github")
+def test_no_verdict_comment_ignores_empty_fail_reason(
+    mock_gh_cls, monkeypatch, tmp_path
+):
+    (tmp_path / ".blender-fail-reason").write_text("\n")
+
+    monkeypatch.setenv("PR_NUMBER", "10")
+    monkeypatch.setenv("REPO", "owner/repo")
+    monkeypatch.setenv("GH_TOKEN", "fake-token")
+    monkeypatch.setenv("DRY_RUN", "false")
+    monkeypatch.chdir(tmp_path)
+
+    pr = MagicMock()
+    pr.get_issue_comments.return_value = []
+    mock_gh_cls.return_value.get_repo.return_value.get_pull.return_value = pr
+
+    main()
+
+    comment_text = pr.create_issue_comment.call_args.args[0]
+    assert comment_text == Verdict.NO_VERDICT.comment("— manual review needed.")

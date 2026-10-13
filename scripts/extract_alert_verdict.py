@@ -5,8 +5,13 @@ Claude runs in a sandbox that prevents file writes.  Instead, the prompt
 tells Claude to output a ```VERDICT_JSON fenced block.  This script
 parses that block and writes .blender-alert-verdict.json.
 
-Usage: extract_alert_verdict.py <claude_log_file>
+Usage: extract_alert_verdict.py [--final-text] <claude_log_file>
+
+With --final-text, print Claude's final answer instead of writing the
+verdict file.
 """
+
+from __future__ import annotations
 
 import json
 import re
@@ -61,6 +66,23 @@ def _extract_text_from_json_log(log: str) -> str:
     return "\n".join(parts)
 
 
+def final_text(log: str) -> str:
+    """Return Claude's final answer from a JSON session log, or ""."""
+    result = last_text = ""
+    for doc in _iter_json_docs(log):
+        for event in doc if isinstance(doc, list) else [doc]:
+            if not isinstance(event, dict):
+                continue
+            if event.get("type") == "result" and isinstance(event.get("result"), str):
+                result = event["result"]
+            msg = event.get("message")
+            if isinstance(msg, dict) and msg.get("role") == "assistant":
+                for block in msg.get("content", []):
+                    if isinstance(block, dict) and block.get("type") == "text":
+                        last_text = block["text"]
+    return result or last_text
+
+
 def _search_text(text: str) -> dict | None:
     """Search plain text for a VERDICT_JSON block or bare verdict object."""
     # Primary: look for ```VERDICT_JSON ... ``` fenced block
@@ -106,17 +128,27 @@ def extract(log: str) -> dict | None:
 
 
 def main() -> None:
-    if len(sys.argv) < 2:
-        print("Usage: extract_alert_verdict.py <claude_log_file>", file=sys.stderr)
+    args = sys.argv[1:]
+    want_text = args[:1] == ["--final-text"]
+    if want_text:
+        args = args[1:]
+    if len(args) != 1:
+        print(
+            "Usage: extract_alert_verdict.py [--final-text] <claude_log_file>",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
-    log_path = sys.argv[1]
     try:
-        with open(log_path) as f:
+        with open(args[0], encoding="utf-8", errors="replace") as f:
             log = f.read()
     except OSError as e:
         print(f"Cannot read log file: {e}", file=sys.stderr)
         sys.exit(1)
+
+    if want_text:
+        print(final_text(log))
+        return
 
     verdict = extract(log)
     if verdict is None:

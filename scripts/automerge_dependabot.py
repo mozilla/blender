@@ -70,6 +70,10 @@ class CIFailurePR(SkipPR):
     """CI failures are handled by the fix workflow; suppress the comment."""
 
 
+class CIPendingPR(SkipPR):
+    """CI is still running; a later run picks the PR up. Suppress the comment."""
+
+
 class MajorBumpPR(SkipPR):
     """Skip caused by a major version bump. Carries dep/meta for dispatch."""
 
@@ -376,7 +380,7 @@ def gate_ci(repo: Repository, sha: str) -> None:
     if failing > 0:
         raise CIFailurePR(f"CI has {failing} failure(s)")
     if pending > 0:
-        raise SkipPR(f"CI has {pending} pending check(s)")
+        raise CIPendingPR(f"CI has {pending} pending check(s)")
 
     print("  CI: all checks passed")
 
@@ -621,6 +625,9 @@ def approve_and_merge(pr: PullRequest, compat_score: int | None) -> None:
             raise SkipPR(f"direct merge failed: {merge_error}")
         print("  Merged.")
         return
+    print(f"  enable_auto_merge: {error}")
+    if "unstable status" in error.lower():
+        raise SkipPR("could not enable auto-merge: a check on this PR is not passing")
     raise SkipPR(f"could not enable auto-merge: {error}")
 
 
@@ -680,8 +687,8 @@ def process_pr(
         allow_major = True
 
     gate_versions(meta, allow_major=allow_major)
-    compat_score = gate_compatibility(pr, meta, config.min_compatibility_score)
     gate_ci(repo, pr.head.sha)
+    compat_score = gate_compatibility(pr, meta, config.min_compatibility_score)
     gate_advisories(gh, meta)
 
     if config.dry_run:
@@ -827,8 +834,8 @@ def main() -> None:
             else:
                 _post_skip_comment(pr, str(e), False, config.dry_run)
 
-        except CIFailurePR as e:
-            print(f"  SKIP (CI failure, fix workflow handles it): {e}")
+        except (CIFailurePR, CIPendingPR) as e:
+            print(f"  SKIP (CI not green, no comment): {e}")
             skipped += 1
             pkg = _package_name_from_branch(pr.head.ref)
             skip_reasons.append(f"#{pr.number} ({pkg}): {e}")
