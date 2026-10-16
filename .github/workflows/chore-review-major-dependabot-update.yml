@@ -162,7 +162,7 @@ jobs:
 
       # --- BLEnder review ---
       - name: Install sandbox dependencies
-        run: sudo apt-get install -y bubblewrap socat
+        run: bash ${{ github.workspace }}/scripts/install-sandbox.sh
 
       - name: Install Claude Code
         run: |

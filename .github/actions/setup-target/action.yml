@@ -174,7 +174,7 @@ runs:
     - name: Install sandbox dependencies
       if: inputs.install-sandbox == 'true'
       shell: bash
-      run: sudo apt-get install -y bubblewrap socat
+      run: bash ${{ github.workspace }}/scripts/install-sandbox.sh
 
     - name: Install Claude Code
       if: inputs.install-claude == 'true'
