@@ -2,7 +2,7 @@
   "sandbox": {
     "enabled": true,
     "failIfUnavailable": true,
-    "autoAllowBashIfSandboxed": true
-  },
-  "allowUnsandboxedCommands": false
+    "autoAllowBashIfSandboxed": true,
+    "allowUnsandboxedCommands": false
+  }
 }
