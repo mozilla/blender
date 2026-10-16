@@ -24,7 +24,7 @@ Make the minimum change needed. Do not refactor unrelated code.
 2. Run the failing check to reproduce the error.
 3. Read the error output. Identify the root cause.
 4. Make the fix. Run the check again to confirm.
-5. If you cannot fix it, say so. Do not guess.
+5. If you cannot fix it, end with one or two sentences saying why. Do not guess.
 6. You have a limited number of turns. Be direct.
 
 ## Commit message
