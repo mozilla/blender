@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # BLEnder yarn bump: commit yarn.lock changes via a verified commit and open a
-# PR. Runs after scripts/yarn-fix.sh in the target repo checkout.
+# PR. Runs after scripts/yarn_fix.py in the target repo checkout.
 #
 #   GH_TOKEN, PACKAGE, PATCHED_VERSION, ALERT_NUMBER, REPO
 
