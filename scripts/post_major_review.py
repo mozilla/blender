@@ -31,6 +31,7 @@ except ModuleNotFoundError:
     from github_utils import Verdict, enable_auto_merge, has_blender_verdict
 
 VERDICT_FILE = ".blender-verdict.json"
+FAIL_REASON_FILE = ".blender-fail-reason"
 
 
 def post_comment(pr: PullRequest, body: str, dry_run: bool) -> None:
@@ -73,11 +74,13 @@ def main() -> None:
     # No verdict file: Claude failed or timed out
     if not os.path.exists(VERDICT_FILE):
         print("No verdict file found. Claude could not evaluate this bump.")
-        post_comment(
-            pr,
-            Verdict.NO_VERDICT.comment("— manual review needed."),
-            dry_run,
-        )
+        body = Verdict.NO_VERDICT.comment("— manual review needed.")
+        if os.path.isfile(FAIL_REASON_FILE) and not os.path.islink(FAIL_REASON_FILE):
+            with open(FAIL_REASON_FILE, encoding="utf-8", errors="replace") as f:
+                reason = f.read().strip().replace("@", "@ ")
+            if reason:
+                body += "\n\n" + "\n".join(f"> {line}" for line in reason.splitlines())
+        post_comment(pr, body, dry_run)
         return
 
     # Parse verdict

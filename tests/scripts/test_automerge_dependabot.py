@@ -12,6 +12,7 @@ from tests.scripts import make_comment, make_review
 from scripts.automerge_dependabot import (
     AdvisorySkipPR,
     CIFailurePR,
+    CIPendingPR,
     DependencyUpdate,
     MajorBumpPR,
     PRMetadata,
@@ -445,6 +446,12 @@ def test_main_no_comment_on_ci_failure(monkeypatch):
     pr.create_issue_comment.assert_not_called()
 
 
+def test_ci_pending_posts_no_comment(monkeypatch):
+    pr = _make_dependabot_pr()
+    _run_main(monkeypatch, pr, CIPendingPR("CI has 2 pending check(s)"))
+    pr.create_issue_comment.assert_not_called()
+
+
 # --- has_codeowner_approval ---
 
 
@@ -551,6 +558,27 @@ def test_process_pr_codeowner_approval_bypasses_major_gate():
         result = process_pr(config, gh, repo, pr)
 
     assert result is True
+
+
+def test_process_pr_checks_ci_before_compatibility():
+    from scripts.automerge_dependabot import Config, process_pr
+
+    pr = _make_dependabot_pr(number=42, ref="dependabot/npm_and_yarn/foo-1.0.1")
+    config = Config(repo_name="owner/repo", token="fake", dry_run=True)
+    repo = MagicMock()
+    failed = MagicMock(status="completed", conclusion="failure")
+    repo.get_commit.return_value.get_check_runs.return_value = [failed]
+    repo.get_commit.return_value.get_combined_status.return_value.statuses = []
+
+    with (
+        patch("scripts.automerge_dependabot.extract_metadata"),
+        patch("scripts.automerge_dependabot.gate_versions"),
+        patch("scripts.automerge_dependabot.gate_compatibility") as mock_compat,
+        pytest.raises(CIFailurePR),
+    ):
+        process_pr(config, MagicMock(), repo, pr)
+
+    mock_compat.assert_not_called()
 
 
 # --- extract_metadata propagates old_version to deps ---
@@ -677,6 +705,14 @@ def test_approve_and_merge_raises_skippr_on_enable_error(mock_enable):
     with pytest.raises(SkipPR, match="could not enable auto-merge"):
         approve_and_merge(pr, compat_score=90)
     pr.create_review.assert_called_once()
+
+
+@patch("scripts.automerge_dependabot.enable_auto_merge")
+def test_approve_and_merge_explains_unstable_status(mock_enable):
+    mock_enable.return_value = "Pull request Pull request is in unstable status"
+    pr = MagicMock()
+    with pytest.raises(SkipPR, match="a check on this PR is not passing"):
+        approve_and_merge(pr, compat_score=90)
 
 
 @patch("scripts.automerge_dependabot.enable_auto_merge")
